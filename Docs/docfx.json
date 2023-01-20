@@ -4,7 +4,7 @@
       "src": [
         {
           "files": [
-            "SlugBase/bin/Release/SlugBase.dll"
+            "src/bin/Release/net48/SlugBase.dll"
           ],
 		  "src": ".."
         }
