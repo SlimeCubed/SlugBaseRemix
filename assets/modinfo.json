@@ -1,0 +1,9 @@
+{
+	"id": "slime-cubed.slugbase",
+	"name": "SlugBase",
+	"authors": "Slime_Cubed",
+	"description": "Lets you add even more slugcats to the game.",
+	"requirements": [],
+	"requirements_names": [],
+	"checksum_override_version": false
+}
