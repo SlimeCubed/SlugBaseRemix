@@ -1,0 +1,15 @@
+{
+	"id": "SlugBaseExample",
+	"name": "The Wraith",
+	"description": "An example slugcat made with SlugBase.",
+	
+	"player": {
+		"explode_on_death": { "radius": 300, "damage": 3 },
+		"multi_jump": { "jumps": 5, "delay": 0.25 }
+	},
+	
+	"game": {
+		"karma": 0,
+		"karma_cap": 2
+	}
+}
