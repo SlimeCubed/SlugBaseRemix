@@ -24,7 +24,7 @@ public sealed class PlayerCompositeFeature
         this.id = id;
     }
 
-    public bool TryGet(Player player, out object data) => PlayerCharacterCache.For(player).Character.Objects.TryGetValue(id, out data);
+    public bool TryGet(Player player, out Dictionary<string, object> data) => PlayerCharacterCache.For(player).Character.Objects.TryGetValue(id, out data);
 }
 
 public sealed class PlayerIntFeature<TData> where TData : class
