@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
+using SlugBase.Features;
+using System.Runtime.CompilerServices;
 
 namespace SlugBase.Characters
 {
@@ -11,32 +13,15 @@ namespace SlugBase.Characters
         public string Description { get; set; }
         public string Path { get; set; }
 
-        public string Error { get; set; }
+        public FeatureList Features { get; } = new();
 
-        public FeatureList<PlayerState> PlayerFeatures { get; } = new();
-        public FeatureList<RainWorldGame> GameFeatures { get; } = new();
-        public FeatureList<PlayerProgression> GlobalFeatures { get; } = new();
-
-        public SlugBaseCharacter(SlugcatStats.Name name, Dictionary<string, object> json) : this(name)
+        public SlugBaseCharacter(SlugcatStats.Name name, JsonObject json) : this(name)
         {
-            DisplayName = Get<object>(json, "name", "The Nameless").ToString();
-            Description = Get<object>(json, "description", "A being with no description.").ToString();
+            DisplayName = json.GetString("name");
+            Description = json.GetString("description");
 
-            var empty = new Dictionary<string, object>();
-            foreach(var pair in Get(json, "player", empty))
-            {
-                PlayerFeatures.Add(Features.PlayerFeatures[pair.Key], pair.Value);
-            }
-
-            foreach(var pair in Get(json, "game", empty))
-            {
-                GameFeatures.Add(Features.GameFeatures[pair.Key], pair.Value);
-            }
-
-            foreach(var pair in Get(json, "global", empty))
-            {
-                GlobalFeatures.Add(Features.GlobalFeatures[pair.Key], pair.Value);
-            }
+            if (json.TryGet("features")?.AsObject() is JsonObject obj)
+                Features.Add(obj);
         }
 
         public SlugBaseCharacter(SlugcatStats.Name name)
@@ -44,48 +29,37 @@ namespace SlugBase.Characters
             Name = name;
         }
 
-        public void Validate()
+        public class FeatureList
         {
-            PlayerFeatures.Validate();
-            GameFeatures.Validate();
-            GlobalFeatures.Validate();
-        }
+            private readonly Dictionary<Feature, object> _features = new();
 
-        private T Get<T>(Dictionary<string, object> json, string key, T defaultValue)
-        {
-            if (json.TryGetValue(key, out object objValue) && objValue is T tValue)
-                return tValue;
-            else
-                return defaultValue;
-        }
-
-        public class FeatureList<TOwner> where TOwner : class
-        {
-            private readonly List<KeyValuePair<IFeature<TOwner>, object>> _features = new();
-
-            public void Add(IFeature<TOwner> feature, object json)
+            public bool TryGet<T>(Feature<T> feature, out T value)
             {
-                _features.Add(new(feature, json));
-            }
-
-            public void Attach(TOwner owner)
-            {
-                foreach (var pair in _features)
-                    pair.Key.Attach(owner, pair.Value);
-            }
-
-            public void Validate()
-            {
-                foreach (var pair in _features)
+                if (_features.TryGetValue(feature, out object outObj))
                 {
-                    try
-                    {
-                        pair.Key.Attach(null, pair.Value);
-                    }
-                    catch(Exception e)
-                    {
-                        throw new FormatException($"Failed to validate {typeof(TOwner).Name} feature: {pair.Key}", e);
-                    }
+                    value = (T)outObj;
+                    return true;
+                }
+                else
+                {
+                    value = default;
+                    return false;
+                }
+            }
+
+            public bool Contains(Feature feature)
+            {
+                return _features.ContainsKey(feature);
+            }
+
+            internal void Add(JsonObject json)
+            {
+                foreach(var pair in json)
+                {
+                    if(FeatureManager.TryGetFeature(pair.Key, out Feature feature))
+                        _features.Add(feature, feature.Create(pair.Value));
+                    else
+                        throw new JsonException($"Couldn't find feature: {pair.Key}!", json._path);
                 }
             }
         }

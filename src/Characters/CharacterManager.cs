@@ -13,6 +13,8 @@ namespace SlugBase.Characters
 
         public static void Scan()
         {
+            characters.Clear();
+
             var files = AssetManager.ListDirectory("slugbase", includeAll: true);
 
             foreach(var file in files.Where(file => file.EndsWith(".json")))
@@ -21,10 +23,22 @@ namespace SlugBase.Characters
                 {
                     var chara = Load(file);
                     characters.Add(chara.Name, chara);
+                    SlugBasePlugin.Logger.LogMessage($"Loaded SlugBase character: {Path.GetFileName(file)}");
+                }
+                catch(JsonException e)
+                {
+                    SlugBasePlugin.Logger.LogError($"Failed to parse SlugBase character from {Path.GetFileName(file)}: {e.Message}\nField: {e.JsonPath ?? "unknown"}");
+                    Debug.LogException(e);
+
+                    errors.Add(new LoadError()
+                    {
+                        Exception = e,
+                        FilePath = file
+                    });
                 }
                 catch(Exception e)
                 {
-                    SlugBasePlugin.Logger.LogError($"Failed to load SlugBase character: {Path.GetFileName(file)}");
+                    SlugBasePlugin.Logger.LogError($"Failed to load SlugBase character from {Path.GetFileName(file)}: {e.Message}");
                     Debug.LogException(e);
 
                     errors.Add(new LoadError()
@@ -36,24 +50,30 @@ namespace SlugBase.Characters
             }
         }
 
+        public static SlugBaseCharacter Get(SlugcatStats.Name name)
+        {
+            if (name == null || (int)name == -1) return null;
+
+            return characters.TryGetValue(name, out var chara) ? chara : null;
+        }
+
+        public static SlugBaseCharacter Get(Player player) => Get(player?.SlugCatClass);
+        public static SlugBaseCharacter Get(RainWorldGame game) => Get(game?.StoryCharacter);
+
         private static SlugBaseCharacter Load(string jsonPath)
         {
-            string id;
+            var json = JsonAny.Parse(File.ReadAllText(jsonPath)).AsObject();
 
-            Dictionary<string, object> json = File.ReadAllText(jsonPath).dictionaryFromJson();
-            if (json.TryGetValue("id", out object jsonIdObj) && jsonIdObj is string jsonId)
-                id = jsonId;
-            else
-                throw new FormatException("Missing \"id\" property!");
+            string id = json.GetString("id");
 
+            Debug.Log(string.Join(", ", SlugcatStats.Name.values.entries));
             if (SlugcatStats.Name.values.entries.Contains(id))
                 throw new FormatException($"The slugcat ID {id} is taken!");
 
-            var chara = new SlugBaseCharacter(new SlugcatStats.Name(id, true), json);
-
-            chara.Validate();
-
-            return chara;
+            return new SlugBaseCharacter(new SlugcatStats.Name(id, true), json)
+            {
+                Path = jsonPath
+            };
         }
 
         private static void Unload(SlugBaseCharacter chara)

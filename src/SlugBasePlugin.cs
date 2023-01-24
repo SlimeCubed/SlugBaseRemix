@@ -1,8 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Logging;
 using SlugBase.Characters;
+using SlugBase.Features;
+using System.Runtime.CompilerServices;
+using System.Security;
+using System.Security.Permissions;
+
+
+#pragma warning disable CS0618 // Type or member is obsolete
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+[module: UnverifiableCode]
+#pragma warning restore CS0618 // Type or member is obsolete
 
 namespace SlugBase
 {
@@ -22,7 +30,8 @@ namespace SlugBase
         {
             On.RainWorld.PreModsInit += (orig, self) =>
             {
-                Features.Init();
+                RuntimeHelpers.RunClassConstructor(typeof(PlayerFeatures).TypeHandle);
+                RuntimeHelpers.RunClassConstructor(typeof(GameFeatures).TypeHandle);
 
                 orig(self);
             };
@@ -52,7 +61,38 @@ namespace SlugBase
             orig(self, crit, playerNumber, slugcatCharacter, isGhost);
 
             // Temporary!
-            CharacterManager.characters[new SlugcatStats.Name("SlugBaseExample")].PlayerFeatures.Attach(self);
+            var c = GetInitialClass(crit, self);
+            CharacterManager.characters[c] = CharacterManager.characters[new SlugcatStats.Name("SlugBaseExample")];
+        }
+
+        // This is so dumb
+        private SlugcatStats.Name GetInitialClass(AbstractCreature player, PlayerState state)
+        {
+            if (ModManager.MSC && player.creatureTemplate.TopAncestor().type == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC)
+            {
+                return MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Slugpup;
+            }
+            if (ModManager.CoopAvailable && player.Room.world.game.IsStorySession)
+            {
+                return player.world.game.rainWorld.options.jollyPlayerOptionsArray[state.playerNumber].playerClass ?? player.world.game.GetStorySession.saveState.saveStateNumber;
+            }
+            else
+            {
+                if (!ModManager.MSC || player.Room.world.game.IsStorySession)
+                {
+                    return state.slugcatCharacter;
+                }
+
+                if (ModManager.MSC && !player.world.game.IsStorySession)
+                {
+                    return (player.world.game.session as ArenaGameSession).characterStats_Mplayer[state.playerNumber].name;
+                }
+                if (ModManager.CoopAvailable && player.world.game.IsStorySession)
+                {
+                    return (player.world.game.session as StoryGameSession).characterStatsJollyplayer[state.playerNumber].name;
+                }
+                return player.world.game.session.characterStats.name;
+            }
         }
     }
 }
