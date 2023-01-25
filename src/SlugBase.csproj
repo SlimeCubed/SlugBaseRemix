@@ -20,8 +20,8 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(RainWorldDir)/RainWorld_Data/StreamingAssets/mods/$(ProjectName)/plugins" />
   </Target>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if not exist &quot;$(SolutionDir)assets\slime-cubed.slugbase\&quot; exit&#xD;&#xA;if not exist &quot;$(SolutionDir)assets\slime-cubed.slugbase\plugins\&quot; mkdir &quot;$(SolutionDir)assets\slime-cubed.slugbase\plugins\&quot;&#xD;&#xA;copy /Y &quot;$(TargetPath)&quot; &quot;$(SolutionDir)assets\slime-cubed.slugbase\plugins\&quot;" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(ProjectDir)../assets/slime-cubed.slugbase/')">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)../assets/slime-cubed.slugbase/plugins/" />
   </Target>
 
 </Project>
