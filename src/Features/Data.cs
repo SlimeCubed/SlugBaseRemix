@@ -1,5 +1,4 @@
-﻿using SlugBase.Characters;
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 
 namespace SlugBase.Features
@@ -9,7 +8,7 @@ namespace SlugBase.Features
     {
         public PlayerData(Feature requiredFeature) : base(requiredFeature) {}
 
-        private SlugBaseCharacter GetChara(PlayerState state) => CharacterManager.Get((state.creature.realizedObject as Player)?.SlugCatClass);
+        private SlugBaseCharacter GetChara(PlayerState state) => SlugBaseCharacter.Get(state.creature.realizedObject as Player);
 
         public Box<TValue> Get(PlayerState state) => Get(GetChara(state), state);
         public Box<TValue> Get(Player player) => Get(player.playerState);
@@ -23,7 +22,7 @@ namespace SlugBase.Features
     {
         public GameData(Feature requiredFeature) : base(requiredFeature) {}
 
-        public Box<TValue> Get(RainWorldGame game) => Get(CharacterManager.Get(game), game);
+        public Box<TValue> Get(RainWorldGame game) => Get(SlugBaseCharacter.Get(game), game);
 
         public bool TryGet(RainWorldGame game, out TValue value) => Box<TValue>.TryUnbox(Get(game), out value);
     }

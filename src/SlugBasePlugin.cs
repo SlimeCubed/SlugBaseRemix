@@ -1,11 +1,14 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using SlugBase.Characters;
 using SlugBase.Features;
+using System.IO;
+using System.Linq;
+using System;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
-
+using UnityEngine;
+using System.Collections.Generic;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -18,6 +21,7 @@ namespace SlugBase
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
+        internal static List<LoadError> loadErrors = new();
 
         private bool _initialized = false;
 
@@ -44,54 +48,55 @@ namespace SlugBase
                 _initialized = true;
 
                 FeatureHooks.Apply();
-
-                On.PlayerState.ctor += PlayerState_ctor;
+                CoreHooks.Apply();
             };
 
             On.RainWorld.PostModsInit += (orig, self) =>
             {
                 orig(self);
 
-                CharacterManager.Scan();
+                ScanCharacters();
             };
         }
 
-        private void PlayerState_ctor(On.PlayerState.orig_ctor orig, PlayerState self, AbstractCreature crit, int playerNumber, SlugcatStats.Name slugcatCharacter, bool isGhost)
+        public static void ScanCharacters()
         {
-            orig(self, crit, playerNumber, slugcatCharacter, isGhost);
+            loadErrors.Clear();
+            var files = AssetManager.ListDirectory("slugbase", includeAll: true);
 
-            // Temporary!
-            var c = GetInitialClass(crit, self);
-            CharacterManager.characters[c] = CharacterManager.characters[new SlugcatStats.Name("SlugBaseExample")];
+            foreach (var file in files.Where(file => file.EndsWith(".json")))
+            {
+                try
+                {
+                    var chara = SlugBaseCharacter.Characters.FirstOrDefault(chara => chara.Path.Equals(file, StringComparison.InvariantCultureIgnoreCase));
+                    if (chara == null)
+                    {
+                        chara = SlugBaseCharacter.RegisterFromFile(file);
+                        Logger.LogMessage($"Loaded SlugBase character \"{chara.Name}\" from {Path.GetFileName(file)}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (e is JsonException jsonE)
+                        Logger.LogError($"Failed to parse SlugBase character from {Path.GetFileName(file)}: {jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}");
+                    else
+                        Logger.LogError($"Failed to load SlugBase character from {Path.GetFileName(file)}: {e.Message}");
+                    Debug.LogException(e);
+
+                    loadErrors.Add(new LoadError(file, e));
+                }
+            }
         }
 
-        // This is so dumb
-        private SlugcatStats.Name GetInitialClass(AbstractCreature player, PlayerState state)
+        internal class LoadError
         {
-            if (ModManager.MSC && player.creatureTemplate.TopAncestor().type == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC)
-            {
-                return MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Slugpup;
-            }
-            if (ModManager.CoopAvailable && player.Room.world.game.IsStorySession)
-            {
-                return player.world.game.rainWorld.options.jollyPlayerOptionsArray[state.playerNumber].playerClass ?? player.world.game.GetStorySession.saveState.saveStateNumber;
-            }
-            else
-            {
-                if (!ModManager.MSC || player.Room.world.game.IsStorySession)
-                {
-                    return state.slugcatCharacter;
-                }
+            public readonly string Path;
+            public readonly Exception Exception;
 
-                if (ModManager.MSC && !player.world.game.IsStorySession)
-                {
-                    return (player.world.game.session as ArenaGameSession).characterStats_Mplayer[state.playerNumber].name;
-                }
-                if (ModManager.CoopAvailable && player.world.game.IsStorySession)
-                {
-                    return (player.world.game.session as StoryGameSession).characterStatsJollyplayer[state.playerNumber].name;
-                }
-                return player.world.game.session.characterStats.name;
+            public LoadError(string path, Exception exception)
+            {
+                Path = path;
+                Exception = exception;
             }
         }
     }

@@ -1,5 +1,4 @@
-﻿using SlugBase.Characters;
-using System;
+﻿using System;
 
 namespace SlugBase.Features
 {
@@ -7,14 +6,14 @@ namespace SlugBase.Features
     {
         public PlayerFeature(string id, Func<JsonAny, T> factory) : base(id, factory) {}
 
-        public bool TryGet(Player player, out T value) => TryGet(CharacterManager.Get(player), out value);
+        public bool TryGet(Player player, out T value) => TryGet(SlugBaseCharacter.Get(player), out value);
     }
 
     public class GameFeature<T> : Feature<T>
     {
         public GameFeature(string id, Func<JsonAny, T> factory) : base(id, factory) { }
 
-        public bool TryGet(RainWorldGame game, out T value) => TryGet(CharacterManager.Get(game), out value);
+        public bool TryGet(RainWorldGame game, out T value) => TryGet(SlugBaseCharacter.Get(game), out value);
     }
 
     public class Feature<T> : Feature

@@ -15,7 +15,7 @@ namespace SlugBase
             _path = path;
 
             if (Type == Element.Invalid)
-                throw new JsonException("Invalid json element! Could this be a parser bug?", _path);
+                throw new JsonException("Failed to parse text as JSON!", _path);
         }
 
         public JsonObject AsObject()
@@ -70,7 +70,7 @@ namespace SlugBase
         public static int AsInt(JsonAny json) => json.AsInt();
         public static string AsString(JsonAny json) => json.AsString();
 
-        public static JsonAny Parse(string data) => new JsonAny(Json.Parser.Parse(data), new JsonPathNode("root", null));
+        public static JsonAny Parse(string data) => new JsonAny(Json.Deserialize(data), new JsonPathNode("root", null));
 
         private Element Type => _object switch
         {
