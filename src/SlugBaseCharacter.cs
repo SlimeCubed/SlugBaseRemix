@@ -224,7 +224,7 @@ namespace SlugBase
                     if (FeatureManager.TryGetFeature(pair.Key, out Feature feature))
                         _features.Add(feature, feature.Create(pair.Value));
                     else
-                        throw new JsonException($"Couldn't find feature: {pair.Key}!", json._path);
+                        throw new JsonException($"Couldn't find feature: {pair.Key}!", json);
                 }
             }
 

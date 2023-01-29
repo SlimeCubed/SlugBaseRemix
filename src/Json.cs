@@ -18,7 +18,7 @@ namespace SlugBase
             _path = path;
 
             if (Type == Element.Invalid)
-                throw new JsonException("Failed to parse text as JSON!", _path);
+                throw new JsonException("Failed to parse text as JSON!", this);
         }
 
         /// <summary>Cast to <see cref="JsonObject"/>.</summary>
@@ -26,7 +26,7 @@ namespace SlugBase
         public JsonObject AsObject()
         {
             if (_object is Dictionary<string, object> dict) return new JsonObject(dict, _path);
-            else throw new JsonException($"Json {Type} cannot be converted to Object!", _path);
+            else throw new JsonException($"Json {Type} cannot be converted to Object!", this);
         }
 
         /// <summary>Cast to <see cref="JsonList"/>.</summary>
@@ -34,7 +34,7 @@ namespace SlugBase
         public JsonList AsList()
         {
             if (_object is List<object> list) return new JsonList(list, _path);
-            else throw new JsonException($"Json {Type} cannot be converted to List!", _path);
+            else throw new JsonException($"Json {Type} cannot be converted to List!", this);
         }
 
         /// <summary>Cast to <see cref="double"/>.</summary>
@@ -43,7 +43,7 @@ namespace SlugBase
         {
             if (_object is double d) return d;
             else if (_object is long l) return (double)l;
-            else throw new JsonException($"Json {Type} cannot be converted to Float!", _path);
+            else throw new JsonException($"Json {Type} cannot be converted to Float!", this);
         }
 
         /// <summary>Cast to <see cref="long"/>.</summary>
@@ -52,7 +52,7 @@ namespace SlugBase
         {
             if (_object is double d) return (long)d;
             else if (_object is long l) return l;
-            else throw new JsonException($"Json {Type} cannot be converted to Integer!", _path);
+            else throw new JsonException($"Json {Type} cannot be converted to Integer!", this);
         }
 
         /// <summary>Cast to <see cref="string"/>.</summary>
@@ -60,7 +60,7 @@ namespace SlugBase
         public string AsString()
         {
             if (_object is string str) return str;
-            else throw new JsonException($"Json {Type} cannot be converted to String!", _path);
+            else throw new JsonException($"Json {Type} cannot be converted to String!", this);
         }
 
         /// <summary>Cast to <see cref="int"/>.</summary>
@@ -130,7 +130,10 @@ namespace SlugBase
         /// <exception cref="JsonException">The root element could not be parsed.</exception>
         public static JsonAny Parse(string data) => new JsonAny(Json.Deserialize(data), new JsonPathNode("root", null));
 
-        private Element Type => _object switch
+        /// <summary>
+        /// The type of this element. This may not be <see cref="Element.Invalid"/>.
+        /// </summary>
+        public Element Type => _object switch
         {
             Dictionary<string, object> => Element.Object,
             List<object> => Element.List,
@@ -140,13 +143,34 @@ namespace SlugBase
             _ => Element.Invalid
         };
 
-        enum Element
+        /// <summary>
+        /// Represents the type of a JSON element.
+        /// </summary>
+        public enum Element
         {
+            /// <summary>
+            /// Values associated with string keys.
+            /// </summary>
             Object,
+            /// <summary>
+            /// Values associated with integer keys.
+            /// </summary>
             List,
+            /// <summary>
+            /// An integer.
+            /// </summary>
             Integer,
+            /// <summary>
+            /// A floating-point value.
+            /// </summary>
             Float,
+            /// <summary>
+            /// A string.
+            /// </summary>
             String,
+            /// <summary>
+            /// A value that couldn't be parsed.
+            /// </summary>
             Invalid
         }
     }
@@ -174,7 +198,7 @@ namespace SlugBase
         public JsonAny Get(string key)
         {
             if (!_dict.TryGetValue(key, out object value))
-                throw new JsonException($"Missing \"{key}\" property!", _path);
+                throw new JsonException($"Missing \"{key}\" property!", this);
 
             return new JsonAny(value, new("." + key, _path));
         }
@@ -236,6 +260,11 @@ namespace SlugBase
         public JsonAny this[string key] => Get(key);
 
         /// <summary>
+        /// Get <paramref name="obj"/> as a <see cref="JsonAny"/>.
+        /// </summary>
+        public static implicit operator JsonAny(JsonObject obj) => new JsonAny(obj._dict, obj._path);
+
+        /// <summary>
         /// Get an enumerator for all properties and values of this object.
         /// </summary>
         public IEnumerator<KeyValuePair<string, JsonAny>> GetEnumerator()
@@ -269,9 +298,9 @@ namespace SlugBase
         public JsonAny Get(int key)
         {
             if (key < 0)
-                throw new JsonException($"Index {key} may not be negative!", _path);
+                throw new JsonException($"Index {key} may not be negative!", this);
             else if (key >= _list.Count)
-                throw new JsonException($"Index {key} is out of range for a list of size {_list.Count}!", _path);
+                throw new JsonException($"Index {key} is out of range for a list of size {_list.Count}!", this);
 
             return new JsonAny(_list[key], new($"[{key}]", _path));
         }
@@ -339,6 +368,11 @@ namespace SlugBase
         public JsonAny this[int key] => Get(key);
 
         /// <summary>
+        /// Get <paramref name="list"/> as a <see cref="JsonAny"/>.
+        /// </summary>
+        public static implicit operator JsonAny(JsonList list) => new JsonAny(list._list, list._path);
+
+        /// <summary>
         /// Gets an enumerator for all elements of this list.
         /// </summary>
         public IEnumerator<JsonAny> GetEnumerator()
@@ -396,8 +430,15 @@ namespace SlugBase
         /// and a reference to the inner exception that is the cause of this exception.</summary>
         public JsonException(string message, Exception inner) : base(message, inner) { }
 
-        internal JsonException(JsonPathNode path) => JsonPath = path.ToString();
-        internal JsonException(string message, JsonPathNode path) : base(message) => JsonPath = path.ToString();
-        internal JsonException(string message, Exception inner, JsonPathNode path) : base(message, inner) => JsonPath = path.ToString();
+        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a path to the invalid element.</summary>
+        public JsonException(JsonAny json) => JsonPath = json._path?.ToString();
+
+        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a specified error message
+        /// and a path to the invalid element.</summary>
+        public JsonException(string message, JsonAny json) : base(message) => JsonPath = json._path?.ToString();
+
+        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a specified error message,
+        /// a reference to the inner exception that is the cause of this exception, and a path to the invalid element.</summary>
+        public JsonException(string message, Exception inner, JsonAny json) : base(message, inner) => JsonPath = json._path?.ToString();
     }
 }

@@ -49,6 +49,11 @@ namespace SlugBase.Features
     /// <summary>
     /// A strongly-typed constant setting of a <see cref="SlugBaseCharacter"/>.
     /// </summary>
+    /// <remarks>
+    /// <see cref="PlayerFeature{T}"/> and <see cref="GameFeature{T}"/> should be used when possible.
+    /// Otherwise, consider making a child class with a <c>TryGet</c> method that finds the most
+    /// appropriate <see cref="SlugBaseCharacter"/> to pass to <see cref="TryGet(SlugBaseCharacter, out T)"/>.
+    /// </remarks>
     /// <typeparam name="T">The type that stores this setting's information.</typeparam>
     public class Feature<T> : Feature
     {
@@ -75,7 +80,8 @@ namespace SlugBase.Features
         /// <returns><c>true</c> if <paramref name="character"/> had this feature, <c>false</c> otherwise.</returns>
         public bool TryGet(SlugBaseCharacter character, out T value)
         {
-            return character.Features.TryGet(this, out value);
+            value = default;
+            return character != null && character.Features.TryGet(this, out value);
         }
 
         internal override object Create(JsonAny json) => _factory(json);

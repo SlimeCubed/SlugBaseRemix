@@ -109,7 +109,7 @@ namespace SlugBase.Features
         /// <param name="key">The key the data is attached to.</param>
         public StrongBox<TValue> Get(SlugBaseCharacter character, THolder key)
         {
-            if (RequiredFeature != null && !character.Features.Contains(RequiredFeature))
+            if (RequiredFeature != null && (character == null || !character.Features.Contains(RequiredFeature)))
                 return null;
 
             if (!_values.TryGetValue(key, out var box))

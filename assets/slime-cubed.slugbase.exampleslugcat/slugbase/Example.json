@@ -4,8 +4,6 @@
 	"description": "An example slugcat made with SlugBase.",
 	
 	"features": {
-		"multi_jumps": 3,
-		
 		"karma": 3,
 		"karma_cap": 7
 	}
