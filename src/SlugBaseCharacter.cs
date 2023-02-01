@@ -13,6 +13,9 @@ namespace SlugBase
     /// </summary>
     public class SlugBaseCharacter
     {
+        /// <summary>
+        /// Stores all registered <see cref="SlugBaseCharacter"/>s.
+        /// </summary>
         public static JsonRegistry<SlugcatStats.Name, SlugBaseCharacter> Registry { get; } = new((key, json) => new(key, json));
 
         /// <summary>

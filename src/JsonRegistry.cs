@@ -6,20 +6,40 @@ using UnityEngine;
 
 namespace SlugBase
 {
+    /// <summary>
+    /// Represents a collection of values with unique IDs that can be loaded from JSON.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the <see cref="ExtEnum{T}"/> keys.</typeparam>
+    /// <typeparam name="TValue">The type of the values.</typeparam>
     public class JsonRegistry<TKey, TValue>
         where TKey : ExtEnum<TKey>
     {
         private readonly Dictionary<TKey, Entry> _entries = new();
         private readonly Func<TKey, JsonObject, TValue> _fromJson;
 
+        /// <summary>
+        /// A collection of all keys used by this registry.
+        /// </summary>
         public IEnumerable<TKey> Keys => _entries.Keys;
+
+        /// <summary>
+        /// A collection of all values registered.
+        /// </summary>
         public IEnumerable<TValue> Values => _entries.Values.Select(entry => entry.Value);
 
+        /// <summary>
+        /// Create a new registry.
+        /// </summary>
+        /// <param name="fromJson">The factory that creates values from JSON.</param>
         public JsonRegistry(Func<TKey, JsonObject, TValue> fromJson)
         {
             _fromJson = fromJson;
         }
 
+        /// <summary>
+        /// Register all JSON files in a directory using <see cref="AddFromFile(string)"/>.
+        /// </summary>
+        /// <param name="directory">The directory to search.</param>
         public void ScanDirectory(string directory)
         {
             var files = AssetManager.ListDirectory(directory, includeAll: true);
@@ -54,11 +74,21 @@ namespace SlugBase
             }
         }
 
+        /// <summary>
+        /// Parse a file as JSON and link it to a new <see cref="ExtEnum{T}"/> ID.
+        /// </summary>
+        /// <param name="path">The file path to the json.</param>
+        /// <returns>The registered value.</returns>
         public TValue AddFromFile(string path)
         {
             return Add(path, JsonAny.Parse(File.ReadAllText(path)).AsObject());
         }
 
+        /// <summary>
+        /// Load a <typeparamref name="TValue"/> from JSON and link it to a new <see cref="ExtEnum{T}"/> ID.
+        /// </summary>
+        /// <param name="json">The json data for the new object.</param>
+        /// <returns>The registered value.</returns>
         public TValue Add(JsonObject json) => Add(null, json);
 
         private TValue Add(string path, JsonObject json)
@@ -78,6 +108,12 @@ namespace SlugBase
             }
         }
 
+        /// <summary>
+        /// Unregister a value.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         public void Remove(TKey id)
         {
             if (id == null)
@@ -92,6 +128,12 @@ namespace SlugBase
             id.Unregister();
         }
 
+        /// <summary>
+        /// Get a registered value by key.
+        /// </summary>
+        /// <param name="id">The unique ID of the value.</param>
+        /// <param name="value">The registered value with the unique ID.</param>
+        /// <returns><c>true</c> if the value was found, <c>false</c> otherwise.</returns>
         public bool TryGet(TKey id, out TValue value)
         {
             if(id != null && _entries.TryGetValue(id, out var entry))
@@ -106,11 +148,22 @@ namespace SlugBase
             }
         }
 
+        /// <summary>
+        /// Get a registered value by key.
+        /// </summary>
+        /// <param name="id">The unique ID of the value.</param>
+        /// <returns>The registered value with the unique ID.</returns>
         public TValue GetOrDefault(TKey id)
         {
             return id != null && TryGet(id, out var value) ? value : default;
         }
 
+        /// <summary>
+        /// Gets the path to a registered value by key.
+        /// </summary>
+        /// <param name="id">The unique ID of the value.</param>
+        /// <param name="path">The path to the value's JSON file.</param>
+        /// <returns><c>true</c> if the value was found and has a path, <c>false</c> otherwise.</returns>
         public bool TryGetPath(TKey id, out string path)
         {
             if (id != null && _entries.TryGetValue(id, out var entry))
