@@ -1,6 +1,8 @@
-﻿using Mono.Cecil.Cil;
+﻿using Menu;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RWCustom;
+using SlugBase.Assets;
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -14,6 +16,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            IL.Menu.SlugcatSelectMenu.SlugcatPage.AddImage += SlugcatPage_AddImage;
             On.CreatureCommunities.LoadDefaultCommunityAlignments += CreatureCommunities_LoadDefaultCommunityAlignments;
             On.CreatureCommunities.LikeOfPlayer += CreatureCommunities_LikeOfPlayer;
             On.SlugcatStats.SlugcatFoodMeter += SlugcatStats_SlugcatFoodMeter;
@@ -29,6 +32,47 @@ namespace SlugBase.Features
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+        }
+
+        // SelectMenuScene, SelectMenuSceneAscended: Override scenes
+        private static void SlugcatPage_AddImage(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if(c.TryGotoNext(MoveType.After,
+                x => x.MatchStloc(0)))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Ldarg_1);
+                c.Emit(OpCodes.Ldloc_0);
+                c.EmitDelegate<Func<SlugcatSelectMenu.SlugcatPage, bool, MenuScene.SceneID, MenuScene.SceneID>>((self, ascended, sceneID) =>
+                {
+                    // Find scene ID
+                    if(SlugBaseCharacter.TryGet(self.slugcatNumber, out var chara))
+                    {
+                        if (ascended && SelectMenuSceneAscended.TryGet(chara, out var ascendedScene))
+                            sceneID = ascendedScene;
+                        else if (SelectMenuScene.TryGet(chara, out var normalScene))
+                            sceneID = normalScene;
+                    }
+
+                    // Override extra properties like mark position
+                    if(CustomScene.Registry.TryGet(sceneID, out var customScene))
+                    {
+                        self.markOffset = customScene.MarkPos ?? self.markOffset;
+                        self.glowOffset = customScene.GlowPos ?? self.glowOffset;
+                        self.sceneOffset = customScene.SelectMenuOffset ?? self.sceneOffset;
+                        self.slugcatDepth = customScene.SlugcatDepth ?? self.slugcatDepth;
+                    }
+
+                    return sceneID;
+                });
+                c.Emit(OpCodes.Stloc_0);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(SlugcatPage_AddImage)} failed!");
+            }
         }
 
         // CommunityAlignments: Set initial reputation

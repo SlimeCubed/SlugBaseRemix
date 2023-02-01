@@ -2,6 +2,7 @@
 using SlugBase.DataTypes;
 using System.Runtime.Serialization.Json;
 using System.Collections.Generic;
+using Menu;
 
 namespace SlugBase.Features
 {
@@ -113,7 +114,7 @@ namespace SlugBase.Features
         public static readonly GameFeature<int> Karma = GameInt("karma");
 
         // TODO: Test
-        /// <summary>"karma": Initial karma cap.</summary>
+        /// <summary>"karma_cap": Initial karma cap.</summary>
         public static readonly GameFeature<int> KarmaCap = GameInt("karma_cap");
 
         // TODO: Test
@@ -125,15 +126,15 @@ namespace SlugBase.Features
         public static readonly GameFeature<int> GuideOverseer = GameInt("guide_overseer");
 
         // TODO: Test
-        /// <summary>"dreams": Player guide overseer color index.</summary>
-        public static readonly GameFeature<bool> HasDreams = GameBool("dreams");
+        /// <summary>"has_dreams": Player guide overseer color index.</summary>
+        public static readonly GameFeature<bool> HasDreams = GameBool("has_dreams");
 
         // TODO: Test
         /// <summary>"cycle_length_min": Minimum cycle length in minutes.</summary>
         public static readonly GameFeature<float> CycleLengthMin = GameFloat("cycle_length_min");
 
         // TODO: Test
-        /// <summary>"cycle_length_min": Maximum cycle length in minutes.</summary>
+        /// <summary>"cycle_length_max": Maximum cycle length in minutes.</summary>
         public static readonly GameFeature<float> CycleLengthMax = GameFloat("cycle_length_max");
 
         // TODO: Test
@@ -147,5 +148,13 @@ namespace SlugBase.Features
         // TODO: Test
         /// <summary>"food_max": Maximum food stored during a cycle.</summary>
         public static readonly GameFeature<int> FoodMax = GameInt("food_max");
+
+        // TODO: Test
+        /// <summary>The scene for this slugcat on the select menu.</summary>
+        public static readonly GameFeature<MenuScene.SceneID> SelectMenuScene = GameExtEnum<MenuScene.SceneID>("select_menu_scene");
+
+        // TODO: Test
+        /// <summary>The scene for this slugcat on the select menu when ascended.</summary>
+        public static readonly GameFeature<MenuScene.SceneID> SelectMenuSceneAscended = GameExtEnum<MenuScene.SceneID>("select_menu_scene_ascended");
     }
 }

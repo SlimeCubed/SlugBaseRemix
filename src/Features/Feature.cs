@@ -21,7 +21,7 @@ namespace SlugBase.Features
         /// <param name="player">A <see cref="Player"/> instance that may be a <see cref="SlugBaseCharacter"/> with this <see cref="Feature"/>.</param>
         /// <param name="value">The stored setting, or <typeparamref name="T"/>'s default value if the feature wasn't found.</param>
         /// <returns><c>true</c> if the <paramref name="player"/>'s <see cref="SlugBaseCharacter"/> had this feature, <c>false</c> otherwise.</returns>
-        public bool TryGet(Player player, out T value) => TryGet(SlugBaseCharacter.Get(player), out value);
+        public bool TryGet(Player player, out T value) => TryGet(SlugBaseCharacter.Get(player.SlugCatClass), out value);
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ namespace SlugBase.Features
         /// <param name="game">A <see cref="RainWorldGame"/> instance that may belong to a <see cref="SlugBaseCharacter"/> with this <see cref="Feature"/>.</param>
         /// <param name="value">The stored setting, or <typeparamref name="T"/>'s default value if the feature wasn't found.</param>
         /// <returns><c>true</c> if the <paramref name="game"/>'s <see cref="SlugBaseCharacter"/> had this feature, <c>false</c> otherwise.</returns>
-        public bool TryGet(RainWorldGame game, out T value) => TryGet(SlugBaseCharacter.Get(game), out value);
+        public bool TryGet(RainWorldGame game, out T value) => TryGet(SlugBaseCharacter.Get(game.StoryCharacter), out value);
     }
 
     /// <summary>

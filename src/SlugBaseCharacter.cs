@@ -2,6 +2,9 @@
 using System;
 using SlugBase.Features;
 using System.IO;
+using Menu;
+using System.Linq;
+using UnityEngine;
 
 namespace SlugBase
 {
@@ -10,7 +13,22 @@ namespace SlugBase
     /// </summary>
     public class SlugBaseCharacter
     {
-        private static readonly Dictionary<SlugcatStats.Name, SlugBaseCharacter> _characters = new();
+        public static JsonRegistry<SlugcatStats.Name, SlugBaseCharacter> Registry { get; } = new((key, json) => new(key, json));
+
+        /// <summary>
+        /// Gets a <see cref="SlugBaseCharacter"/> by <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The <see cref="SlugcatStats.Name"/> to search for.</param>
+        /// <param name="character">The <see cref="SlugBaseCharacter"/> with the given <paramref name="name"/>, or <c>null</c> if it was not found.</param>
+        /// <returns><c>true</c> if the <see cref="SlugBaseCharacter"/> was found, <c>false</c> otherwise.</returns>
+        public static bool TryGet(SlugcatStats.Name name, out SlugBaseCharacter character) => Registry.TryGet(name, out character);
+
+        /// <summary>
+        /// Gets a <see cref="SlugBaseCharacter"/> by <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The <see cref="SlugcatStats.Name"/> to search for.</param>
+        /// <returns>The <see cref="SlugBaseCharacter"/>, or <c>null</c> if it was not found.</returns>
+        public static SlugBaseCharacter Get(SlugcatStats.Name name) => Registry.GetOrDefault(name);
 
         /// <summary>
         /// This character's unique name.
@@ -28,152 +46,14 @@ namespace SlugBase
         public string Description { get; set; }
 
         /// <summary>
-        /// The path to this slugcat's JSON file, or <c>null</c> if it was not loaded via JSON.
-        /// </summary>
-        public string Path { get; set; }
-
-        /// <summary>
         /// Settings, abilities, or other <see cref="Feature"/>s of this character.
         /// </summary>
         public FeatureList Features { get; } = new();
 
-        internal SlugBaseCharacter(SlugcatStats.Name name)
+        private SlugBaseCharacter(SlugcatStats.Name name, JsonObject json)
         {
             Name = name;
-        }
 
-        /// <summary>
-        /// Create and register a new <see cref="SlugBaseCharacter"/> with the given name.
-        /// </summary>
-        /// <param name="name">The character's ID to be registered as its <see cref="SlugcatStats.Name"/>.</param>
-        /// <exception cref="ArgumentException"><paramref name="name"/> is not unique.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <c>null</c>.</exception>
-        public static SlugBaseCharacter Register(string name)
-        {
-            if (name == null)
-                throw new ArgumentNullException(nameof(name));
-
-            if (SlugcatStats.Name.values.entries.Contains(name))
-                throw new ArgumentException($"The slugcat ID \"{name}\" is already taken!");
-
-            var id = new SlugcatStats.Name(name, true);
-            try
-            {
-                var chara = new SlugBaseCharacter(id);
-                Register(chara);
-
-                return chara;
-            }
-            catch
-            {
-                id.Unregister();
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Register a previously unregistered <see cref="SlugBaseCharacter"/>.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="Name"/> is also unregistered.
-        /// </remarks>
-        /// <seealso cref="Unregister(SlugBaseCharacter)"/>
-        /// <param name="character">The <see cref="SlugBaseCharacter"/> to register.</param>
-        /// <exception cref="ArgumentException"><paramref name="character"/> is already registered.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="character"/> is <c>null</c>.</exception>
-        public static void Register(SlugBaseCharacter character)
-        {
-            if (character == null)
-                throw new ArgumentNullException(nameof(character));
-
-            if (_characters.ContainsKey(character.Name))
-                throw new ArgumentException($"The SlugBase character \"{character.Name}\" is already registered!");
-
-            _characters.Add(character.Name, character);
-        }
-
-        /// <summary>
-        /// Unregister a previously unregistered <see cref="SlugBaseCharacter"/>.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="Name"/> is also registered.
-        /// </remarks>
-        /// <param name="character">The <see cref="SlugBaseCharacter"/> to unregister.</param>
-        /// <exception cref="ArgumentException"><paramref name="character"/> is not registered.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="character"/> is <c>null</c>.</exception>
-        public static void Unregister(SlugBaseCharacter character)
-        {
-            if (character == null)
-                throw new ArgumentNullException(nameof(character));
-
-            if (!_characters.Remove(character.Name))
-                throw new ArgumentException($"The SlugBase character \"{character.Name}\" was not registered!");
-        }
-
-        /// <summary>
-        /// Loads and registers a <see cref="SlugBaseCharacter"/> from a JSON file.
-        /// </summary>
-        /// <param name="path">The file path.</param>
-        /// <returns>A registered <see cref="SlugBaseCharacter"/> with <see cref="Path"/> set to <paramref name="path"/>.</returns>
-        public static SlugBaseCharacter RegisterFromFile(string path)
-        {
-            JsonObject json = JsonAny.Parse(File.ReadAllText(path)).AsObject();
-
-            string id = json.GetString("id");
-
-            SlugBaseCharacter chara = Register(id);
-            chara.LoadFrom(json);
-            chara.Path = path;
-            return chara;
-        }
-
-        /// <summary>
-        /// Gets all registered <see cref="SlugBaseCharacter"/>s.
-        /// </summary>
-        public static IEnumerable<SlugBaseCharacter> Characters => _characters.Values;
-
-        /// <summary>
-        /// Gets a <see cref="SlugBaseCharacter"/> by <see cref="Name"/>.
-        /// </summary>
-        /// <param name="name">The <see cref="SlugcatStats.Name"/> to search for.</param>
-        /// <returns>The <see cref="SlugBaseCharacter"/> with the given <paramref name="name"/>, or <c>null</c> if it was not found.</returns>
-        public static SlugBaseCharacter Get(SlugcatStats.Name name)
-        {
-            return name != null && _characters.TryGetValue(name, out var chara) ? chara : null;
-        }
-
-        /// <summary>
-        /// Gets a <see cref="SlugBaseCharacter"/> that matches <see cref="Player.SlugCatClass"/>.
-        /// </summary>
-        /// <param name="player">The <see cref="Player"/> to check the class of.</param>
-        /// <returns>The <see cref="SlugBaseCharacter"/> of the same class as <paramref name="player"/>, or <c>null</c> if it was not found.</returns>
-        public static SlugBaseCharacter Get(Player player) => Get(player.SlugCatClass);
-
-        /// <summary>
-        /// Gets a <see cref="SlugBaseCharacter"/> that matches <see cref="StoryGameSession.saveStateNumber"/>.
-        /// </summary>
-        /// <param name="game">The <see cref="RainWorldGame"/> to check the save state number of.</param>
-        /// <returns>The <see cref="SlugBaseCharacter"/> that owns the <paramref name="game"/>'s save state, or <c>null</c> if it was not found.</returns>
-        public static SlugBaseCharacter Get(RainWorldGame game) => Get(game.StoryCharacter);
-
-        /// <summary>
-        /// Gets a <see cref="SlugBaseCharacter"/> by <paramref name="name"/>.
-        /// </summary>
-        /// <param name="name">The <see cref="SlugcatStats.Name"/> to search for.</param>
-        /// <param name="character">The <see cref="SlugBaseCharacter"/> with the given <paramref name="name"/>, or <c>null</c> if it was not found.</param>
-        /// <returns><c>true</c> if the <see cref="SlugBaseCharacter"/> was found, <c>false</c> otherwise.</returns>
-        public static bool TryGet(SlugcatStats.Name name, out SlugBaseCharacter character)
-        {
-            character = Get(name);
-            return character != null;
-        }
-
-        /// <summary>
-        /// Replace this slugcat's information and <see cref="Features"/> with those loaded from <paramref name="json"/>.
-        /// </summary>
-        /// <param name="json">The JSON element to parse.</param>
-        public void LoadFrom(JsonObject json)
-        {
             DisplayName = json.GetString("name");
             Description = json.GetString("description");
 

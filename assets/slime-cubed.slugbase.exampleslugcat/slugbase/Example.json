@@ -5,6 +5,7 @@
 	
 	"features": {
 		"karma": 3,
-		"karma_cap": 7
+		"karma_cap": 7,
+		"select_menu_scene": "Slugcat_Example"
 	}
 }

@@ -71,6 +71,14 @@ namespace SlugBase
         /// <exception cref="JsonException">This isn't a number.</exception>
         public float AsFloat() => (float)AsDouble();
 
+        /// <summary>Cast to <see cref="bool"/>.</summary>
+        /// <exception cref="JsonException">This isn't a boolean.</exception>
+        public bool AsBool()
+        {
+            if (_object is bool b) return b;
+            else throw new JsonException($"Json {Type} cannot be converted to Bool!");
+        }
+
 
         /// <summary>Try casting to <see cref="JsonObject"/>, returning <c>null</c> on failure.</summary>
         public JsonObject? TryObject() => Type == Element.Object ? AsObject() : null;
@@ -92,6 +100,9 @@ namespace SlugBase
 
         /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
         public string TryString() => Type == Element.String ? AsString() : null;
+
+        /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
+        public bool? TryBool() => Type == Element.Bool ? AsBool() : null;
 
 
         /// <summary>Cast to <see cref="JsonObject"/>.</summary>
@@ -122,6 +133,10 @@ namespace SlugBase
         /// <exception cref="JsonException"><paramref name="json"/> isn't a string.</exception>
         public static string AsString(JsonAny json) => json.AsString();
 
+        /// <summary>Cast to <see cref="bool"/>.</summary>
+        /// <exception cref="JsonException"><paramref name="json"/> isn't a boolean.</exception>
+        public static bool AsBool(JsonAny json) => json.AsBool();
+
         /// <summary>
         /// Parse JSON text as a <see cref="JsonAny"/>.
         /// </summary>
@@ -140,6 +155,7 @@ namespace SlugBase
             long => Element.Integer,
             double => Element.Float,
             string => Element.String,
+            bool => Element.Bool,
             _ => Element.Invalid
         };
 
@@ -168,6 +184,10 @@ namespace SlugBase
             /// A string.
             /// </summary>
             String,
+            /// <summary>
+            /// A boolean.
+            /// </summary>
+            Bool,
             /// <summary>
             /// A value that couldn't be parsed.
             /// </summary>
@@ -250,6 +270,11 @@ namespace SlugBase
         /// <param name="key">The JSON property to search for.</param>
         /// <exception cref="JsonException">The specified property doesn't exist or was the wrong type.</exception>
         public string GetString(string key) => Get(key).AsString();
+
+        /// <summary>Get a <see cref="bool"/> from this object.</summary>
+        /// <param name="key">The JSON property to search for.</param>
+        /// <exception cref="JsonException">The specified property doesn't exist or was the wrong type.</exception>
+        public bool GetBool(string key) => Get(key).AsBool();
 
         /// <summary>
         /// Get an element from this object.
@@ -353,6 +378,11 @@ namespace SlugBase
         /// <param name="key">The index.</param>
         /// <exception cref="JsonException"><paramref name="key"/> is out of range or is not the right type.</exception>
         public string GetString(int key) => Get(key).AsString();
+
+        /// <summary>Get a <see cref="bool"/> from this list.</summary>
+        /// <param name="key">The index.</param>
+        /// <exception cref="JsonException"><paramref name="key"/> is out of range or is not the right type.</exception>
+        public bool GetBool(int key) => Get(key).AsBool();
 
         /// <summary>
         /// Get the number of elements in this list.

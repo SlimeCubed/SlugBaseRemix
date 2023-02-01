@@ -11,7 +11,7 @@ namespace SlugBase.Features
     /// </summary>
     public static class FeatureTypes
     {
-        private static float ToColorElement(JsonAny json)
+        internal static float ToColorElement(JsonAny json)
         {
             switch(json.Type)
             {
@@ -32,14 +32,14 @@ namespace SlugBase.Features
             }
         }
 
-        private static long ToLong(JsonAny json) => json.AsLong();
-        private static int ToInt(JsonAny json) => json.AsInt();
-        private static double ToDouble(JsonAny json) => json.AsDouble();
-        private static float ToFloat(JsonAny json) => json.AsFloat();
-        private static string ToString(JsonAny json) => json.AsString();
-        private static bool ToBool(JsonAny json) => json.AsLong() > 0;
+        internal static long ToLong(JsonAny json) => json.AsLong();
+        internal static int ToInt(JsonAny json) => json.AsInt();
+        internal static double ToDouble(JsonAny json) => json.AsDouble();
+        internal static float ToFloat(JsonAny json) => json.AsFloat();
+        internal static string ToString(JsonAny json) => json.AsString();
+        internal static bool ToBool(JsonAny json) => json.AsBool();
 
-        private static Color ToColor(JsonAny json)
+        internal static Color ToColor(JsonAny json)
         {
             switch(json.Type)
             {
@@ -90,7 +90,7 @@ namespace SlugBase.Features
             }
         }
 
-        private static PaletteColor ToPaletteColor(JsonAny json)
+        internal static PaletteColor ToPaletteColor(JsonAny json)
         {
             if (json.TryObject() is JsonObject obj
                 && obj.TryGet("r") == null
@@ -139,17 +139,46 @@ namespace SlugBase.Features
             }
         }
 
-        private static long[] ToLongs(JsonAny json) => json.TryLong() == null ? json.AsList().Select(ToLong).ToArray() : new[] { json.AsLong() };
-        private static int[] ToInts(JsonAny json) => json.TryInt() == null ? json.AsList().Select(ToInt).ToArray() : new[] { json.AsInt() };
-        private static double[] ToDoubles(JsonAny json) => json.TryDouble() == null ? json.AsList().Select(ToDouble).ToArray() : new[] { json.AsDouble() };
-        private static float[] ToFloats(JsonAny json) => json.TryFloat() == null ? json.AsList().Select(ToFloat).ToArray() : new[] { json.AsFloat() };
-        private static string[] ToStrings(JsonAny json) => json.TryString() == null ? json.AsList().Select(ToString).ToArray() : new[] { json.AsString() };
-        private static T ToEnum<T>(JsonAny json) where T : struct
+        internal static long[] ToLongs(JsonAny json) => json.TryLong() == null ? json.AsList().Select(ToLong).ToArray() : new[] { json.AsLong() };
+        internal static int[] ToInts(JsonAny json) => json.TryInt() == null ? json.AsList().Select(ToInt).ToArray() : new[] { json.AsInt() };
+        internal static double[] ToDoubles(JsonAny json) => json.TryDouble() == null ? json.AsList().Select(ToDouble).ToArray() : new[] { json.AsDouble() };
+        internal static float[] ToFloats(JsonAny json) => json.TryFloat() == null ? json.AsList().Select(ToFloat).ToArray() : new[] { json.AsFloat() };
+        internal static string[] ToStrings(JsonAny json) => json.TryString() == null ? json.AsList().Select(ToString).ToArray() : new[] { json.AsString() };
+        internal static T ToEnum<T>(JsonAny json) where T : struct
         {
             if (Enum.TryParse(json.AsString(), true, out T value))
                 return value;
             else
                 throw new JsonException($"\"{json.AsString()}\" was not a value of \"{typeof(T).Name}\"!", json);
+        }
+        internal static T ToExtEnum<T>(JsonAny json) where T : ExtEnum<T>
+        {
+            //// Fails if the enum hasn't loaded yet
+            //if (ExtEnumBase.TryParse(typeof(T), json.AsString(), true, out var value))
+            //    return (T)value;
+            //else
+            //    throw new JsonException($"\"{json.AsString()}\" was not a value of \"{typeof(T).Name}\"!", json);
+
+            return (T)Activator.CreateInstance(typeof(T), json.AsString(), false);
+        }
+        internal static Vector2 ToVector2(JsonAny json)
+        {
+            switch(json.Type)
+            {
+                case JsonAny.Element.List:
+                    var list = json.AsList();
+                    if (list.Count != 2)
+                        throw new JsonException("2D vector must contain 2 values!", json);
+
+                    return new Vector2(list.GetFloat(0), list.GetFloat(1));
+
+                case JsonAny.Element.Object:
+                    var obj = json.AsObject();
+                    return new Vector2(obj.GetFloat("x"), obj.GetFloat("y"));
+
+                default:
+                    throw new JsonException("Invalid 2D vector!", json);
+            }
         }
 
         private static JsonAny AssertLength(JsonAny json, int minLength, int maxLength)
@@ -208,6 +237,9 @@ namespace SlugBase.Features
         /// <summary>Create a player feature that takes one enum value.</summary>
         public static PlayerFeature<T> PlyEnum<T>(string id) where T : struct => new(id, ToEnum<T>);
 
+        /// <summary>Create a player feature that takes one enum value.</summary>
+        public static PlayerFeature<T> PlyExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
+
 
         /// <summary>Create a game feature that takes one integer.</summary>
         public static GameFeature<int> GameInt(string id) => new(id, ToInt);
@@ -250,5 +282,8 @@ namespace SlugBase.Features
 
         /// <summary>Create a game feature that takes one enum value.</summary>
         public static GameFeature<T> GameEnum<T>(string id) where T : struct => new(id, ToEnum<T>);
+
+        /// <summary>Create a game feature that takes one enum value.</summary>
+        public static GameFeature<T> GameExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
     }
 }

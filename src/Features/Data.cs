@@ -17,21 +17,19 @@ namespace SlugBase.Features
         /// <param name="requiredFeature">The required <see cref="Feature"/>, or <c>null</c> if data access should not be locked behind a feature.</param>
         public PlayerData(Feature requiredFeature) : base(requiredFeature) {}
 
-        private SlugBaseCharacter GetChara(PlayerState state) => SlugBaseCharacter.Get(state.creature.realizedObject as Player);
-
         /// <summary>
         /// Gets the <typeparamref name="TValue"/> instance assocated with <paramref name="state"/>, constructing it if it does not exist.
         /// <para>If the game's <see cref="SlugBaseCharacter"/> does not have <see cref="Data.RequiredFeature"/>, then <c>null</c> is returned.</para>
         /// </summary>
         /// <param name="state">The player state the variable is associated with.</param>
-        public StrongBox<TValue> Get(PlayerState state) => Get(GetChara(state), state);
+        public StrongBox<TValue> Get(PlayerState state) => Get(state.creature.realizedObject as Player);
 
         /// <summary>
         /// Gets the <typeparamref name="TValue"/> instance assocated with <paramref name="player"/>, constructing it if it does not exist.
         /// <para>If the game's <see cref="SlugBaseCharacter"/> does not have <see cref="Data.RequiredFeature"/>, then <c>null</c> is returned.</para>
         /// </summary>
         /// <param name="player">The player the variable is associated with.</param>
-        public StrongBox<TValue> Get(Player player) => Get(player.playerState);
+        public StrongBox<TValue> Get(Player player) => Get(SlugBaseCharacter.Get(player.SlugCatClass), player.playerState);
 
         /// <summary>
         /// Gets the <typeparamref name="TValue"/> instance assocated with <paramref name="state"/>, constructing it if it does not exist.
@@ -68,7 +66,7 @@ namespace SlugBase.Features
         /// <para>If the game's <see cref="SlugBaseCharacter"/> does not have <see cref="Data.RequiredFeature"/>, then <c>null</c> is returned.</para>
         /// </summary>
         /// <param name="game">The current game.</param>
-        public StrongBox<TValue> Get(RainWorldGame game) => Get(SlugBaseCharacter.Get(game), game);
+        public StrongBox<TValue> Get(RainWorldGame game) => Get(SlugBaseCharacter.Get(game.StoryCharacter), game);
 
         /// <summary>
         /// Gets the <typeparamref name="TValue"/> instance assocated with <paramref name="game"/>, constructing it if it does not exist.

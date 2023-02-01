@@ -14,7 +14,6 @@ namespace SlugBase
         public static void Apply()
         {
             On.Menu.SlugcatSelectMenu.SlugcatPageNewGame.ctor += SlugcatPageNewGame_ctor;
-            On.Menu.SlugcatSelectMenu.SlugcatPage.AddImage += SlugcatPage_AddImage;
             On.Menu.SlugcatSelectMenu.SetSlugcatColorOrder += SlugcatSelectMenu_SetSlugcatColorOrder;
         }
 
@@ -40,30 +39,14 @@ namespace SlugBase
             }
         }
 
-        // Default to Survivor's image
-        private static void SlugcatPage_AddImage(On.Menu.SlugcatSelectMenu.SlugcatPage.orig_AddImage orig, SlugcatSelectMenu.SlugcatPage self, bool ascended)
-        {
-            SlugcatStats.Name name = self.slugcatNumber;
-            if(SlugBaseCharacter.TryGet(name, out var chara))
-            {
-                self.slugcatNumber = SlugcatStats.Name.White;
-                orig(self, ascended);
-                self.slugcatNumber = name;
-            }
-            else
-            {
-                orig(self, ascended);
-            }
-        }
-
         // Add SlugBaseCharacters to the main menu
         private static void SlugcatSelectMenu_SetSlugcatColorOrder(On.Menu.SlugcatSelectMenu.orig_SetSlugcatColorOrder orig, SlugcatSelectMenu self)
         {
             orig(self);
 
-            foreach (var chara in SlugBaseCharacter.Characters)
+            foreach (var id in SlugBaseCharacter.Registry.Keys)
             {
-                self.slugcatColorOrder.Add(chara.Name);
+                self.slugcatColorOrder.Add(id);
             }
 
             for (int i = 0; i < self.slugcatColorOrder.Count; i++)
