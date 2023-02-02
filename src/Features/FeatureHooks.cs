@@ -177,7 +177,7 @@ namespace SlugBase.Features
             T ApplyStarve<T>(T[] values, T starveDefault)
             {
                 if (malnourished)
-                    return values.Length > 1 ? values[0] : starveDefault;
+                    return values.Length > 1 ? values[1] : starveDefault;
                 else
                     return values[0];
             }
@@ -188,10 +188,10 @@ namespace SlugBase.Features
                     self.bodyWeightFac = ApplyStarve(weight, Mathf.Min(weight[0], 0.9f));
 
                 if (TunnelSpeedMul.TryGet(chara, out var tunnelSpeed))
-                    self.bodyWeightFac = ApplyStarve(tunnelSpeed, 0.86f);
+                    self.corridorClimbSpeedFac = ApplyStarve(tunnelSpeed, 0.86f);
 
                 if (ClimbSpeedMul.TryGet(chara, out var climbSpeed))
-                    self.bodyWeightFac = ApplyStarve(climbSpeed, 0.8f);
+                    self.poleClimbSpeedFac = ApplyStarve(climbSpeed, 0.8f);
 
                 if (WalkSpeedMul.TryGet(chara, out var walkSpeed))
                     self.runspeedFac = ApplyStarve(walkSpeed, 0.875f);
@@ -200,7 +200,7 @@ namespace SlugBase.Features
                     self.visualStealthInSneakMode = ApplyStarve(crouchStealth, crouchStealth[0]);
 
                 if (ThrowSkill.TryGet(chara, out var throwSkill))
-                    self.bodyWeightFac = ApplyStarve(throwSkill, 0);
+                    self.throwingSkill = ApplyStarve(throwSkill, 0);
 
                 if (LungsCapacityMul.TryGet(chara, out var lungCapacity))
                     self.lungsFac = ApplyStarve(lungCapacity, lungCapacity[0]);

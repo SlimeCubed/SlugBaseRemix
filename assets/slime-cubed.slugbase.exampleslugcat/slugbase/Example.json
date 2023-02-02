@@ -4,12 +4,18 @@
 	"description": "An example slugcat made with SlugBase.",
 	
 	"features": {
-		"color": "66d47d",
-		"body_color": "45664c",
-		"eye_color": { "000000": 0.75, "black": 0.25 },
+		"color": "12a116",
+		"body_color": { "064a08": 0.5, "black": 0.5 },
+		"body_color_starved": { "064a08": 0.4, "black": 0.4, "sky": 0.2 },
+		"eye_color": { "0f8512": 0.25, "sky": 0.75 },
+		"auto_grab_batflies": false,
 		"weight": 0.8,
+		"tunnel_speed": 2.0,
+		"climb_speed": 2.0,
+		"walk_speed": 0.8,
 		"crouch_stealth": 1.5,
 		"throw_skill": 1,
+		"lung_capacity": 0.2,
 		"loudness": 0.7,
 		"alignments": {
 			"all": { "like": -1, "strength": 0.5 }
@@ -17,9 +23,14 @@
 		
 		"karma": 3,
 		"karma_cap": 7,
+		"den": "SI_S04",
+		"guide_overseer": 3,
+		"has_dreams": false,
+		"cycle_length_min": 10,
+		"cycle_length_max": 10,
+		"perma_unlock_gates": true,
 		"food_min": 4,
 		"food_max": 6,
-		"den": "SI_S04",
 		"select_menu_scene": "Slugcat_Example"
 	}
 }
