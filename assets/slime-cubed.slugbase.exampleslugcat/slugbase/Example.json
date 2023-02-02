@@ -4,8 +4,22 @@
 	"description": "An example slugcat made with SlugBase.",
 	
 	"features": {
+		"color": "66d47d",
+		"body_color": "45664c",
+		"eye_color": { "000000": 0.75, "black": 0.25 },
+		"weight": 0.8,
+		"crouch_stealth": 1.5,
+		"throw_skill": 1,
+		"loudness": 0.7,
+		"alignments": {
+			"all": { "like": -1, "strength": 0.5 }
+		},
+		
 		"karma": 3,
 		"karma_cap": 7,
+		"food_min": 4,
+		"food_max": 6,
+		"den": "SI_S04",
 		"select_menu_scene": "Slugcat_Example"
 	}
 }

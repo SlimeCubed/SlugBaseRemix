@@ -76,23 +76,23 @@ namespace SlugBase.Features
                 var id = new CreatureCommunities.CommunityID(pair.Key);
                 float rep;
                 float strength;
-                int locked;
+                bool locked;
 
                 if(pair.Value.TryFloat() != null)
                 {
                     rep = pair.Value.AsFloat();
                     strength = 1f;
-                    locked = 0;
+                    locked = false;
                 }
                 else
                 {
                     var entry = pair.Value.AsObject();
                     rep = entry.GetFloat("like");
                     strength = entry.TryGet("strength")?.AsFloat() ?? 1f;
-                    locked = entry.TryGet("locked")?.AsInt() ?? 0;
+                    locked = entry.TryGet("locked")?.AsBool() ?? false;
                 }
 
-                reps[id] = new(rep, strength, locked != 0);
+                reps[id] = new(rep, strength, locked);
             }
             return reps;
         });

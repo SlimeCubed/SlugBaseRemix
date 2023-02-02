@@ -47,9 +47,16 @@ namespace SlugBase
                 if (_initialized) return;
                 _initialized = true;
 
-                CoreHooks.Apply();
-                AssetHooks.Apply();
-                FeatureHooks.Apply();
+                try
+                {
+                    CoreHooks.Apply();
+                    AssetHooks.Apply();
+                    FeatureHooks.Apply();
+                }
+                catch(Exception e)
+                {
+                    Debug.LogException(e);
+                }
             };
 
             On.RainWorld.PostModsInit += (orig, self) =>

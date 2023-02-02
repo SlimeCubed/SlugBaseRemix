@@ -280,20 +280,20 @@ namespace SlugBase.Features
             }
         }
 
-        /// BodyColor: Apply color override
+        /// BodyColor, BodyColorStarved: Apply body color override
         private static void PlayerGraphics_ApplyPalette(ILContext il)
         {
             var c = new ILCursor(il);
 
             // Body color
-            if(c.TryGotoNext(MoveType.Before,
+            if(c.TryGotoNext(MoveType.AfterLabel,
                 x => x.MatchLdarg(0),
                 x => x.MatchLdloc(1),
-                x => x.MatchCall<GraphicsModule>(nameof(GraphicsModule.HypothermiaColorBlend))))
+                x => x.MatchCallOrCallvirt<GraphicsModule>(nameof(GraphicsModule.HypothermiaColorBlend))))
             {
                 c.Emit(OpCodes.Ldarg_0);
                 c.Emit(OpCodes.Ldloc_1);
-                c.Emit(OpCodes.Ldarg_2);
+                c.Emit(OpCodes.Ldarg_3);
                 c.EmitDelegate<Func<PlayerGraphics, Color, RoomPalette, Color>>((self, color, palette) =>
                 {
                     if(SlugBaseCharacter.TryGet(self.CharacterForColor, out var chara)
@@ -315,6 +315,7 @@ namespace SlugBase.Features
                         return color;
                     }
                 });
+                c.Emit(OpCodes.Stloc_1);
             }
             else
             {
