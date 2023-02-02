@@ -20,4 +20,8 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(RainWorldDir)/RainWorld_Data/StreamingAssets/mods/$(ProjectName)/plugins" />
   </Target>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(ProjectDir)../assets/slime-cubed.slugbase/')">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)../assets/slime-cubed.slugbase/plugins/" />
+  </Target>
+
 </Project>
