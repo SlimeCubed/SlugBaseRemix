@@ -16,6 +16,8 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.RoomSettings.ctor += RoomSettings_ctor;
+            On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
             On.Player.CanEatMeat += Player_CanEatMeat;
             IL.Player.EatMeatUpdate += Player_EatMeatUpdate;
             On.Player.ObjectEaten += Player_ObjectEaten;
@@ -36,6 +38,30 @@ namespace SlugBase.Features
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+        }
+
+        // WorldState: Change conditional settings
+        private static void RoomSettings_ctor(On.RoomSettings.orig_ctor orig, RoomSettings self, string name, Region region, bool template, bool firstTemplate, SlugcatStats.Name playerChar)
+        {
+            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                playerChar = copyWorld;
+            }
+
+            orig(self, name, region, template, firstTemplate, playerChar);
+        }
+
+        // WorldState: Change character filters
+        private static void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues(On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
+        {
+            if(SlugBaseCharacter.TryGet(playerCharacter, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                playerCharacter = copyWorld;
+            }
+
+            orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
         }
 
         // Diet: Corpse edibility

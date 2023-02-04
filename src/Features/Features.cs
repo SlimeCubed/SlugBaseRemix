@@ -135,5 +135,9 @@ namespace SlugBase.Features
         // TODO: Test
         /// <summary>The scene for this slugcat on the select menu when ascended.</summary>
         public static readonly GameFeature<MenuScene.SceneID> SelectMenuSceneAscended = GameExtEnum<MenuScene.SceneID>("select_menu_scene_ascended");
+
+        // TODO: Test
+        /// <summary>The character to use for creature spawns and room connections.</summary>
+        public static readonly GameFeature<SlugcatStats.Name> WorldState = GameExtEnum<SlugcatStats.Name>("world_state");
     }
 }
