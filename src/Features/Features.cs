@@ -73,35 +73,14 @@ namespace SlugBase.Features
             var reps = new Dictionary<CreatureCommunities.CommunityID, RepOverride>();
             foreach (var pair in obj)
             {
-                var id = new CreatureCommunities.CommunityID(pair.Key);
-                float rep;
-                float strength;
-                bool locked;
-
-                if(pair.Value.TryFloat() != null)
-                {
-                    rep = pair.Value.AsFloat();
-                    strength = 1f;
-                    locked = false;
-                }
-                else
-                {
-                    var entry = pair.Value.AsObject();
-                    rep = entry.GetFloat("like");
-                    strength = entry.TryGet("strength")?.AsFloat() ?? 1f;
-                    locked = entry.TryGet("locked")?.AsBool() ?? false;
-                }
-
-                reps[id] = new(rep, strength, locked);
+                reps[new CreatureCommunities.CommunityID(pair.Key)] = new(pair.Value);
             }
             return reps;
         });
 
-        // TODO: Figure out a good way to represent diets
-        // all - everything edible
-        // omnivore - IPlayerEdibles, centipedes
-        // carnivore - non-batfly creatures, bug eggs, jellyfish
-        // herbivore - inverse of carnivore
+        // TODO: Test base
+        /// <summary>"diet": Edibility and nourishment of foods.</summary>
+        public static readonly PlayerFeature<Diet> Diet = new("diet", json => new Diet(json));
     }
 
     /// <summary>

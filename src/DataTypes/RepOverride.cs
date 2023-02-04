@@ -1,4 +1,6 @@
-﻿namespace SlugBase.DataTypes
+﻿using System.Net.Sockets;
+
+namespace SlugBase.DataTypes
 {
     /// <summary>
     /// Represents the initial reputation of the player with a community.
@@ -31,6 +33,27 @@
             Target = target;
             Strength = strength;
             Locked = locked;
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="RepOverride"/> from JSON.
+        /// </summary>
+        /// <param name="json">The JSON to load.</param>
+        public RepOverride(JsonAny json)
+        {
+            if (json.TryFloat() != null)
+            {
+                Target = json.AsFloat();
+                Strength = 1f;
+                Locked = false;
+            }
+            else
+            {
+                var obj = json.AsObject();
+                Target = obj.GetFloat("like");
+                Strength = obj.TryGet("strength")?.AsFloat() ?? 1f;
+                Locked = obj.TryGet("locked")?.AsBool() ?? false;
+            }
         }
     }
 }

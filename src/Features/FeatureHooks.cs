@@ -16,6 +16,10 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.Player.CanEatMeat += Player_CanEatMeat;
+            IL.Player.EatMeatUpdate += Player_EatMeatUpdate;
+            On.Player.ObjectEaten += Player_ObjectEaten;
+            On.SlugcatStats.NourishmentOfObjectEaten += SlugcatStats_NourishmentOfObjectEaten;
             IL.Menu.SlugcatSelectMenu.SlugcatPage.AddImage += SlugcatPage_AddImage;
             On.CreatureCommunities.LoadDefaultCommunityAlignments += CreatureCommunities_LoadDefaultCommunityAlignments;
             On.CreatureCommunities.LikeOfPlayer += CreatureCommunities_LikeOfPlayer;
@@ -32,6 +36,101 @@ namespace SlugBase.Features
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+        }
+
+        // Diet: Corpse edibility
+        private static bool Player_CanEatMeat(On.Player.orig_CanEatMeat orig, Player self, Creature crit)
+        {
+            if (SlugBaseCharacter.TryGet(self.SlugCatClass, out var chara)
+                && Diet.TryGet(chara, out var diet))
+            {
+                return diet.GetMeatMultiplier(self, crit) > 0f;
+            }
+            else
+                return orig(self, crit);
+        }
+
+        // Diet: Multiplier for corpses
+        private static void Player_EatMeatUpdate(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            ILLabel foodAdded = null;
+
+            // Match
+            if (c.TryGotoNext(x => x.MatchLdarg(0),
+                              x => x.MatchCallOrCallvirt<Player>(nameof(Player.AddQuarterFood)),
+                              x => x.MatchBr(out foodAdded))
+                && c.TryGotoNext(MoveType.AfterLabel,
+                                 x => x.MatchLdarg(0),
+                                 x => x.MatchLdcI4(1),
+                                 x => x.MatchCallOrCallvirt<Player>(nameof(Player.AddFood))))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Ldarg_1);
+                c.EmitDelegate<Func<Player, int, bool>>((self, graspIndex) =>
+                {
+                    // Add rounded quarter pips from meat, intercepting vanilla AddFood
+                    if (SlugBaseCharacter.TryGet(self.SlugCatClass, out var chara)
+                        && Diet.TryGet(chara, out var diet)
+                        && self.grasps[graspIndex].grabbed is Creature crit)
+                    {
+                        var mult = diet.GetMeatMultiplier(self, crit);
+
+                        int quarterPips = Mathf.RoundToInt(mult * 4f);
+                        for (; quarterPips >= 4; quarterPips -= 4)
+                            self.AddFood(1);
+
+                        for (; quarterPips >= 1; quarterPips -= 1)
+                            self.AddQuarterFood();
+
+                        return true;
+                    }
+                    else
+                        return false;
+                });
+                c.Emit(OpCodes.Brtrue, foodAdded);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(Player_EatMeatUpdate)} failed!");
+            }
+        }
+
+        // Diet: Stun from negative nourishment
+        private static void Player_ObjectEaten(On.Player.orig_ObjectEaten orig, Player self, IPlayerEdible edible)
+        {
+            if (SlugBaseCharacter.TryGet(self.SlugCatClass, out var chara)
+                && Diet.TryGet(chara, out _)
+                && SlugcatStats.NourishmentOfObjectEaten(self.SlugCatClass, edible) == -1)
+            {
+                (self.graphicsModule as PlayerGraphics)?.LookAtNothing();
+                self.Stun(60);
+            }
+            else
+            {
+                orig(self, edible);
+            }
+        }
+
+        // Diet: Multiplier for IPlayerEdibles
+        private static int SlugcatStats_NourishmentOfObjectEaten(On.SlugcatStats.orig_NourishmentOfObjectEaten orig, SlugcatStats.Name slugcatIndex, IPlayerEdible eatenobject)
+        {
+            int n = orig(slugcatIndex, eatenobject);
+
+            if (SlugBaseCharacter.TryGet(slugcatIndex, out var chara)
+                && Diet.TryGet(chara, out var diet)
+                && eatenobject is PhysicalObject obj)
+            {
+                float mul = diet.GetFoodMultiplier(obj);
+
+                if (mul >= 0f)
+                    n = Mathf.RoundToInt(n * mul);
+                else
+                    n = -1;
+            }
+
+            return n;
         }
 
         // SelectMenuScene, SelectMenuSceneAscended: Override scenes

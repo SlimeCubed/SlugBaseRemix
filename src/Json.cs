@@ -42,8 +42,8 @@ namespace SlugBase
         public double AsDouble()
         {
             if (_object is double d) return d;
-            else if (_object is long l) return (double)l;
-            else throw new JsonException($"Json {Type} cannot be converted to Float!", this);
+            else if (_object is long l) return l;
+            else throw new JsonException($"Json {Type} cannot be converted to Double!", this);
         }
 
         /// <summary>Cast to <see cref="long"/>.</summary>
@@ -93,10 +93,10 @@ namespace SlugBase
         public int? TryInt() => Type == Element.Integer ? AsInt() : null;
 
         /// <summary>Try casting to <see cref="double"/>, returning <c>null</c> on failure.</summary>
-        public double? TryDouble() => Type == Element.Float ? AsDouble() : null;
+        public double? TryDouble() => Type == Element.Float || Type == Element.Integer ? AsDouble() : null;
 
         /// <summary>Try casting to <see cref="float"/>, returning <c>null</c> on failure.</summary>
-        public float? TryFloat() => Type == Element.Float ? AsFloat() : null;
+        public float? TryFloat() => Type == Element.Float || Type == Element.Integer ? AsFloat() : null;
 
         /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
         public string TryString() => Type == Element.String ? AsString() : null;
