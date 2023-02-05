@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,29 @@ namespace SlugBase
     {
         private readonly Dictionary<TKey, Entry> _entries = new();
         private readonly Func<TKey, JsonObject, TValue> _fromJson;
+        private readonly Dictionary<string, FileSystemWatcher> _watchers = new();
+        private readonly ConcurrentQueue<string> _reloadQueue = new();
+        private bool _reloadOnChange;
+
+        /// <summary>
+        /// Whether this registry should track files to reload.
+        /// Call <see cref="ReloadChangedFiles"/> to apply changes.
+        /// </summary>
+        public bool WatchForChanges
+        {
+            get => _reloadOnChange;
+            set
+            {
+                _reloadOnChange = value;
+                if(!value)
+                {
+                    while (_reloadQueue.TryDequeue(out _)) ;
+                    foreach (var watcher in _watchers.Values)
+                        watcher.Dispose();
+                    _watchers.Clear();
+                }
+            }
+        }
 
         /// <summary>
         /// A collection of all keys used by this registry.
@@ -48,17 +72,6 @@ namespace SlugBase
             {
                 try
                 {
-                    // Unload the old entry loaded from this file path
-                    foreach(var pair in _entries)
-                    {
-                        if (pair.Value.Path != null && pair.Value.Path.Equals(file, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            Remove(pair.Key);
-                            break;
-                        }
-                    }
-
-                    // Create from JSON
                     AddFromFile(file);
                 }
                 catch (Exception e)
@@ -81,7 +94,36 @@ namespace SlugBase
         /// <returns>The registered value.</returns>
         public TValue AddFromFile(string path)
         {
-            return Add(path, JsonAny.Parse(File.ReadAllText(path)).AsObject());
+            path = path.Replace('/', Path.DirectorySeparatorChar);
+
+            // Unload the old entry loaded from this file path
+            foreach (var pair in _entries)
+            {
+                if (pair.Value.Path != null && pair.Value.Path.Equals(path, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Remove(pair.Key);
+                    break;
+                }
+            }
+
+            var value = Add(path, JsonAny.Parse(File.ReadAllText(path)).AsObject());
+
+            // Watch file system for edits
+            if (WatchForChanges)
+            {
+                var dir = Path.GetDirectoryName(path);
+                if (!_watchers.ContainsKey(dir))
+                {
+                    var watcher = new FileSystemWatcher(dir, "*.json");
+                    watcher.Changed += FileChanged;
+                    watcher.EnableRaisingEvents = true;
+                    _watchers.Add(dir, watcher);
+                }
+            }
+
+            SlugBasePlugin.Logger.LogError($"Added SlugBase object from {path}");
+
+            return value;
         }
 
         /// <summary>
@@ -176,6 +218,35 @@ namespace SlugBase
                 path = default;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Reload all JSON files that have been modified.
+        /// </summary>
+        public void ReloadChangedFiles()
+        {
+            while(_reloadQueue.TryDequeue(out string path))
+            {
+                try
+                {
+                    AddFromFile(path);
+                }
+                catch (Exception e)
+                {
+                    if (e is JsonException jsonE)
+                        SlugBasePlugin.Logger.LogError($"Failed to parse SlugBase object when reloading from {Path.GetFileName(path)}: {jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}");
+                    else
+                        SlugBasePlugin.Logger.LogError($"Failed to reload SlugBase object from {Path.GetFileName(path)}: {e.Message}");
+                    SlugBasePlugin.Logger.LogError($"Full path: {path}");
+
+                    Debug.LogException(e);
+                }
+            }
+        }
+
+        private void FileChanged(object sender, FileSystemEventArgs e)
+        {
+            _reloadQueue.Enqueue(e.FullPath);
         }
 
         private TKey ClaimID(string id)

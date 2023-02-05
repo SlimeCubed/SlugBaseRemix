@@ -69,8 +69,17 @@ namespace SlugBase
 
         public static void ScanFiles()
         {
+            SlugBaseCharacter.Registry.WatchForChanges = true;
+            CustomScene.Registry.WatchForChanges = true;
+
             SlugBaseCharacter.Registry.ScanDirectory("slugbase");
             CustomScene.Registry.ScanDirectory("slugbase/scenes");
+        }
+
+        public void Update()
+        {
+            SlugBaseCharacter.Registry.ReloadChangedFiles();
+            CustomScene.Registry.ReloadChangedFiles();
         }
     }
 }
