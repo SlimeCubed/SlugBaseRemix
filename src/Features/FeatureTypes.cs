@@ -196,49 +196,49 @@ namespace SlugBase.Features
         }
 
         /// <summary>Create a player feature that takes one integer.</summary>
-        public static PlayerFeature<int> PlyInt(string id) => new(id, ToInt);
+        public static PlayerFeature<int> PlayerInt(string id) => new(id, ToInt);
 
         /// <summary>Create a player feature that takes one integer.</summary>
-        public static PlayerFeature<long> PlyLong(string id) => new(id, ToLong);
+        public static PlayerFeature<long> PlayerLong(string id) => new(id, ToLong);
 
         /// <summary>Create a player feature that takes one number.</summary>
-        public static PlayerFeature<double> PlyDouble(string id) => new(id, ToDouble);
+        public static PlayerFeature<double> PlayerDouble(string id) => new(id, ToDouble);
 
         /// <summary>Create a player feature that takes one number.</summary>
-        public static PlayerFeature<float> PlyFloat(string id) => new(id, ToFloat);
+        public static PlayerFeature<float> PlayerFloat(string id) => new(id, ToFloat);
 
         /// <summary>Create a player feature that takes one string.</summary>
-        public static PlayerFeature<string> PlyString(string id) => new(id, ToString);
+        public static PlayerFeature<string> PlayerString(string id) => new(id, ToString);
 
         /// <summary>Create a player feature that takes an array of integers.</summary>
-        public static PlayerFeature<int[]> PlyInts(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToInts(AssertLength(json, minLength, maxLength)));
+        public static PlayerFeature<int[]> PlayerInts(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToInts(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes an array of integers.</summary>
-        public static PlayerFeature<long[]> PlyLongs(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToLongs(AssertLength(json, minLength, maxLength)));
+        public static PlayerFeature<long[]> PlayerLongs(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToLongs(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes an array of numbers.</summary>
-        public static PlayerFeature<double[]> PlyDoubles(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToDoubles(AssertLength(json, minLength, maxLength)));
+        public static PlayerFeature<double[]> PlayerDoubles(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToDoubles(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes an array of numbers.</summary>
-        public static PlayerFeature<float[]> PlyFloats(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToFloats(AssertLength(json, minLength, maxLength)));
+        public static PlayerFeature<float[]> PlayerFloats(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToFloats(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes an array of strings.</summary>
-        public static PlayerFeature<string[]> PlyStrings(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToStrings(AssertLength(json, minLength, maxLength)));
+        public static PlayerFeature<string[]> PlayerStrings(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToStrings(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes a color.</summary>
-        public static PlayerFeature<Color> PlyColor(string id) => new(id, ToColor);
+        public static PlayerFeature<Color> PlayerColor(string id) => new(id, ToColor);
 
         /// <summary>Create a player feature that takes a palette-modified color.</summary>
-        public static PlayerFeature<PaletteColor> PlyPaletteColor(string id) => new(id, ToPaletteColor);
+        public static PlayerFeature<PaletteColor> PlayerPaletteColor(string id) => new(id, ToPaletteColor);
 
         /// <summary>Create a player feature that takes one boolean.</summary>
-        public static PlayerFeature<bool> PlyBool(string id) => new(id, ToBool);
+        public static PlayerFeature<bool> PlayerBool(string id) => new(id, ToBool);
 
         /// <summary>Create a player feature that takes one enum value.</summary>
-        public static PlayerFeature<T> PlyEnum<T>(string id) where T : struct => new(id, ToEnum<T>);
+        public static PlayerFeature<T> PlayerEnum<T>(string id) where T : struct => new(id, ToEnum<T>);
 
         /// <summary>Create a player feature that takes one enum value.</summary>
-        public static PlayerFeature<T> PlyExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
+        public static PlayerFeature<T> PlayerExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
 
 
         /// <summary>Create a game feature that takes one integer.</summary>

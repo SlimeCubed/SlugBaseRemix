@@ -15,55 +15,55 @@ namespace SlugBase.Features
     {
         // TODO: Test
         /// <summary>"color": Player body and UI color.</summary>
-        public static readonly PlayerFeature<Color> SlugcatColor = PlyColor("color");
+        public static readonly PlayerFeature<Color> SlugcatColor = PlayerColor("color");
 
         // TODO: Test
         /// <summary>"body_color": Player body color, overriding "color".</summary>
-        public static readonly PlayerFeature<PaletteColor> BodyColor = PlyPaletteColor("body_color");
+        public static readonly PlayerFeature<PaletteColor> BodyColor = PlayerPaletteColor("body_color");
 
         // TODO: Test
         /// <summary>"body_color_starved": Player body color when starving, overriding "color" and "body_color".</summary>
-        public static readonly PlayerFeature<PaletteColor> BodyColorStarved = PlyPaletteColor("body_color_starved");
+        public static readonly PlayerFeature<PaletteColor> BodyColorStarved = PlayerPaletteColor("body_color_starved");
 
         // TODO: Test
         /// <summary>"eye_color": Player eye color.</summary>
-        public static readonly PlayerFeature<PaletteColor> EyeColor = PlyPaletteColor("eye_color");
+        public static readonly PlayerFeature<PaletteColor> EyeColor = PlayerPaletteColor("eye_color");
 
         // TODO: Test
         /// <summary>"auto_grab_batflies": Grab batflies on collision.</summary>
-        public static readonly PlayerFeature<bool> AutoGrabFlies = PlyBool("auto_grab_batflies");
+        public static readonly PlayerFeature<bool> AutoGrabFlies = PlayerBool("auto_grab_batflies");
 
         // TODO: Test
         /// <summary>"weight": Weight multiplier.</summary>
-        public static readonly PlayerFeature<float[]> WeightMul = PlyFloats("weight", 1, 2);
+        public static readonly PlayerFeature<float[]> WeightMul = PlayerFloats("weight", 1, 2);
 
         // TODO: Test
         /// <summary>"tunnel_speed": Move speed in tunnels.</summary>
-        public static readonly PlayerFeature<float[]> TunnelSpeedMul = PlyFloats("tunnel_speed", 1, 2);
+        public static readonly PlayerFeature<float[]> TunnelSpeedMul = PlayerFloats("tunnel_speed", 1, 2);
 
         // TODO: Test
         /// <summary>"climb_speed": Move speed in tunnels.</summary>
-        public static readonly PlayerFeature<float[]> ClimbSpeedMul = PlyFloats("climb_speed", 1, 2);
+        public static readonly PlayerFeature<float[]> ClimbSpeedMul = PlayerFloats("climb_speed", 1, 2);
 
         // TODO: Test
         /// <summary>"walk_speed": Standing move speed.</summary>
-        public static readonly PlayerFeature<float[]> WalkSpeedMul = PlyFloats("walk_speed", 1, 2);
+        public static readonly PlayerFeature<float[]> WalkSpeedMul = PlayerFloats("walk_speed", 1, 2);
 
         // TODO: Test
         /// <summary>"crouch_stealth": Standing move speed.</summary>
-        public static readonly PlayerFeature<float[]> CrouchStealth = PlyFloats("crouch_stealth", 1, 2);
+        public static readonly PlayerFeature<float[]> CrouchStealth = PlayerFloats("crouch_stealth", 1, 2);
 
         // TODO: Test
         /// <summary>"throw_skill": Spear damage and speed.</summary>
-        public static readonly PlayerFeature<int[]> ThrowSkill = PlyInts("throw_skill", 1, 2);
+        public static readonly PlayerFeature<int[]> ThrowSkill = PlayerInts("throw_skill", 1, 2);
 
         // TODO: Test
         /// <summary>"lung_capacity": Time underwater before drowning.</summary>
-        public static readonly PlayerFeature<float[]> LungsCapacityMul = PlyFloats("lung_capacity", 1, 2);
+        public static readonly PlayerFeature<float[]> LungsCapacityMul = PlayerFloats("lung_capacity", 1, 2);
 
         // TODO: Test
         /// <summary>"loudness": Sound alert multiplier.</summary>
-        public static readonly PlayerFeature<float[]> LoudnessMul = PlyFloats("loudness", 1, 2);
+        public static readonly PlayerFeature<float[]> LoudnessMul = PlayerFloats("loudness", 1, 2);
         
         // TODO: Test
         /// <summary>"alignments": Initial community reputation.</summary>
@@ -129,15 +129,15 @@ namespace SlugBase.Features
         public static readonly GameFeature<int> FoodMax = GameInt("food_max");
 
         // TODO: Test
-        /// <summary>The scene for this slugcat on the select menu.</summary>
+        /// <summary>"select_menu_scene": The scene for this slugcat on the select menu.</summary>
         public static readonly GameFeature<MenuScene.SceneID> SelectMenuScene = GameExtEnum<MenuScene.SceneID>("select_menu_scene");
 
         // TODO: Test
-        /// <summary>The scene for this slugcat on the select menu when ascended.</summary>
+        /// <summary>"select_menu_scene_ascended": The scene for this slugcat on the select menu when ascended.</summary>
         public static readonly GameFeature<MenuScene.SceneID> SelectMenuSceneAscended = GameExtEnum<MenuScene.SceneID>("select_menu_scene_ascended");
 
         // TODO: Test
-        /// <summary>The character to use for creature spawns and room connections.</summary>
+        /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
         public static readonly GameFeature<SlugcatStats.Name> WorldState = GameExtEnum<SlugcatStats.Name>("world_state");
     }
 }
