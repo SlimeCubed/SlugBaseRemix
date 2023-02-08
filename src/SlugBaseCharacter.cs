@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using SlugBase.Features;
-using System.IO;
-using Menu;
-using System.Linq;
-using UnityEngine;
 
 namespace SlugBase
 {
@@ -17,6 +13,14 @@ namespace SlugBase
         /// Stores all registered <see cref="SlugBaseCharacter"/>s.
         /// </summary>
         public static JsonRegistry<SlugcatStats.Name, SlugBaseCharacter> Registry { get; } = new((key, json) => new(key, json));
+
+        /// <summary>
+        /// Occurs when any <see cref="SlugBaseCharacter"/>'s JSON file is modified, after all features have been loaded.
+        /// </summary>
+        /// <remarks>
+        /// This event is only raised when in-game.
+        /// </remarks>
+        public static event EventHandler<RefreshEventArgs> Refreshed;
 
         /// <summary>
         /// Gets a <see cref="SlugBaseCharacter"/> by <paramref name="name"/>.
@@ -32,6 +36,17 @@ namespace SlugBase
         /// <param name="name">The <see cref="SlugcatStats.Name"/> to search for.</param>
         /// <returns>The <see cref="SlugBaseCharacter"/>, or <c>null</c> if it was not found.</returns>
         public static SlugBaseCharacter Get(SlugcatStats.Name name) => Registry.GetOrDefault(name);
+
+        static SlugBaseCharacter()
+        {
+            Registry.EntryReloaded += (_, args) =>
+            {
+                if(UnityEngine.Object.FindObjectOfType<RainWorld>()?.processManager.currentMainLoop is RainWorldGame game)
+                {
+                    Refreshed?.Invoke(_, new RefreshEventArgs(game, args.Key, args.Value));
+                }
+            };
+        }
 
         /// <summary>
         /// This character's unique name.
@@ -114,6 +129,35 @@ namespace SlugBase
             internal void Clear()
             {
                 _features.Clear();
+            }
+        }
+
+
+        /// <summary>
+        /// Provides data for the <see cref="Refreshed"/> event.
+        /// </summary>
+        public class RefreshEventArgs : EventArgs
+        {
+            /// <summary>
+            /// The current <see cref="RainWorldGame"/>.
+            /// </summary>
+            public RainWorldGame Game { get; }
+
+            /// <summary>
+            /// The ID of the reloaded <see cref="SlugBaseCharacter"/>.
+            /// </summary>
+            public SlugcatStats.Name ID { get; }
+
+            /// <summary>
+            /// The reloaded <see cref="SlugBaseCharacter"/>.
+            /// </summary>
+            public SlugBaseCharacter Character { get; }
+
+            internal RefreshEventArgs(RainWorldGame game, SlugcatStats.Name id, SlugBaseCharacter character)
+            {
+                Game = game;
+                ID = id;
+                Character = character;
             }
         }
     }

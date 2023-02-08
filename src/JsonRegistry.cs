@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -20,6 +21,11 @@ namespace SlugBase
         private readonly Dictionary<string, FileSystemWatcher> _watchers = new();
         private readonly ConcurrentQueue<string> _reloadQueue = new();
         private bool _reloadOnChange;
+
+        /// <summary>
+        /// Occurs when a loaded JSON file is modified while <see cref="WatchForChanges"/> is set.
+        /// </summary>
+        public event EventHandler<ReloadedEventArgs> EntryReloaded;
 
         /// <summary>
         /// Whether this registry should track files to reload.
@@ -91,8 +97,8 @@ namespace SlugBase
         /// Parse a file as JSON and link it to a new <see cref="ExtEnum{T}"/> ID.
         /// </summary>
         /// <param name="path">The file path to the json.</param>
-        /// <returns>The registered value.</returns>
-        public TValue AddFromFile(string path)
+        /// <returns>The registered key and value.</returns>
+        public KeyValuePair<TKey, TValue> AddFromFile(string path)
         {
             path = path.Replace('/', Path.DirectorySeparatorChar);
 
@@ -121,7 +127,7 @@ namespace SlugBase
                 }
             }
 
-            SlugBasePlugin.Logger.LogError($"Added SlugBase object from {path}");
+            SlugBasePlugin.Logger.LogDebug($"Added SlugBase object from {path}");
 
             return value;
         }
@@ -130,10 +136,10 @@ namespace SlugBase
         /// Load a <typeparamref name="TValue"/> from JSON and link it to a new <see cref="ExtEnum{T}"/> ID.
         /// </summary>
         /// <param name="json">The json data for the new object.</param>
-        /// <returns>The registered value.</returns>
-        public TValue Add(JsonObject json) => Add(null, json);
+        /// <returns>The registered key and value.</returns>
+        public KeyValuePair<TKey, TValue> Add(JsonObject json) => Add(null, json);
 
-        private TValue Add(string path, JsonObject json)
+        private KeyValuePair<TKey, TValue> Add(string path, JsonObject json)
         {
             var key = ClaimID(json.GetString("id"));
 
@@ -141,7 +147,7 @@ namespace SlugBase
             {
                 var entry = new Entry(path, _fromJson(key, json));
                 _entries[key] = entry;
-                return entry.Value;
+                return new(key, entry.Value);
             }
             catch
             {
@@ -229,7 +235,16 @@ namespace SlugBase
             {
                 try
                 {
-                    AddFromFile(path);
+                    var pair = AddFromFile(path);
+
+                    try
+                    {
+                        EntryReloaded?.Invoke(this, new(pair.Key, pair.Value));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -265,6 +280,28 @@ namespace SlugBase
             public Entry(string path, TValue value)
             {
                 Path = path;
+                Value = value;
+            }
+        }
+
+        /// <summary>
+        /// Provides data for the <see cref="EntryReloaded"/> event.
+        /// </summary>
+        public class ReloadedEventArgs : EventArgs
+        {
+            /// <summary>
+            /// The unique key of the reloaded entry.
+            /// </summary>
+            public TKey Key { get; }
+
+            /// <summary>
+            /// The reloaded entry.
+            /// </summary>
+            public TValue Value { get; }
+
+            internal ReloadedEventArgs(TKey key, TValue value)
+            {
+                Key = key;
                 Value = value;
             }
         }

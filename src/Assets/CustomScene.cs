@@ -3,8 +3,8 @@ using Menu;
 using SceneID = Menu.MenuScene.SceneID;
 using System;
 using System.Linq;
-using SlugBase.Features;
 using System.IO;
+using static SlugBase.JsonUtils;
 
 namespace SlugBase.Assets
 {
@@ -77,13 +77,13 @@ namespace SlugBase.Assets
             SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
 
             if(json.TryGet("glow_pos") is JsonAny glowPos)
-                GlowPos = FeatureTypes.ToVector2(glowPos);
+                GlowPos = ToVector2(glowPos);
 
             if(json.TryGet("mark_pos") is JsonAny markPos)
-                MarkPos = FeatureTypes.ToVector2(markPos);
+                MarkPos = ToVector2(markPos);
 
             if (json.TryGet("select_menu_pos") is JsonAny selectMenuPos)
-                SelectMenuOffset = FeatureTypes.ToVector2(selectMenuPos);
+                SelectMenuOffset = ToVector2(selectMenuPos);
 
             SlugcatDepth = json.TryGet("slugcat_depth")?.AsFloat();
         }
@@ -136,7 +136,7 @@ namespace SlugBase.Assets
             /// Creates a new image from JSON.
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
-            public Image(JsonObject json) : this(json.GetString("name"), FeatureTypes.ToVector2(json.Get("pos")))
+            public Image(JsonObject json) : this(json.GetString("name"), ToVector2(json.Get("pos")))
             {
                 Depth = json.TryGet("depth")?.AsFloat() ?? -1f;
                 Shader = json.TryGet("shader")?.AsString() is string shader ? new(shader) : MenuDepthIllustration.MenuShader.Normal;
