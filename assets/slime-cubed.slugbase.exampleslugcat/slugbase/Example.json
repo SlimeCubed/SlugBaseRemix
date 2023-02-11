@@ -25,7 +25,7 @@
 			"corpses": 2,
 			"meat": 0.25,
 			"plants": -1,
-			"exceptions": {
+			"overrides": {
 				"Fly": 2
 			}
 		}

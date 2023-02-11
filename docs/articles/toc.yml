@@ -1,2 +1,6 @@
 - name: Getting Started
   href: gettingstarted.md
+- name: Built-In Features
+  href: features.md
+- name: Custom Features
+  href: custom-features.md
