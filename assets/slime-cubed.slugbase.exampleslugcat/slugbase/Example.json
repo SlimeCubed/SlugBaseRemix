@@ -5,9 +5,10 @@
 	
 	"features": {
 		"color": "12a116",
-		"body_color": { "064a08": 0.5, "black": 0.5 },
-		"body_color_starved": { "064a08": 0.4, "black": 0.4, "sky": 0.2 },
-		"eye_color": { "0f8512": 0.25, "sky": 0.75 },
+		"custom_colors": [
+			{ "name": "Body", "story": "AAEECC", "arena": [ "AAEECC", "FFFFAA", "F0F0FF", "FFDDEE" ] },
+			{ "name": "Eyes", "story": "032504", "arena": [ "032504", "351314", "10343A", "210031" ] }
+		],
 		"auto_grab_batflies": false,
 		"weight": 0.8,
 		"tunnel_speed": 2.0,

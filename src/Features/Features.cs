@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using SlugBase.DataTypes;
-using System.Runtime.Serialization.Json;
 using System.Collections.Generic;
 using Menu;
 
@@ -16,18 +15,6 @@ namespace SlugBase.Features
         // TODO: Test
         /// <summary>"color": Player body and UI color.</summary>
         public static readonly PlayerFeature<Color> SlugcatColor = PlayerColor("color");
-
-        // TODO: Test
-        /// <summary>"body_color": Player body color, overriding "color".</summary>
-        public static readonly PlayerFeature<PaletteColor> BodyColor = PlayerPaletteColor("body_color");
-
-        // TODO: Test
-        /// <summary>"body_color_starved": Player body color when starving, overriding "color" and "body_color".</summary>
-        public static readonly PlayerFeature<PaletteColor> BodyColorStarved = PlayerPaletteColor("body_color_starved");
-
-        // TODO: Test
-        /// <summary>"eye_color": Player eye color.</summary>
-        public static readonly PlayerFeature<PaletteColor> EyeColor = PlayerPaletteColor("eye_color");
 
         // TODO: Test
         /// <summary>"auto_grab_batflies": Grab batflies on collision.</summary>
@@ -81,6 +68,22 @@ namespace SlugBase.Features
         // TODO: Test base
         /// <summary>"diet": Edibility and nourishment of foods.</summary>
         public static readonly PlayerFeature<Diet> Diet = new("diet", json => new Diet(json));
+
+        // TODO: Test
+        /// <summary>"custom_colors": Configurable player colors.</summary>
+        public static readonly PlayerFeature<ColorSlot[]> CustomColors = new("custom_colors", json =>
+        {
+            var list = json.AsList();
+            var colors = new ColorSlot[list.Count];
+
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = new ColorSlot(i, list[i]);
+
+            if (colors.Length < 1 || colors[0].Name != "Body") throw new JsonException("Expected \"Body\" as first custom color!", list);
+            if (colors.Length < 2 || colors[1].Name != "Eyes") throw new JsonException("Expected \"Eyes\" as second custom color!", list);
+
+            return colors;
+        });
     }
 
     /// <summary>

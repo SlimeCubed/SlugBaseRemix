@@ -3,7 +3,10 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RWCustom;
 using SlugBase.Assets;
+using SlugBase.DataTypes;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -16,6 +19,10 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.PlayerGraphics.DefaultBodyPartColorHex += PlayerGraphics_DefaultBodyPartColorHex;
+            On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
+            On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
+            IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.RoomSettings.ctor += RoomSettings_ctor;
             On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
             On.Player.CanEatMeat += Player_CanEatMeat;
@@ -34,10 +41,137 @@ namespace SlugBase.Features
             On.WorldLoader.GeneratePopulation += WorldLoader_GeneratePopulation;
             On.OverseerAbstractAI.SetAsPlayerGuide += OverseerAbstractAI_SetAsPlayerGuide;
             On.WorldLoader.OverseerSpawnConditions += WorldLoader_OverseerSpawnConditions;
-            On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
-            IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+
+            SlugBaseCharacter.Refreshed += Refreshed;
+        }
+
+        // Apply some changes immediately for fast iteration
+        private static void Refreshed(object sender, SlugBaseCharacter.RefreshEventArgs args)
+        {
+            SlugBasePlugin.Logger.LogDebug($"Refreshed: {args.ID}");
+
+            // Refresh graphics
+            foreach (var rCam in args.Game.cameras)
+            {
+                foreach(var sLeaser in rCam.spriteLeasers)
+                {
+                    if (sLeaser.drawableObject is PlayerGraphics graphics
+                        && graphics.player.SlugCatClass == args.ID)
+                    {
+                        graphics.ApplyPalette(sLeaser, rCam, rCam.currentPalette);
+                    }
+                }
+            }
+
+            // Refresh arena mode stats
+			if (ModManager.MSC && args.Game.IsArenaSession)
+			{
+				var stats = args.Game.GetArenaGameSession.characterStats_Mplayer;
+                for(int i = 0; i < stats.Length; i++)
+                {
+                    if (stats[i].name == args.Character.Name)
+                        stats[i] = new SlugcatStats(args.Character.Name, stats[i].malnourished);
+                }
+			}
+
+            // Refresh coop stats
+            if (ModManager.CoopAvailable && args.Game.IsStorySession)
+			{
+				var stats = args.Game.GetStorySession.characterStatsJollyplayer;
+                for (int i = 0; i < stats.Length; i++)
+                {
+                    if (stats[i].name == args.Character.Name)
+                        stats[i] = new SlugcatStats(args.Character.Name, stats[i].malnourished);
+                }
+            }
+
+            // Refresh singleplayer stats
+            if (args.Game.session.characterStats.name == args.Character.Name)
+            {
+                args.Game.session.characterStats = new SlugcatStats(args.Character.Name, args.Game.session.characterStats.malnourished);
+            }
+        }
+
+        // CustomColors: Set defaults for customization
+        private static List<string> PlayerGraphics_DefaultBodyPartColorHex(On.PlayerGraphics.orig_DefaultBodyPartColorHex orig, SlugcatStats.Name slugcatID)
+        {
+            var list = orig(slugcatID);
+
+            if (SlugBaseCharacter.TryGet(slugcatID, out var chara)
+                && CustomColors.TryGet(chara, out var colorSlots))
+            {
+                list.Clear();
+                list.AddRange(colorSlots.Select(slot => Custom.colorToHex(slot.Default)));
+            }
+
+            return list;
+        }
+        
+        // CustomColors: Allow customization
+        private static List<string> PlayerGraphics_ColoredBodyPartList(On.PlayerGraphics.orig_ColoredBodyPartList orig, SlugcatStats.Name slugcatID)
+        {
+            var list = orig(slugcatID);
+
+            if(SlugBaseCharacter.TryGet(slugcatID, out var chara)
+                && CustomColors.TryGet(chara, out var colorSlots))
+            {
+                list.Clear();
+                list.AddRange(colorSlots.Select(slot => slot.Name));
+            }
+
+            return list;
+        }
+
+        // CustomColors: Apply color override
+        private static void PlayerGraphics_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+        {
+            orig(self, sLeaser, rCam, timeStacker, camPos);
+
+            if (sLeaser.sprites.Length > 9 && sLeaser.sprites[9] != null
+                && PlayerColor.Eyes.GetColor(self) is Color color)
+            {
+                sLeaser.sprites[9].color = color;
+            }
+        }
+
+        /// CustomColors: Apply body color override
+        private static void PlayerGraphics_ApplyPalette(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            // Body color
+            if (c.TryGotoNext(MoveType.AfterLabel,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdloc(1),
+                x => x.MatchCallOrCallvirt<GraphicsModule>(nameof(GraphicsModule.HypothermiaColorBlend))))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Ldloc_1);
+                c.Emit(OpCodes.Ldarg_3);
+                c.EmitDelegate<Func<PlayerGraphics, Color, RoomPalette, Color>>((self, color, palette) =>
+                {
+                    if (PlayerColor.Body.GetColor(self) is Color newColor)
+                    {
+                        Color starveColor = Color.Lerp(newColor, Color.gray, 0.4f);
+
+                        float starveAmount = self.player.Malnourished ? self.malnourished : Mathf.Max(0f, self.malnourished - 0.005f);
+                        newColor = Color.Lerp(newColor, starveColor, starveAmount);
+
+                        return newColor;
+                    }
+                    else
+                    {
+                        return color;
+                    }
+                });
+                c.Emit(OpCodes.Stloc_1);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(PlayerGraphics_ApplyPalette)} failed!");
+            }
         }
 
         // WorldState: Change conditional settings
@@ -390,62 +524,6 @@ namespace SlugBase.Features
                 return false;
             else
                 return orig(self, character);
-        }
-
-        // EyeColor: Apply color override
-        private static void PlayerGraphics_DrawSprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
-        {
-            orig(self, sLeaser, rCam, timeStacker, camPos);
-
-            if (sLeaser.sprites.Length > 9 && sLeaser.sprites[9] != null
-                && SlugBaseCharacter.TryGet(self.CharacterForColor, out var chara)
-                && EyeColor.TryGet(chara, out var newPalColor))
-            {
-                sLeaser.sprites[9].color = newPalColor.GetColor(rCam.currentPalette);
-            }
-        }
-
-        /// BodyColor, BodyColorStarved: Apply body color override
-        private static void PlayerGraphics_ApplyPalette(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            // Body color
-            if(c.TryGotoNext(MoveType.AfterLabel,
-                x => x.MatchLdarg(0),
-                x => x.MatchLdloc(1),
-                x => x.MatchCallOrCallvirt<GraphicsModule>(nameof(GraphicsModule.HypothermiaColorBlend))))
-            {
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit(OpCodes.Ldloc_1);
-                c.Emit(OpCodes.Ldarg_3);
-                c.EmitDelegate<Func<PlayerGraphics, Color, RoomPalette, Color>>((self, color, palette) =>
-                {
-                    if(SlugBaseCharacter.TryGet(self.CharacterForColor, out var chara)
-                        && BodyColor.TryGet(chara, out var newPalColor))
-                    {
-                        Color newColor = newPalColor.GetColor(palette);
-                        Color starveColor = Color.Lerp(newColor, Color.gray, 0.4f);
-
-                        if (BodyColorStarved.TryGet(chara, out var starvePalColor))
-                            starveColor = starvePalColor.GetColor(palette);
-
-                        float starveAmount = self.player.Malnourished ? self.malnourished : Mathf.Max(0f, self.malnourished - 0.005f);
-                        newColor = Color.Lerp(newColor, starveColor, starveAmount);
-
-                        return newColor;
-                    }
-                    else
-                    {
-                        return color;
-                    }
-                });
-                c.Emit(OpCodes.Stloc_1);
-            }
-            else
-            {
-                SlugBasePlugin.Logger.LogError($"IL hook {nameof(PlayerGraphics_ApplyPalette)} failed!");
-            }
         }
 
         // Color: Set color
