@@ -100,8 +100,8 @@ namespace SlugBase.Features
         public static readonly GameFeature<int> KarmaCap = GameInt("karma_cap");
 
         // TODO: Test
-        /// <summary>"den": Initial room, plus backups from highest to lowest priority.</summary>
-        public static readonly GameFeature<string[]> Den = GameStrings("den", 1);
+        /// <summary>"start_room": Initial room, plus backups from highest to lowest priority.</summary>
+        public static readonly GameFeature<string[]> StartRoom = GameStrings("start_room", 1);
 
         // TODO: Test
         /// <summary>"guide_overseer": Player guide overseer color index.</summary>

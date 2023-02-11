@@ -520,7 +520,7 @@ namespace SlugBase.Features
         // GuideOverseer: Remove when not present
         private static bool WorldLoader_OverseerSpawnConditions(On.WorldLoader.orig_OverseerSpawnConditions orig, WorldLoader self, SlugcatStats.Name character)
         {
-            if (SlugBaseCharacter.TryGet(character, out var chara) && GuideOverseer.TryGet(chara, out _))
+            if (SlugBaseCharacter.TryGet(character, out var chara) && !GuideOverseer.TryGet(chara, out _))
                 return false;
             else
                 return orig(self, character);
@@ -546,7 +546,7 @@ namespace SlugBase.Features
             orig(self);
 
             if(SlugBaseCharacter.TryGet(self.saveStateNumber, out var chara)
-                && chara.Features.TryGet(Den, out string[] dens))
+                && chara.Features.TryGet(StartRoom, out string[] dens))
             {
                 // Search through dens until a valid one is found
                 foreach(var den in dens)
