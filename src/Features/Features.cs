@@ -29,7 +29,7 @@ namespace SlugBase.Features
         public static readonly PlayerFeature<float[]> TunnelSpeedMul = PlayerFloats("tunnel_speed", 1, 2);
 
         // TODO: Test
-        /// <summary>"climb_speed": Move speed in tunnels.</summary>
+        /// <summary>"climb_speed": Move speed on poles.</summary>
         public static readonly PlayerFeature<float[]> ClimbSpeedMul = PlayerFloats("climb_speed", 1, 2);
 
         // TODO: Test
@@ -37,7 +37,7 @@ namespace SlugBase.Features
         public static readonly PlayerFeature<float[]> WalkSpeedMul = PlayerFloats("walk_speed", 1, 2);
 
         // TODO: Test
-        /// <summary>"crouch_stealth": Standing move speed.</summary>
+        /// <summary>"crouch_stealth": Visual stealth while crouched.</summary>
         public static readonly PlayerFeature<float[]> CrouchStealth = PlayerFloats("crouch_stealth", 1, 2);
 
         // TODO: Test
@@ -108,7 +108,7 @@ namespace SlugBase.Features
         public static readonly GameFeature<int> GuideOverseer = GameInt("guide_overseer");
 
         // TODO: Test
-        /// <summary>"has_dreams": Player guide overseer color index.</summary>
+        /// <summary>"has_dreams": Whether or not to track dream state.</summary>
         public static readonly GameFeature<bool> HasDreams = GameBool("has_dreams");
 
         // TODO: Test
