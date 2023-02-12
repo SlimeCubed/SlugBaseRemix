@@ -4,7 +4,7 @@
 - `integer`: Number with no fractional component
 - `float`: Number with some fractional component
 - `color`: List of 3-4 color components, hex color string, or object with `"r"`, `"g"`, `"b"`, and optionally `"a"` properties
-- `type[min..max]`: List of between `min` and `max` elements of type `type`
+- `type[min..max]`: List of between `min` and `max` elements of `type`, or a single element of `type` not in a list
 
 ## Player Features
 ### "color"
@@ -82,7 +82,7 @@ Default reputation values that creature communities have towards the player. Whe
 }
 ```
 
-Edibility and nourishment of foods. Values are rounded to the nearest fourth. 0 indicates inedibility and -1 indicates that eating stuns the player. `"corpses"` multiplies food from eating large, non-centipede bodies. `"meat"` multiplies food from eating small creatures and meat-like objects (i.e., eggbug eggs and jellyfish). `"plants"` multiplies food from eating non-meat objects. `"overrides"` sets multipliers for individual creatures and objects.
+Edibility and nourishment of foods. Values are rounded to the nearest fourth. 0 indicates inedibility and -1 indicates that eating stuns the player. `"corpses"` multiplies food from eating large, non-centipede bodies. `"meat"` multiplies food from eating small creatures, centipedes, and meat-like objects (i.e., eggbug eggs and jellyfish). `"plants"` multiplies food from eating non-meat objects. `"overrides"` sets multipliers for individual creatures and objects.
 
 If `"base"` is specified, it must refer to a `SlugcatStats.Name` that is from the base game or More Slugcats. When present, other diet properties are optional and default to the values for this character. Otherwise, these properties are required.
 
@@ -96,7 +96,7 @@ If `"base"` is specified, it must refer to a `SlugcatStats.Name` that is from th
 ]
 ```
 
-Configurable colors for this character. Colors are referenced by `"name"`, and will appear as such in the color customization menu. The color defaults to `"story"` in story mode, and is overridden by `"arena"` when in arena mode. If an insufficient number of colors are specified in `"arena"`, then some players in arena mode will use `"story"` colors. 
+Configurable colors for this character. Colors are referenced by `"name"`, and will appear as such in the color customization menu. The color defaults to `"story"` in story mode, and is overridden by `"arena"` when in arena mode. If an insufficient number of colors are specified in `"arena"` or the property is omitted, then some players in arena mode will use `"story"` colors.
 
 ## Game Features
 ### "karma"
@@ -124,7 +124,7 @@ Color index of the player guide. If unspecified, then the guide overseer will no
 - `4`: White
 - `5`: Purple
 
-Colors may not work as expected if MSC is not enabled.
+Colors besides yellow may not work as expected if MSC is not enabled.
 
 ### "has_dreams"
 `boolean`
@@ -147,12 +147,12 @@ Maximum cycle length in minutes.
 Whether this character unlocks gates permanently when passing through.
 
 ### "food_min"
-`int`
+`integer`
 
 Food required to hibernate.
 
 ### "food_max"
-`int`
+`integer`
 
 Max food stored at any time.
 
