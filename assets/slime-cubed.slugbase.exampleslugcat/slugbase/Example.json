@@ -32,7 +32,7 @@
 		
 		"karma": 3,
 		"karma_cap": 7,
-		"den": "SI_S04",
+		"start_room": "SI_S04",
 		"guide_overseer": 3,
 		"has_dreams": false,
 		"cycle_length_min": 10,
