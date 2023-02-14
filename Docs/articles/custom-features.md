@@ -1,5 +1,7 @@
 # Writing Custom Features!
 ## Basics
+Before writing any custom features, you'll need to make a BepInEx plugin that references SlugBase. You can download those binaries from the [Releases](https://github.com/SlimeCubed/SlugBaseRemix/releases/latest) page on GitHub.
+
 At its core, defining a feature just requires you to instantiate [`Feature<T>`](../api/SlugBase.Features.Feature-1.yml). The constructor takes a string ID (the same one that you must specify in your character's JSON) and a delegate that converts a [`JsonAny`](../api/SlugBase.JsonAny.yml) into `T`. Accessing your feature requires a [`SlugBaseCharacter`](../api/SlugBase.SlugBaseCharacter.yml) instance, which you can find via [`SlugBaseCharacter.TryGet`](../api/SlugBase.SlugBaseCharacter.yml#SlugBase_SlugBaseCharacter_TryGet_).
 
 In most cases, neither parsing your own data nor getting the [`SlugBaseCharacter`](../api/SlugBase.SlugBaseCharacter.yml) will be necessary.
