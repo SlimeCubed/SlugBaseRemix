@@ -6,7 +6,7 @@
           "files": [
             "src/bin/Release/net48/SlugBase.dll"
           ],
-		  "src": ".."
+      "src": ".."
         }
       ],
       "dest": "api",
@@ -34,7 +34,9 @@
     "resource": [
       {
         "files": [
-          "images/**"
+          "images/**",
+          "favicon.ico",
+          "logo.svg",
         ]
       }
     ],

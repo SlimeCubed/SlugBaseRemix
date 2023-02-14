@@ -2,8 +2,8 @@
 	"id": "slime-cubed.slugbase",
 	"name": "SlugBase",
 	"authors": "Slime_Cubed",
-	"version": "2.0.0-alpha.1",
-	"description": "Lets you add even more slugcats to the game.",
+	"version": "2.0.0-beta.1",
+	"description": "A framework for adding new characters to the game.<LINE>Get started making your own here: https://slimecubed.github.io/slugbase/",
 	"requirements": [],
 	"requirements_names": [],
 	"checksum_override_version": false
