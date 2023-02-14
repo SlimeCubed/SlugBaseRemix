@@ -1,14 +1,11 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using SlugBase.Features;
-using System.IO;
-using System.Linq;
 using System;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
 using UnityEngine;
-using System.Collections.Generic;
 using SlugBase.Assets;
 
 #pragma warning disable CS0618 // Type or member is obsolete

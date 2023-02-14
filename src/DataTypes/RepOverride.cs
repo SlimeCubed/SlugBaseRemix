@@ -1,6 +1,4 @@
-﻿using System.Net.Sockets;
-
-namespace SlugBase.DataTypes
+﻿namespace SlugBase.DataTypes
 {
     /// <summary>
     /// Represents the initial reputation of the player with a community.
