@@ -27,7 +27,7 @@ namespace SlugBase
                 int descLines = desc.Count((char f) => f == '\n');
                 float offset = descLines > 1 ? 30f : 0f;
 
-                self.difficultyLabel.text = name;
+                self.difficultyLabel.text = name.ToUpper();
                 self.difficultyLabel.pos = new Vector2(-1000f, self.imagePos.y - 249f + offset);
 
                 self.infoLabel.text = desc;
