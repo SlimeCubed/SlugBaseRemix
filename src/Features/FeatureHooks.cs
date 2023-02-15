@@ -462,7 +462,7 @@ namespace SlugBase.Features
                     self.throwingSkill = ApplyStarve(throwSkill, 0);
 
                 if (LungsCapacityMul.TryGet(chara, out var lungCapacity))
-                    self.lungsFac = ApplyStarve(lungCapacity, lungCapacity[0]);
+                    self.lungsFac = 1f / ApplyStarve(lungCapacity, lungCapacity[0]);
 
                 if (LoudnessMul.TryGet(chara, out var loudness))
                     self.loudnessFac = ApplyStarve(loudness, loudness[0]);

@@ -6,8 +6,8 @@
 	"features": {
 		"color": "12a116",
 		"custom_colors": [
-			{ "name": "Body", "story": "AAEECC", "arena": [ "AAEECC", "FFFFAA", "F0F0FF", "FFDDEE" ] },
-			{ "name": "Eyes", "story": "032504", "arena": [ "032504", "351314", "10343A", "210031" ] }
+			{ "name": "Body", "story": "032504", "arena": [ "032504", "351314", "10343A", "210031" ] }
+			{ "name": "Eyes", "story": "AAEECC", "arena": [ "AAEECC", "FFFFAA", "F0F0FF", "FFDDEE" ] },
 		],
 		"auto_grab_batflies": false,
 		"weight": 0.8,
