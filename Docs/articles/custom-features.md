@@ -14,23 +14,23 @@ using static SlugBase.Features.FeatureTypes;
 [BepInPlugin("mycoolplugin", "My Cool Plugin", "1.2.3")]
 class MyCoolPlugin : BaseUnityPlugin
 {
-  static readonly PlayerFeature<float> SuperJump = PlayerFloat("super_jump");
+    static readonly PlayerFeature<float> SuperJump = PlayerFloat("super_jump");
 }
 ```
 Then, you implement it with hooks:
 ```cs
 void Awake()
 {
-  On.Player.Jump += Player_Jump;
+    On.Player.Jump += Player_Jump;
 }
 
 void Player_Jump(On.Player.orig_Jump orig, Player self)
 {
-  orig(self);
-  if(SuperJump.TryGet(self, out var superJump))
-  {
-    self.jumpBoost *= 1f + superJump;
-  }
+    orig(self);
+    if(SuperJump.TryGet(self, out var superJump))
+    {
+        self.jumpBoost *= 1f + superJump;
+    }
 }
 ```
 SlugBase provides two types of features: [`PlayerFeature<T>`](../api/SlugBase.Features.PlayerFeature-1.yml) and [`GameFeature<T>`](../api/SlugBase.Features.GameFeature-1.yml). These allow you to get the feature's data by `Player` or `RainWorldGame` instance. If you've hooked a method that doesn't have access to either of those, getting by [`SlugBaseCharacter`](../api/SlugBase.SlugBaseCharacter.yml) still works.

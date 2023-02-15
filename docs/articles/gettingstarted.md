@@ -18,7 +18,7 @@ This will create a copy of Survivor called "The Scholar". That's not very intere
 {
   "id": "Scholar",
   ...
-  "features": [
+  "features": {
     "color": "9530A1",
     "custom_colors": [
       { "name": "Body", "story": "9530A1" },
@@ -26,7 +26,7 @@ This will create a copy of Survivor called "The Scholar". That's not very intere
     ],
     "start_room": "SI_S04",
     "select_menu_scene": "Slugcat_Scholar"
-  ]
+  }
 }
 ```
 Now the Scholar is purple with white eyes, starts in Sky Islands, and will use the "Slugcat_Scholar" scene in the character select menu. See [Built-In Features](features.md) for a list of features you can use here. Most characters will need some new mechanics to set them apart from other campaigns. To implement those, see [Custom Features](custom-features.md).
