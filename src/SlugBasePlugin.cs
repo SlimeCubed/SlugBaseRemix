@@ -7,6 +7,7 @@ using System.Security;
 using System.Security.Permissions;
 using UnityEngine;
 using SlugBase.Assets;
+using SlugBase.Interface;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -19,6 +20,7 @@ namespace SlugBase
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
+        internal static Config RemixConfig;
 
         private bool _initialized = false;
 
@@ -31,6 +33,7 @@ namespace SlugBase
         {
             On.RainWorld.PreModsInit += (orig, self) =>
             {
+                // Ensure that all features are registered before use
                 RuntimeHelpers.RunClassConstructor(typeof(PlayerFeatures).TypeHandle);
                 RuntimeHelpers.RunClassConstructor(typeof(GameFeatures).TypeHandle);
 
@@ -46,6 +49,9 @@ namespace SlugBase
 
                 try
                 {
+                    RemixConfig = new Config();
+                    // MachineConnector.SetRegisteredOI("slime-cubed.slugbase", RemixConfig);
+
                     CoreHooks.Apply();
                     AssetHooks.Apply();
                     FeatureHooks.Apply();

@@ -27,6 +27,11 @@ namespace SlugBase
         public event EventHandler<ReloadedEventArgs> EntryReloaded;
 
         /// <summary>
+        /// Occurs when a JSON file fails to load or reload.
+        /// </summary>
+        public event EventHandler<ReloadedEventArgs> LoadFailed;
+
+        /// <summary>
         /// Whether this registry should track files to reload.
         /// Call <see cref="ReloadChangedFiles"/> to apply changes.
         /// </summary>
@@ -302,6 +307,38 @@ namespace SlugBase
             {
                 Key = key;
                 Value = value;
+            }
+        }
+
+        /// <summary>
+        /// Provides data for the <see cref="LoadFailed"/> event.
+        /// </summary>
+        public class LoadErrorEventArgs : EventArgs
+        {
+            /// <summary>
+            /// The unique ID that this entry would have taken, or <c>null</c> if no ID was found.
+            /// </summary>
+            public string Key { get; }
+
+            /// <summary>
+            /// The exception that caused this event, or <c>null</c> if it was not from an exception.
+            /// </summary>
+            public Exception Exception { get; }
+
+            /// <summary>
+            /// An error message that may be shown to the user.
+            /// </summary>
+            public string ErrorMessage { get; }
+
+            internal LoadErrorEventArgs(string key, Exception exception) : this(key, exception.Message, exception)
+            {
+            }
+
+            internal LoadErrorEventArgs(string key, string message, Exception exception)
+            {
+                Key = key;
+                ErrorMessage = message;
+                Exception = exception;
             }
         }
     }
