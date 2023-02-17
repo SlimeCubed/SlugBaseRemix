@@ -1,5 +1,7 @@
 - name: Getting Started
   href: gettingstarted.md
+- name: SlugTemplate Walkthrough
+  href: template.md
 - name: Built-In Features
   href: features.md
 - name: Custom Features

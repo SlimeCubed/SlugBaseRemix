@@ -1,4 +1,7 @@
 # Getting started with SlugBase!
+## Prerequisite
+This guide assumes that you already know how to make Rain World mods. If that isn't the case, see the [SlugTemplate Walkthrough](template.md) to build a mod from the ground up.
+
 ## Custom Slugcats
 To create a simple SlugBase slugcat, start by making a file called `slugbase\scholar.json`. The name of this file isn't crucial and won't break if other mods name theirs the same. The contents must be a JSON object with at least the "id", "name", and "description" properties:
 ```json

@@ -40,22 +40,25 @@ Player normal and starving speed multiplier when walking. If unspecified, the st
 ### "crouch_stealth"
 `float[1..2]`
 
-Player normal and starving multiplier for visual stealth when down on all fours. If unspecified, the starving value is automatically calculated.
+Player normal and starving multiplier for visual stealth when down on all fours. If unspecified, the starving value matches the normal value.
 
 ### "throw_skill"
 `integer[1..2]`
 
-Player normal and starving body mass. If unspecified, the starving value is automatically calculated.
+Player normal and starving spear throwing damage and distance. If unspecified, the starving value is 0.
+- `0`: 0.6 to 0.9 damage, matching Monk
+- `1`: 1.0 damage, matching Survivor
+- `2`: 1.25 damage, matching Hunter
 
 ### "lung_capacity"
 `float[1..2]`
 
-Player normal and starving multiplier for lung capacity. If unspecified, the starving value is automatically calculated.
+Player normal and starving multiplier for lung capacity. If unspecified, the starving value matches the normal value.
 
 ### "loudness"
 `float[1..2]`
 
-Player normal and starving multiplier for loudness in regards to drawing creature attention. If unspecified, the starving value is automatically calculated.
+Player normal and starving multiplier for loudness in regards to drawing creature attention. If unspecified, the starving value matches the normal value.
 
 ### "alignments"
 ```
