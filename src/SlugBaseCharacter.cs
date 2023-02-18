@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using SlugBase.Features;
 
@@ -83,7 +84,7 @@ namespace SlugBase
         /// <summary>
         /// Stores the <see cref="Feature"/>s of a <see cref="SlugBaseCharacter"/>.
         /// </summary>
-        public class FeatureList
+        public class FeatureList : IEnumerable<Feature>
         {
             private readonly Dictionary<Feature, object> _features = new();
 
@@ -130,6 +131,11 @@ namespace SlugBase
             {
                 _features.Clear();
             }
+
+            /// <inheritdoc/>
+            public IEnumerator<Feature> GetEnumerator() => _features.Keys.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
 

@@ -140,6 +140,18 @@ namespace SlugBase.Features
         public static readonly GameFeature<MenuScene.SceneID> SelectMenuSceneAscended = GameExtEnum<MenuScene.SceneID>("select_menu_scene_ascended");
 
         // TODO: Test
+        /// <summary>"sleep_scene": The scene for this slugcat when hibernating.</summary>
+        public static readonly GameFeature<MenuScene.SceneID> SleepScene = GameExtEnum<MenuScene.SceneID>("sleep_scene");
+
+        // TODO: Test
+        /// <summary>"starve_scene": The scene for this slugcat when losing from starvation.</summary>
+        public static readonly GameFeature<MenuScene.SceneID> StarveScene = GameExtEnum<MenuScene.SceneID>("starve_scene");
+
+        // TODO: Test
+        /// <summary>"death_scene": The scene for this slugcat when losing from a non-starvation death.</summary>
+        public static readonly GameFeature<MenuScene.SceneID> DeathScene = GameExtEnum<MenuScene.SceneID>("death_scene");
+
+        // TODO: Test
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
         public static readonly GameFeature<SlugcatStats.Name> WorldState = new("world_state", json => Utils.GetName(json.AsString()));
     }

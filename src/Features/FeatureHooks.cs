@@ -19,6 +19,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.Menu.SleepAndDeathScreen.AddBkgIllustration += SleepAndDeathScreen_AddBkgIllustration;
             On.PlayerGraphics.DefaultBodyPartColorHex += PlayerGraphics_DefaultBodyPartColorHex;
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
@@ -66,20 +67,20 @@ namespace SlugBase.Features
             }
 
             // Refresh arena mode stats
-			if (ModManager.MSC && args.Game.IsArenaSession)
-			{
-				var stats = args.Game.GetArenaGameSession.characterStats_Mplayer;
+            if (ModManager.MSC && args.Game.IsArenaSession)
+            {
+                var stats = args.Game.GetArenaGameSession.characterStats_Mplayer;
                 for(int i = 0; i < stats.Length; i++)
                 {
                     if (stats[i].name == args.Character.Name)
                         stats[i] = new SlugcatStats(args.Character.Name, stats[i].malnourished);
                 }
-			}
+            }
 
             // Refresh coop stats
             if (ModManager.CoopAvailable && args.Game.IsStorySession)
-			{
-				var stats = args.Game.GetStorySession.characterStatsJollyplayer;
+            {
+                var stats = args.Game.GetStorySession.characterStatsJollyplayer;
                 for (int i = 0; i < stats.Length; i++)
                 {
                     if (stats[i].name == args.Character.Name)
@@ -92,6 +93,34 @@ namespace SlugBase.Features
             {
                 args.Game.session.characterStats = new SlugcatStats(args.Character.Name, args.Game.session.characterStats.malnourished);
             }
+        }
+
+        // SleepScene, DeathScene, StarveScene: Replace scenes
+        private static void SleepAndDeathScreen_AddBkgIllustration(On.Menu.SleepAndDeathScreen.orig_AddBkgIllustration orig, SleepAndDeathScreen self)
+        {
+            MenuScene.SceneID newScene = null;
+            SlugcatStats.Name name;
+            
+            if (self.manager.currentMainLoop is RainWorldGame)
+                name = (self.manager.currentMainLoop as RainWorldGame).StoryCharacter;
+            else
+                name = self.manager.rainWorld.progression.PlayingAsSlugcat;
+
+            if (SlugBaseCharacter.TryGet(name, out var chara))
+            {
+                if (self.IsSleepScreen && SleepScene.TryGet(chara, out var sleep)) newScene = sleep;
+                else if (self.IsDeathScreen && DeathScene.TryGet(chara, out var death)) newScene = death;
+                else if (self.IsStarveScreen && StarveScene.TryGet(chara, out var starve)) newScene = starve;
+            }
+
+            if(newScene != null && newScene.Index != -1)
+            {
+                self.scene = new InteractiveMenuScene(self, self.pages[0], newScene);
+                self.pages[0].subObjects.Add(self.scene);
+                return;
+            }
+            else
+                orig(self);
         }
 
         // CustomColors: Set defaults for customization

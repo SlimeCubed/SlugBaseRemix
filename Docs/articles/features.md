@@ -169,6 +169,21 @@ Scene ID for character select menu.
 
 Scene ID for character select menu after ascension.
 
+### "sleep_scene"
+`string`
+
+Scene ID for hibernation.
+
+### "starve_scene"
+`string`
+
+Scene ID for death screen after starvation.
+
+### "death_scene"
+`string`
+
+Scene ID for non-starvation deaths.
+
 ### "world_state"
 `string`
 
