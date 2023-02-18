@@ -1,5 +1,6 @@
 ﻿using Menu;
 using RWCustom;
+using SlugBase.Interface;
 using System.Linq;
 using UnityEngine;
 
@@ -9,8 +10,16 @@ namespace SlugBase
     {
         public static void Apply()
         {
+            On.InGameTranslator.LoadFonts += InGameTranslator_LoadFonts;
             On.Menu.SlugcatSelectMenu.SlugcatPageNewGame.ctor += SlugcatPageNewGame_ctor;
             On.Menu.SlugcatSelectMenu.SetSlugcatColorOrder += SlugcatSelectMenu_SetSlugcatColorOrder;
+        }
+
+        private static void InGameTranslator_LoadFonts(On.InGameTranslator.orig_LoadFonts orig, InGameTranslator.LanguageID lang, Menu.Menu menu)
+        {
+            orig(lang, menu);
+
+            ErrorList.Instance.MarkDirty();
         }
 
         // Update slugcat name and description

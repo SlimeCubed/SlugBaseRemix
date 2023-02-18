@@ -29,7 +29,7 @@ namespace SlugBase
         /// <summary>
         /// Occurs when a JSON file fails to load or reload.
         /// </summary>
-        public event EventHandler<ReloadedEventArgs> LoadFailed;
+        public event EventHandler<LoadErrorEventArgs> LoadFailed;
 
         /// <summary>
         /// Whether this registry should track files to reload.
@@ -80,20 +80,7 @@ namespace SlugBase
 
             foreach (var file in files.Where(file => file.EndsWith(".json")))
             {
-                try
-                {
-                    AddFromFile(file);
-                }
-                catch (Exception e)
-                {
-                    if (e is JsonException jsonE)
-                        SlugBasePlugin.Logger.LogError($"Failed to parse SlugBase object from {Path.GetFileName(file)}: {jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}");
-                    else
-                        SlugBasePlugin.Logger.LogError($"Failed to load SlugBase object from {Path.GetFileName(file)}: {e.Message}");
-                    SlugBasePlugin.Logger.LogError($"Full path: {file}");
-
-                    Debug.LogException(e);
-                }
+                TryAddFromFile(file);
             }
         }
 
@@ -134,6 +121,30 @@ namespace SlugBase
             SlugBasePlugin.Logger.LogDebug($"Added SlugBase object from {path}");
 
             return value;
+        }
+
+        /// <summary>
+        /// Parse a file as JSON and link it to a new <see cref="ExtEnum{T}"/> ID.
+        /// Load errors can be monitored with <see cref="LoadFailed"/>.
+        /// </summary>
+        /// <param name="path">The file path to the json.</param>
+        /// <returns>The registered key and value, or <c>null</c> if loading failed.</returns>
+        public KeyValuePair<TKey, TValue>? TryAddFromFile(string path)
+        {
+            try
+            {
+                return AddFromFile(path);
+            }
+            catch (Exception e)
+            {
+                string message;
+                if (e is JsonException jsonE) message = $"{jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}";
+                else message = e.Message;
+
+                LoadFailed?.Invoke(this, new LoadErrorEventArgs(message, e, path));
+
+                return null;
+            }
         }
 
         /// <summary>
@@ -237,28 +248,18 @@ namespace SlugBase
         {
             while(_reloadQueue.TryDequeue(out string path))
             {
-                try
-                {
-                    var pair = AddFromFile(path);
+                var pair = TryAddFromFile(path);
 
+                if(pair != null)
+                {
                     try
                     {
-                        EntryReloaded?.Invoke(this, new(pair.Key, pair.Value));
+                        EntryReloaded?.Invoke(this, new(pair.Value.Key, pair.Value.Value));
                     }
                     catch (Exception e)
                     {
                         Debug.LogException(e);
                     }
-                }
-                catch (Exception e)
-                {
-                    if (e is JsonException jsonE)
-                        SlugBasePlugin.Logger.LogError($"Failed to parse SlugBase object when reloading from {Path.GetFileName(path)}: {jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}");
-                    else
-                        SlugBasePlugin.Logger.LogError($"Failed to reload SlugBase object from {Path.GetFileName(path)}: {e.Message}");
-                    SlugBasePlugin.Logger.LogError($"Full path: {path}");
-
-                    Debug.LogException(e);
                 }
             }
         }
@@ -316,11 +317,6 @@ namespace SlugBase
         public class LoadErrorEventArgs : EventArgs
         {
             /// <summary>
-            /// The unique ID that this entry would have taken, or <c>null</c> if no ID was found.
-            /// </summary>
-            public string Key { get; }
-
-            /// <summary>
             /// The exception that caused this event, or <c>null</c> if it was not from an exception.
             /// </summary>
             public Exception Exception { get; }
@@ -330,15 +326,20 @@ namespace SlugBase
             /// </summary>
             public string ErrorMessage { get; }
 
-            internal LoadErrorEventArgs(string key, Exception exception) : this(key, exception.Message, exception)
+            /// <summary>
+            /// The path to the file that errored, or <c>null</c> if it was not loaded from a file.
+            /// </summary>
+            public string Path { get; }
+
+            internal LoadErrorEventArgs(Exception exception, string path) : this(exception.Message, exception, path)
             {
             }
 
-            internal LoadErrorEventArgs(string key, string message, Exception exception)
+            internal LoadErrorEventArgs(string message, Exception exception, string path)
             {
-                Key = key;
                 ErrorMessage = message;
                 Exception = exception;
+                Path = path;
             }
         }
     }

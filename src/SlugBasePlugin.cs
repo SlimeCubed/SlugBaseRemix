@@ -21,6 +21,8 @@ namespace SlugBase
     {
         new internal static ManualLogSource Logger;
         internal static Config RemixConfig;
+        internal static Color SlugBaseBlue = new(19f / 255f, 63f / 255f, 231f / 255f);
+        internal static Color SlugBaseGray = new(146f / 255f, 150f / 255f, 164f / 255f);
 
         private bool _initialized = false;
 
@@ -52,9 +54,16 @@ namespace SlugBase
                     RemixConfig = new Config();
                     // MachineConnector.SetRegisteredOI("slime-cubed.slugbase", RemixConfig);
 
+                    Futile.atlasManager.LoadAtlas("atlases/slugbase");
+
+                    ErrorList.Instance = ErrorList.Attach();
+
                     CoreHooks.Apply();
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
+
+                    SlugBaseCharacter.Registry.WatchForChanges = true;
+                    CustomScene.Registry.WatchForChanges = true;
                 }
                 catch(Exception e)
                 {
@@ -66,15 +75,13 @@ namespace SlugBase
             {
                 orig(self);
 
+                ErrorList.Instance.Clear();
                 ScanFiles();
             };
         }
 
         public static void ScanFiles()
         {
-            SlugBaseCharacter.Registry.WatchForChanges = true;
-            CustomScene.Registry.WatchForChanges = true;
-
             SlugBaseCharacter.Registry.ScanDirectory("slugbase");
             CustomScene.Registry.ScanDirectory("slugbase/scenes");
         }
