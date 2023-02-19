@@ -233,7 +233,9 @@ namespace SlugBase.Features
             if (SlugBaseCharacter.TryGet(self.SlugCatClass, out var chara)
                 && Diet.TryGet(chara, out var diet))
             {
-                return diet.GetMeatMultiplier(self, crit) > 0f;
+                return diet.GetMeatMultiplier(self, crit) > 0f
+                    && (crit is not IPlayerEdible edible || !edible.Edible)
+                    && crit.dead;
             }
             else
                 return orig(self, crit);
