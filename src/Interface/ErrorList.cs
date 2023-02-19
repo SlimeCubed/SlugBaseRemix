@@ -92,6 +92,8 @@ namespace SlugBase.Interface
             lock(_errors)
             {
                 _listDirty = true;
+                if (file != null)
+                    _errors.RemoveAll(error => error.File == file);
                 _errors.Add(new ErrorInfo(icon, message, file, retry));
             }
         }
