@@ -96,11 +96,11 @@ namespace SlugBase.DataTypes
             }
 
             // Throw if any fields are left unspecified
-            if (baseName != null)
+            if (baseName == null)
             {
-                if (corpses == null) throw new JsonException("Missing \"corpses\" or \"base\" diet property!");
-                if (meat == null) throw new JsonException("Missing \"meat\" or \"base\" diet property!");
-                if (plants == null) throw new JsonException("Missing \"plants\" or \"base\" diet property!");
+                if (corpses == null) throw new JsonException("Missing \"corpses\" or \"base\" diet property!", json);
+                if (meat == null) throw new JsonException("Missing \"meat\" or \"base\" diet property!", json);
+                if (plants == null) throw new JsonException("Missing \"plants\" or \"base\" diet property!", json);
             }
 
             if (corpses.HasValue)
