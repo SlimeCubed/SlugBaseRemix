@@ -172,7 +172,7 @@ namespace SlugBase.DataTypes
                     return true;
 
                 case nameof(MSCName.Gourmand):
-                case nameof(MSCName.Sofanthiel):
+                case "Inv":
                     Corpses = 0.5f;
                     Meat = 1f;
                     Plants = 1f;

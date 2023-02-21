@@ -15,8 +15,8 @@ namespace SlugBase
                 "survivor" => Name.White,
                 "hunter" => Name.Red,
                 "monk" => Name.Yellow,
-                "spearmaster" => MSCName.Spear,
-                "inv" => MSCName.Sofanthiel,
+                "spearmaster" => new Name("Spear"),
+                "inv" => new Name("Inv"),
                 _ => new Name(text)
             };
         }
