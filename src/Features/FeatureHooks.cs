@@ -19,6 +19,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.Player.ctor += Player_ctor;
             On.Menu.SleepAndDeathScreen.AddBkgIllustration += SleepAndDeathScreen_AddBkgIllustration;
             On.PlayerGraphics.DefaultBodyPartColorHex += PlayerGraphics_DefaultBodyPartColorHex;
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
@@ -93,6 +94,15 @@ namespace SlugBase.Features
             {
                 args.Game.session.characterStats = new SlugcatStats(args.Character.Name, args.Game.session.characterStats.malnourished);
             }
+        }
+
+        // BackSpear: Add back spear
+        private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
+        {
+            orig(self, abstractCreature, world);
+
+            if (BackSpear.TryGet(self, out var hasBackSpear) && hasBackSpear)
+                self.spearOnBack ??= new Player.SpearOnBack(self);
         }
 
         // SleepScene, DeathScene, StarveScene: Replace scenes

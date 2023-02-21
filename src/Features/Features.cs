@@ -51,6 +51,10 @@ namespace SlugBase.Features
         // TODO: Test
         /// <summary>"loudness": Sound alert multiplier.</summary>
         public static readonly PlayerFeature<float[]> LoudnessMul = PlayerFloats("loudness", 1, 2);
+
+        // TODO: Test
+        /// <summary>"back_spear": Store a spear on back.</summary>
+        public static readonly PlayerFeature<bool> BackSpear = PlayerBool("back_spear");
         
         // TODO: Test
         /// <summary>"alignments": Initial community reputation.</summary>

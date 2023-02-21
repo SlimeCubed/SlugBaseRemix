@@ -101,6 +101,11 @@ If `"base"` is specified, it must refer to a `SlugcatStats.Name` that is from th
 
 Configurable colors for this character. Colors are referenced by `"name"`, and will appear as such in the color customization menu. The color defaults to `"story"` in story mode, and is overridden by `"arena"` when in arena mode. If an insufficient number of colors are specified in `"arena"` or the property is omitted, then some players in arena mode will use `"story"` colors.
 
+### "back_spear"
+`boolean`
+
+Ability to store a spear on the player's back.
+
 ## Game Features
 ### "karma"
 `integer`
