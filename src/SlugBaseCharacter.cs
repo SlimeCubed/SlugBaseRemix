@@ -132,7 +132,9 @@ namespace SlugBase
                 _features.Clear();
             }
 
-            /// <inheritdoc/>
+            /// <summary>
+            /// Returns an enumerator that iterates through all features in this collection.
+            /// </summary>
             public IEnumerator<Feature> GetEnumerator() => _features.Keys.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -6,6 +6,34 @@
 - `color`: List of 3-4 color components, hex color string, or object with `"r"`, `"g"`, `"b"`, and optionally `"a"` properties
 - `type[min..max]`: List of between `min` and `max` elements of `type`, or a single element of `type` not in a list
 
+Values specified in angle brackets refer to `ExtEnum`s in the game's code. Replace these with the values from the associated enum. For example, `<SlugcatStats.Name>` may be replaced with `White`. Default values for the enums used below are as follows:
+
+# [SlugcatStats.Name](#tab/slugcatname)
+
+**Vanilla:** `White`, `Yellow`, `Red`
+
+**More Slugcats:** `Rivulet`, `Artificer`, `Saint`, `Spear`, `Gourmand`, `Slugpup`, `Inv`
+
+# [CreatureCommunities.CommunityID](#tab/communityid)
+
+**Vanilla:** `None`, `All`, `Scavengers`, `Lizards`, `Cicadas`, `GarbageWorms`, `Deer`, `Jetfish`
+
+# [CreatureCommunities.CommunityID](#tab/slugcatstatsname)
+
+**Vanilla:** `StandardGroundCreature`, `Slugcat`, `LizardTemplate`, `PinkLizard`, `GreenLizard`, `BlueLizard`, `YellowLizard`, `WhiteLizard`, `RedLizard`, `BlackLizard`, `Salamander`, `CyanLizard`, `Fly`, `Leech`, `SeaLeech`, `Snail`, `Vulture`, `GarbageWorm`, `LanternMouse`, `CicadaA`, `CicadaB`, `Spider`, `JetFish`, `BigEel`, `Deer`, `TubeWorm`, `DaddyLongLegs`, `BrotherLongLegs`, `TentaclePlant`, `PoleMimic`, `MirosBird`, `TempleGuard`, `Centipede`, `RedCentipede`, `Centiwing`, `SmallCentipede`, `Scavenger`, `Overseer`, `VultureGrub`, `EggBug`, `BigSpider`, `SpitterSpider`, `SmallNeedleWorm`, `BigNeedleWorm`, `DropBug`, `KingVulture`, `Hazer`
+
+**More Slugcats:** `MirosVulture`, `SpitLizard`, `EelLizard`, `MotherSpider`, `TerrorLongLegs`, `AquaCenti`, `HunterDaddy`, `FireBug`, `StowawayBug`, `ScavengerElite`, `Inspector`, `Yeek`, `BigJelly`, `SlugNPC`, `JungleLeech`, `ZoopLizard`, `ScavengerKing`, `TrainLizard`
+
+# [AbstractPhysicalObject.Type](#tab/objecttype)
+
+**Vanilla:** `Creature`, `Rock`, `Spear`, `FlareBomb`, `VultureMask`, `PuffBall`, `DangleFruit`, `Oracle`, `PebblesPearl`, `SLOracleSwarmer`, `SSOracleSwarmer`, `DataPearl`, `SeedCob`, `WaterNut`, `JellyFish`, `Lantern`, `KarmaFlower`, `Mushroom`, `VoidSpawn`, `FirecrackerPlant`, `SlimeMold`, `FlyLure`, `ScavengerBomb`, `SporePlant`, `AttachedBee`, `EggBugEgg`, `NeedleEgg`, `DartMaggot`, `BubbleGrass`, `NSHSwarmer`, `OverseerCarcass`, `CollisionField`, `BlinkingFlower`,
+
+**More Slugcats:** `JokeRifle`, `Bullet`, `SingularityBomb`, `Spearmasterpearl`, `FireEgg`, `EnergyCell`, `Germinator`, `Seed`, `GooieDuck`, `LillyPuck`, `GlowWeed`, `MoonCloak`, `HalcyonPearl`, `DandelionPeach`, `HRGuard`
+
+---
+
+Some values will not be present if More Slugcats is not installed. Other mods may add values to these. Features that take enums will often ignore invalid values.
+
 ## Player Features
 ### "color"
 `color`
