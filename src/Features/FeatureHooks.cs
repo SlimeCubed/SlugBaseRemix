@@ -26,6 +26,7 @@ namespace SlugBase.Features
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.RoomSettings.ctor += RoomSettings_ctor;
+            On.Region.GetRegionFullName += Region_GetRegionFullName;
             On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
             On.Player.CanEatMeat += Player_CanEatMeat;
             IL.Player.EatMeatUpdate += Player_EatMeatUpdate;
@@ -223,6 +224,18 @@ namespace SlugBase.Features
             }
 
             orig(self, name, region, template, firstTemplate, playerChar);
+        }
+
+        // WorldState: Change region names
+        private static string Region_GetRegionFullName(On.Region.orig_GetRegionFullName orig, string regionAcro, SlugcatStats.Name slugcatIndex)
+        {
+            if (SlugBaseCharacter.TryGet(slugcatIndex, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                slugcatIndex = copyWorld;
+            }
+
+            return orig(regionAcro, slugcatIndex);
         }
 
         // WorldState: Change character filters
