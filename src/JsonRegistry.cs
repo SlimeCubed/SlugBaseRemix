@@ -138,8 +138,18 @@ namespace SlugBase
             catch (Exception e)
             {
                 string message;
-                if (e is JsonException jsonE) message = $"{jsonE.Message}\nField: {jsonE.JsonPath ?? "unknown"}";
-                else message = e.Message;
+                if (e is JsonException jsonException)
+                {
+                    message = $"{jsonException.Message}\nField: {jsonException.JsonPath ?? "unknown"}";
+                }
+                else if (e is JsonParseException parseException)
+                {
+                    message = $"{parseException.Message}\nLine: {parseException.Line + 1}";
+                }
+                else
+                {
+                    message = e.Message;
+                }
 
                 LoadFailed?.Invoke(this, new LoadErrorEventArgs(message, e, path));
 

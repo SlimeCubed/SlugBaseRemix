@@ -14,20 +14,14 @@ namespace SlugBase
         {
             switch (json.Type)
             {
-                case JsonAny.Element.Integer:
-                    long longVal = json.AsLong();
-                    if (longVal < 0 || longVal > 255)
-                        throw new JsonException("Integer color element was out of range!", json);
-                    return longVal / 255f;
-
-                case JsonAny.Element.Float:
+                case JsonAny.Element.Number:
                     float floatVal = json.AsFloat();
                     if (floatVal < 0f || floatVal > 1f)
-                        throw new JsonException("Float color element was out of range!", json);
+                        throw new JsonException("Color element was out of range!", json);
                     return floatVal;
 
                 default:
-                    throw new JsonException("Color element wasn't a float or integer!", json);
+                    throw new JsonException("Color element wasn't a number!", json);
             }
         }
 
@@ -69,10 +63,7 @@ namespace SlugBase
                         throw new JsonException("Could not convert hex string to color!", e, json);
                     }
 
-                case JsonAny.Element.Float:
-                    throw new JsonException("Could not convert float to color!", json);
-
-                case JsonAny.Element.Integer:
+                case JsonAny.Element.Number:
                     {
                         long longVal = json.AsLong();
                         if (longVal < uint.MinValue || longVal > uint.MaxValue)

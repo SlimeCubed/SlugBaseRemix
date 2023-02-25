@@ -142,11 +142,12 @@ namespace SlugBase.Interface
         {
             _list.RemoveAllChildren();
 
+            float maxTextWidth = TEXT_WIDTH;
+
             var back = new FSprite("pixel")
             {
                 anchorX = 0f,
                 anchorY = 1f,
-                width = ELEMENT_SPACING * 6 + ICON_SIZE * 4 + TEXT_WIDTH,
                 height = ELEMENT_SPACING + (ENTRY_HEIGHT + ELEMENT_SPACING) * _errors.Count
             };
             _listBack = back;
@@ -226,8 +227,12 @@ namespace SlugBase.Interface
                 label.SetPosition(x, y + Y_TEXT_OFFSET);
                 _list.AddChild(label);
 
+                maxTextWidth = Math.Max(maxTextWidth, label.textRect.width);
+
                 y -= ENTRY_HEIGHT + ELEMENT_SPACING;
             }
+
+            back.width = ELEMENT_SPACING * 6 + ICON_SIZE * 4 + maxTextWidth;
         }
 
         private string GetIconSprite(ErrorIcon icon) => icon switch

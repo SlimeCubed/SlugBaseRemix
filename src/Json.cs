@@ -42,18 +42,12 @@ namespace SlugBase
         public double AsDouble()
         {
             if (_object is double d) return d;
-            else if (_object is long l) return l;
             else throw new JsonException($"Json {Type} cannot be converted to Double!", this);
         }
 
         /// <summary>Cast to <see cref="long"/>.</summary>
         /// <exception cref="JsonException">This isn't a number.</exception>
-        public long AsLong()
-        {
-            if (_object is double d) return (long)d;
-            else if (_object is long l) return l;
-            else throw new JsonException($"Json {Type} cannot be converted to Integer!", this);
-        }
+        public long AsLong() => (long)AsDouble();
 
         /// <summary>Cast to <see cref="string"/>.</summary>
         /// <exception cref="JsonException">This isn't a string.</exception>
@@ -65,7 +59,7 @@ namespace SlugBase
 
         /// <summary>Cast to <see cref="int"/>.</summary>
         /// <exception cref="JsonException">This isn't a number.</exception>
-        public int AsInt() => (int)AsLong();
+        public int AsInt() => (int)AsDouble();
 
         /// <summary>Cast to <see cref="float"/>.</summary>
         /// <exception cref="JsonException">This isn't a number.</exception>
@@ -76,7 +70,7 @@ namespace SlugBase
         public bool AsBool()
         {
             if (_object is bool b) return b;
-            else throw new JsonException($"Json {Type} cannot be converted to Bool!");
+            else throw new JsonException($"Json {Type} cannot be converted to Bool!", this);
         }
 
 
@@ -87,16 +81,16 @@ namespace SlugBase
         public JsonList? TryList() => Type == Element.List ? AsList() : null;
 
         /// <summary>Try casting to <see cref="long"/>, returning <c>null</c> on failure.</summary>
-        public long? TryLong() => Type == Element.Integer ? AsLong() : null;
+        public long? TryLong() => Type == Element.Number ? AsLong() : null;
 
         /// <summary>Try casting to <see cref="int"/>, returning <c>null</c> on failure.</summary>
-        public int? TryInt() => Type == Element.Integer ? AsInt() : null;
+        public int? TryInt() => Type == Element.Number ? AsInt() : null;
 
         /// <summary>Try casting to <see cref="double"/>, returning <c>null</c> on failure.</summary>
-        public double? TryDouble() => Type == Element.Float || Type == Element.Integer ? AsDouble() : null;
+        public double? TryDouble() => Type == Element.Number ? AsDouble() : null;
 
         /// <summary>Try casting to <see cref="float"/>, returning <c>null</c> on failure.</summary>
-        public float? TryFloat() => Type == Element.Float || Type == Element.Integer ? AsFloat() : null;
+        public float? TryFloat() => Type == Element.Number ? AsFloat() : null;
 
         /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
         public string TryString() => Type == Element.String ? AsString() : null;
@@ -142,8 +136,8 @@ namespace SlugBase
         /// </summary>
         /// <param name="data">The JSON text.</param>
         /// <returns>A <see cref="JsonAny"/> representing the root element.</returns>
-        /// <exception cref="JsonException">The root element could not be parsed.</exception>
-        public static JsonAny Parse(string data) => new JsonAny(Json.Deserialize(data), new JsonPathNode("root", null));
+        /// <exception cref="JsonParseException">The root element could not be parsed.</exception>
+        public static JsonAny Parse(string data) => new(JsonParser.Parse(data), new JsonPathNode("root", null));
 
         /// <summary>
         /// The type of this element. This may not be <see cref="Element.Invalid"/>.
@@ -152,8 +146,7 @@ namespace SlugBase
         {
             Dictionary<string, object> => Element.Object,
             List<object> => Element.List,
-            long => Element.Integer,
-            double => Element.Float,
+            double => Element.Number,
             string => Element.String,
             bool => Element.Bool,
             _ => Element.Invalid
@@ -173,13 +166,9 @@ namespace SlugBase
             /// </summary>
             List,
             /// <summary>
-            /// An integer.
+            /// A number.
             /// </summary>
-            Integer,
-            /// <summary>
-            /// A floating-point value.
-            /// </summary>
-            Float,
+            Number,
             /// <summary>
             /// A string.
             /// </summary>
@@ -441,7 +430,7 @@ namespace SlugBase
     }
 
     /// <summary>
-    /// Represents errors that occur when parsing JSON.
+    /// Represents errors that occur when accessing JSON data.
     /// </summary>
     public class JsonException : Exception
     {
@@ -449,17 +438,7 @@ namespace SlugBase
         /// The path to the element that failed to parse, starting from the root object.
         /// </summary>
         public string JsonPath { get; set; }
-
-        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class.</summary>
-        public JsonException() { }
-
-        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a specified error message.</summary>
-        public JsonException(string message) : base(message) { }
-
-        /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a specified error message
-        /// and a reference to the inner exception that is the cause of this exception.</summary>
-        public JsonException(string message, Exception inner) : base(message, inner) { }
-
+        
         /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a path to the invalid element.</summary>
         public JsonException(JsonAny json) => JsonPath = json._path?.ToString();
 
@@ -470,5 +449,11 @@ namespace SlugBase
         /// <summary>Initializes a new instance of the <see cref="JsonException"/> class with a specified error message,
         /// a reference to the inner exception that is the cause of this exception, and a path to the invalid element.</summary>
         public JsonException(string message, Exception inner, JsonAny json) : base(message, inner) => JsonPath = json._path?.ToString();
+
+        internal JsonException(JsonPathNode path) => JsonPath = path?.ToString();
+
+        internal JsonException(string message, JsonPathNode path) : base(message) => JsonPath = path?.ToString();
+
+        internal JsonException(string message, Exception inner, JsonPathNode path) : base(message, inner) => JsonPath = path?.ToString();
     }
 }

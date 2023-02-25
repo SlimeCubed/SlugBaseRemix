@@ -55,7 +55,7 @@ namespace SlugBase.DataTypes
                 if (baseName != null)
                 {
                     if (!SetBase(baseName))
-                        throw new JsonException($"Couldn't find character \"{baseName.value}\" to inherit diet from!");
+                        throw new JsonException($"Couldn't find character \"{baseName.value}\" to inherit diet from!", json);
                 }
             }
             else
@@ -68,7 +68,7 @@ namespace SlugBase.DataTypes
                 if (baseName != null)
                 {
                     if (!SetBase(baseName))
-                        throw new JsonException($"Couldn't find character \"{baseName.value}\" to inherit diet from!");
+                        throw new JsonException($"Couldn't find character \"{baseName.value}\" to inherit diet from!", json);
                 }
 
                 corpses ??= diet.TryGet("corpses")?.AsFloat();
