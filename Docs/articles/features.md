@@ -98,6 +98,8 @@ Player normal and starving multiplier for loudness in regards to drawing creatur
 
 Default reputation values that creature communities have towards the player. When a save is started, each community's reputation is moved towards `"like"` by the fraction `"strength"`. If `"locked"`, then the reputation will always be `"like"`.
 
+`"like"` should range between -1 and 1. `"strength"` should range between 0 and 1.
+
 ### "diet"
 ```
 {

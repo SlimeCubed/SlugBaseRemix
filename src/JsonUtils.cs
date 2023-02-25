@@ -138,7 +138,7 @@ namespace SlugBase
             //else
             //    throw new JsonException($"\"{json.AsString()}\" was not a value of \"{typeof(T).Name}\"!", json);
 
-            return (T)Activator.CreateInstance(typeof(T), json.AsString(), false);
+            return (T)Activator.CreateInstance(typeof(T), Utils.MatchCaseInsensitiveEnum<T>(json.AsString()), false);
         }
 
         /// <summary>

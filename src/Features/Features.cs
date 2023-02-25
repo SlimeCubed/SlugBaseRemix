@@ -64,7 +64,8 @@ namespace SlugBase.Features
             var reps = new Dictionary<CreatureCommunities.CommunityID, RepOverride>();
             foreach (var pair in obj)
             {
-                reps[new CreatureCommunities.CommunityID(pair.Key)] = new(pair.Value);
+                var community = new CreatureCommunities.CommunityID(Utils.MatchCaseInsensitiveEnum<CreatureCommunities.CommunityID>(pair.Key));
+                reps[community] = new(pair.Value);
             }
             return reps;
         });

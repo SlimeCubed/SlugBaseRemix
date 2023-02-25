@@ -389,7 +389,7 @@ namespace SlugBase.Features
                     {
                         for (int player = 0; player < self.playerOpinions.GetLength(2); player++)
                         {
-                            int community = (int)pair.Key;
+                            int community = (int)pair.Key - 1;
 
                             if (community >= 0 && community < self.playerOpinions.GetLength(0))
                                 self.playerOpinions[community, region, player] = Mathf.Lerp(self.playerOpinions[community, region, player], pair.Value.Target, pair.Value.Strength);

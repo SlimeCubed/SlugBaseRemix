@@ -1,5 +1,6 @@
 ﻿using Name = SlugcatStats.Name;
 using MSCName = MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName;
+using System.Linq;
 
 namespace SlugBase
 {
@@ -19,6 +20,12 @@ namespace SlugBase
                 "inv" => new Name("Inv"),
                 _ => new Name(text)
             };
+        }
+
+        public static string MatchCaseInsensitiveEnum<T>(string name)
+            where T : ExtEnum<T>
+        {
+            return ExtEnum<T>.values.entries.FirstOrDefault(value => value.Equals(name, System.StringComparison.InvariantCultureIgnoreCase)) ?? name;
         }
     }
 }
