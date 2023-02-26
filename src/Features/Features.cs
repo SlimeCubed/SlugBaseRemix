@@ -2,6 +2,7 @@
 using SlugBase.DataTypes;
 using System.Collections.Generic;
 using Menu;
+using System.Linq;
 
 namespace SlugBase.Features
 {
@@ -88,6 +89,19 @@ namespace SlugBase.Features
             if (colors.Length < 2 || colors[1].Name != "Eyes") throw new JsonException("Expected \"Eyes\" as second custom color!", list);
 
             return colors;
+        });
+
+        /// <summary>"can_maul": Ability to maul creatures.</summary>
+        public static readonly PlayerFeature<bool> CanMaul = PlayerBool("can_maul");
+
+        /// <summary>"maul_damage": Damage of maul attack.</summary>
+        public static readonly PlayerFeature<float> MaulDamage = PlayerFloat("maul_damage");
+
+        /// <summary>"maul_blacklist": Creatures that cannot be mauled.</summary>
+        public static readonly PlayerFeature<CreatureTemplate.Type[]> MaulBlacklist = new("maul_blacklist", json =>
+        {
+            var list = json.AsList();
+            return list.Select(JsonUtils.ToExtEnum<CreatureTemplate.Type>).ToArray();
         });
     }
 

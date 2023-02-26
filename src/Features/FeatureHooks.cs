@@ -97,6 +97,58 @@ namespace SlugBase.Features
             }
         }
 
+        // CanMaul: Allow mauling
+        private static bool SlugcatStats_SlugcatCanMaul(On.SlugcatStats.orig_SlugcatCanMaul orig, SlugcatStats.Name name)
+        {
+            if (SlugBaseCharacter.TryGet(name, out var chara)
+                && CanMaul.TryGet(chara, out bool canMaul))
+            {
+                return canMaul;
+            }
+            return orig(name);
+        }
+
+        // MaulBlacklist: Apply mauling blacklist
+        public static bool Player_CanMaulCreature(On.Player.orig_CanMaulCreature orig, Player player, Creature crit)
+        {
+            if (MaulBlacklist.TryGet(player, out var blacklist))
+            {
+                var template = crit.Template;
+                while(template != null)
+                {
+                    if (Array.IndexOf(blacklist, crit.Template.type) != -1)
+                        return false;
+
+                    template = template.ancestor;
+                }
+            }
+
+            return orig(player, crit);
+        }
+
+        // MaulDamage: Change mauling damage
+        public static void Player_GrabUpdate(ILContext il)
+        {
+            ILCursor c = new(il);
+            if (c.TryGotoNext(
+                MoveType.Before,
+                x => x.MatchLdcR4(1f),
+                x => x.MatchLdcR4(15f),
+                x => x.MatchCallOrCallvirt<Creature>("Violence")))
+            {
+                c.Index += 1;
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Func<float, Player, float>>((baseDamage, player) =>
+                {
+                    return MaulDamage.TryGet(player, out var newDamage) ? newDamage : baseDamage;
+                });
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(Player_GrabUpdate)} failed!");
+            }
+        }
+
         // BackSpear: Add back spear
         private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
         {

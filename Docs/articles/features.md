@@ -136,6 +136,21 @@ Configurable colors for this character. Colors are referenced by `"name"`, and w
 
 Ability to store a spear on the player's back.
 
+### "can_maul"
+`boolean`
+
+Ability to deal damage to stunned creatures by holding grab.
+
+### "maul_blacklist"
+`string[]`
+
+Creature types that may not be mauled by this character. These refer to `CreatureTemplate.Type` values, such as "Scavenger" and "GreenLizard".
+
+### "maul_damage"
+`float`
+
+Damage dealt when mauling. This defaults to 1.
+
 ## Game Features
 ### "karma"
 `integer`
