@@ -19,6 +19,9 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.SlugcatStats.SlugcatCanMaul += SlugcatStats_SlugcatCanMaul;
+            On.Player.CanMaulCreature += Player_CanMaulCreature;
+            IL.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.ctor += Player_ctor;
             On.Menu.SleepAndDeathScreen.AddBkgIllustration += SleepAndDeathScreen_AddBkgIllustration;
             On.PlayerGraphics.DefaultBodyPartColorHex += PlayerGraphics_DefaultBodyPartColorHex;
