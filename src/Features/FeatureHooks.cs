@@ -470,10 +470,11 @@ namespace SlugBase.Features
         // CommunityAlignments: Lock reputation
         private static float CreatureCommunities_LikeOfPlayer(On.CreatureCommunities.orig_LikeOfPlayer orig, CreatureCommunities self, CreatureCommunities.CommunityID commID, int region, int playerNumber)
         {
-            var players = self.session.Players;
+            var players = self.session?.Players;
 
-            if(playerNumber >= 0 && playerNumber < players.Count
-                && players[playerNumber].realizedObject is Player ply
+            if(players != null
+                && playerNumber >= 0 && playerNumber < players.Count
+                && players[playerNumber]?.realizedObject is Player ply
                 && CommunityAlignments.TryGet(ply, out var reps)
                 && reps.TryGetValue(commID, out var repOverride)
                 && repOverride.Locked)
