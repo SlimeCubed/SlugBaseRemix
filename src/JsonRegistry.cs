@@ -284,7 +284,12 @@ namespace SlugBase
             if (ExtEnum<TKey>.values.entries.Contains(id))
                 throw new ArgumentException($"ID \"{id}\" from {typeof(TKey).FullName} is already in use!");
 
-            return (TKey)Activator.CreateInstance(typeof(TKey), id, true);
+            var claimedID = (TKey)Activator.CreateInstance(typeof(TKey), id, true);
+
+            // Update existing ExtEnum with the new index
+            ExtEnum<TKey>.valuesVersion++;
+
+            return claimedID;
         }
 
         private readonly struct Entry
