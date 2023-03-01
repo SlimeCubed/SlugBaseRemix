@@ -235,6 +235,6 @@ Scene ID for death screen after starvation.
 Scene ID for non-starvation deaths.
 
 ### "world_state"
-`string`
+`string[]`
 
-A `SlugcatStats.Name` value to copy world state from. This includes spawns and room connections. Specifying an MSC slugcat will fail if MSC is not installed.
+`SlugcatStats.Name` values to copy world state from. This includes spawns and room connections. If the first name does not exist, then the second will be tried and so on.
