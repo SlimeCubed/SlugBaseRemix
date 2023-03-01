@@ -172,6 +172,18 @@ namespace SlugBase.Features
 
         // TODO: Test
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
-        public static readonly GameFeature<SlugcatStats.Name> WorldState = new("world_state", json => Utils.GetName(json.AsString()));
+        public static readonly GameFeature<SlugcatStats.Name[]> WorldState = new("world_state", json =>
+        {
+            if (json.TryList() is JsonList list)
+            {
+                return list.Select(value => Utils.GetName(value.AsString())).ToArray();
+            }
+            else
+            {
+                return new SlugcatStats.Name[] {
+                    Utils.GetName(json.AsString())
+                };
+            }
+        });
     }
 }

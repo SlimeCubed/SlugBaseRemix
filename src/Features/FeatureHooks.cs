@@ -275,7 +275,7 @@ namespace SlugBase.Features
             if (SlugBaseCharacter.TryGet(playerChar, out var chara)
                 && WorldState.TryGet(chara, out var copyWorld))
             {
-                playerChar = copyWorld;
+                playerChar = Utils.FirstValidEnum(copyWorld) ?? playerChar;
             }
 
             orig(self, name, region, template, firstTemplate, playerChar);
@@ -287,7 +287,7 @@ namespace SlugBase.Features
             if (SlugBaseCharacter.TryGet(slugcatIndex, out var chara)
                 && WorldState.TryGet(chara, out var copyWorld))
             {
-                slugcatIndex = copyWorld;
+                slugcatIndex = Utils.FirstValidEnum(copyWorld) ?? slugcatIndex;
             }
 
             return orig(regionAcro, slugcatIndex);
@@ -299,7 +299,7 @@ namespace SlugBase.Features
             if(SlugBaseCharacter.TryGet(playerCharacter, out var chara)
                 && WorldState.TryGet(chara, out var copyWorld))
             {
-                playerCharacter = copyWorld;
+                playerCharacter = Utils.FirstValidEnum(copyWorld) ?? playerCharacter;
             }
 
             orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
