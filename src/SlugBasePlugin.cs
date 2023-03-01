@@ -16,7 +16,7 @@ using SlugBase.Interface;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.0.0")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.1.0")]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
