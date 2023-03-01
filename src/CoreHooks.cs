@@ -3,6 +3,7 @@ using RWCustom;
 using SlugBase.Interface;
 using System.Linq;
 using UnityEngine;
+using System;
 
 namespace SlugBase
 {
@@ -10,9 +11,24 @@ namespace SlugBase
     {
         public static void Apply()
         {
+            On.SlugcatStats.getSlugcatName += SlugcatStats_getSlugcatName;
             On.InGameTranslator.LoadFonts += InGameTranslator_LoadFonts;
             On.Menu.SlugcatSelectMenu.SlugcatPageNewGame.ctor += SlugcatPageNewGame_ctor;
             On.Menu.SlugcatSelectMenu.SetSlugcatColorOrder += SlugcatSelectMenu_SetSlugcatColorOrder;
+        }
+
+        // Update slugcat name on other menus
+        private static string SlugcatStats_getSlugcatName(On.SlugcatStats.orig_getSlugcatName orig, SlugcatStats.Name i)
+        {
+            if (SlugBaseCharacter.TryGet(i, out var chara)
+                && chara.DisplayName is string displayName)
+            {
+                return displayName.StartsWith("The ", StringComparison.InvariantCultureIgnoreCase) ? displayName.Substring(4) : displayName;
+            }
+            else
+            {
+                return orig(i);
+            }
         }
 
         private static void InGameTranslator_LoadFonts(On.InGameTranslator.orig_LoadFonts orig, InGameTranslator.LanguageID lang, Menu.Menu menu)
@@ -32,11 +48,12 @@ namespace SlugBase
                 string name = chara.DisplayName ?? "Missing Name";
                 string desc = chara.Description ?? "Missing Description";
 
-                desc = Custom.ReplaceLineDelimeters(desc);
+                name = self.menu.Translate(name.ToUpper());
+                desc = Custom.ReplaceLineDelimeters(self.menu.Translate(desc));
                 int descLines = desc.Count((char f) => f == '\n');
                 float offset = descLines > 1 ? 30f : 0f;
 
-                self.difficultyLabel.text = name.ToUpper();
+                self.difficultyLabel.text = name;
                 self.difficultyLabel.pos = new Vector2(-1000f, self.imagePos.y - 249f + offset);
 
                 self.infoLabel.text = desc;
