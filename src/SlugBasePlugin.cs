@@ -16,7 +16,7 @@ using SlugBase.Interface;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.1.0")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.1.1")]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
@@ -35,9 +35,16 @@ namespace SlugBase
         {
             On.RainWorld.PreModsInit += (orig, self) =>
             {
-                // Ensure that all features are registered before use
-                RuntimeHelpers.RunClassConstructor(typeof(PlayerFeatures).TypeHandle);
-                RuntimeHelpers.RunClassConstructor(typeof(GameFeatures).TypeHandle);
+                try
+                {
+                    // Ensure that all features are registered before use
+                    RuntimeHelpers.RunClassConstructor(typeof(PlayerFeatures).TypeHandle);
+                    RuntimeHelpers.RunClassConstructor(typeof(GameFeatures).TypeHandle);
+                }
+                catch(Exception e)
+                {
+                    Debug.LogException(e);
+                }
 
                 orig(self);
             };

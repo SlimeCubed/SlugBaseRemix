@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using MonoMod.RuntimeDetour;
 
 namespace SlugBase.Features
 {
@@ -28,7 +29,14 @@ namespace SlugBase.Features
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
+            On.AbstractCreature.setCustomFlags += AbstractCreature_setCustomFlags;
+            new Hook(
+                typeof(OverWorld).GetProperty(nameof(OverWorld.PlayerCharacterNumber)).GetGetMethod(),
+                OverWorld_get_PlayerCharacterNumber
+            );
             On.RoomSettings.ctor += RoomSettings_ctor;
+            On.Region.GetProperRegionAcronym += Region_GetProperRegionAcronym;
+            On.Region.LoadAllRegions += Region_LoadAllRegions;
             On.Region.GetRegionFullName += Region_GetRegionFullName;
             On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
             On.Player.CanEatMeat += Player_CanEatMeat;
@@ -269,6 +277,42 @@ namespace SlugBase.Features
             }
         }
 
+        // WorldState: Stop some creatures from freezing when using Saint's world state
+        private static void AbstractCreature_setCustomFlags(On.AbstractCreature.orig_setCustomFlags orig, AbstractCreature self)
+        {
+            orig(self);
+
+            if (ModManager.MSC
+                && self.Room.world.game.IsStorySession
+                && SlugBaseCharacter.TryGet(self.Room.world.game.StoryCharacter, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld)
+                && Utils.FirstValidEnum(copyWorld) == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Saint)
+            {
+                if (self.creatureTemplate.BlizzardAdapted)
+                {
+                    self.HypothermiaImmune = true;
+                }
+                if (self.creatureTemplate.BlizzardWanderer)
+                {
+                    self.ignoreCycle = true;
+                }
+            }
+        }
+
+        // WorldState: Change region world files
+        private static SlugcatStats.Name OverWorld_get_PlayerCharacterNumber(Func<OverWorld, SlugcatStats.Name> orig, OverWorld self)
+        {
+            var playerChar = orig(self);
+
+            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                playerChar = Utils.FirstValidEnum(copyWorld) ?? playerChar;
+            }
+
+            return playerChar;
+        }
+
         // WorldState: Change conditional settings
         private static void RoomSettings_ctor(On.RoomSettings.orig_ctor orig, RoomSettings self, string name, Region region, bool template, bool firstTemplate, SlugcatStats.Name playerChar)
         {
@@ -279,6 +323,30 @@ namespace SlugBase.Features
             }
 
             orig(self, name, region, template, firstTemplate, playerChar);
+        }
+
+        // WorldState: Swap regions based on character
+        private static string Region_GetProperRegionAcronym(On.Region.orig_GetProperRegionAcronym orig, SlugcatStats.Name character, string baseAcronym)
+        {
+            if (SlugBaseCharacter.TryGet(character, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                character = Utils.FirstValidEnum(copyWorld) ?? character;
+            }
+
+            return orig(character, baseAcronym);
+        }
+
+        // WorldState: Change regions on fast travel screen
+        private static Region[] Region_LoadAllRegions(On.Region.orig_LoadAllRegions orig, SlugcatStats.Name storyIndex)
+        {
+            if (SlugBaseCharacter.TryGet(storyIndex, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                storyIndex = Utils.FirstValidEnum(copyWorld) ?? storyIndex;
+            }
+
+            return orig(storyIndex);
         }
 
         // WorldState: Change region names
