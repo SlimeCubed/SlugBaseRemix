@@ -4,6 +4,7 @@ This article takes you through the process of making a custom slugcat from a tem
 ## Prerequisites
 Before you start, you'll need a few things:
 - [Visual Studio](https://visualstudio.microsoft.com/vs/community/) with the ".NET desktop development" workload to compile C# code into dlls.
+- [.NET 7 SDK](https://dotnet.microsoft.com/en-us/download/visual-studio-sdks) or above to let you use C# 11.
 - [SlugTemplate](https://github.com/SlimeCubed/SlugTemplate), either by creating a new GitHub repo with the template or downloading the source as a ZIP file.
 - [dnSpy](https://github.com/dnSpy/dnSpy/releases/latest) to decompile and inspect the game's code.
 - Some knowledge of C#.
@@ -24,7 +25,7 @@ This will produce a perfectly functional mod as is, but if more than one person 
 
 <img src="../images/template/rename-sln.png" />
 
-2: Open `Plugin.cs` in Visual Studio. Rename the mod name and ID to something unique. Update the prefixes on the custom feature names, as well. These fields are unrelated, but should be similar enough that you can identify them as being from your mod.
+2: Open `Plugin.cs` in Visual Studio. Rename the mod name and ID to something unique. Update the prefixes on the custom feature names, as well. These fields are unrelated, but should be similar enough that you can identify them as being from your mod. The features here are just for demonstration purposes, so you'll probably want to remove them before publishing your mod.
 
 <img src="../images/template/rename-plugin.png" />
 
