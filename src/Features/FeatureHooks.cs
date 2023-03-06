@@ -137,15 +137,16 @@ namespace SlugBase.Features
             return orig(player, crit);
         }
 
-        // MaulDamage: Change mauling damage
+        // MaulDamage: Change mauling damage, allow mauling without MSC enabled
         public static void Player_GrabUpdate(ILContext il)
         {
+            // Change damage
             ILCursor c = new(il);
             if (c.TryGotoNext(
                 MoveType.Before,
                 x => x.MatchLdcR4(1f),
                 x => x.MatchLdcR4(15f),
-                x => x.MatchCallOrCallvirt<Creature>("Violence")))
+                x => x.MatchCallOrCallvirt<Creature>(nameof(Creature.Violence))))
             {
                 c.Index += 1;
                 c.Emit(OpCodes.Ldarg_0);
@@ -156,7 +157,20 @@ namespace SlugBase.Features
             }
             else
             {
-                SlugBasePlugin.Logger.LogError($"IL hook {nameof(Player_GrabUpdate)} failed!");
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(Player_GrabUpdate)}, damage, failed!");
+            }
+
+            // Skip MSC check (Andrew approved)
+            c.Index = 0;
+            if (c.TryGotoNext(x => x.MatchCallOrCallvirt<SlugcatStats>(nameof(SlugcatStats.SlugcatCanMaul)))
+                && c.TryGotoPrev(MoveType.After, x => x.MatchLdsfld<ModManager>(nameof(ModManager.MSC))))
+            {
+                c.Emit(OpCodes.Pop);
+                c.Emit(OpCodes.Ldc_I4_1);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(Player_GrabUpdate)}, remove MSC check, failed!");
             }
         }
 
