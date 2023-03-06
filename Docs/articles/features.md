@@ -18,7 +18,7 @@ Values specified in angle brackets refer to `ExtEnum`s in the game's code. Repla
 
 **Vanilla:** `None`, `All`, `Scavengers`, `Lizards`, `Cicadas`, `GarbageWorms`, `Deer`, `Jetfish`
 
-# [CreatureCommunities.CommunityID](#tab/slugcatstatsname)
+# [CreatureTemplate.Type](#tab/creaturetype)
 
 **Vanilla:** `StandardGroundCreature`, `Slugcat`, `LizardTemplate`, `PinkLizard`, `GreenLizard`, `BlueLizard`, `YellowLizard`, `WhiteLizard`, `RedLizard`, `BlackLizard`, `Salamander`, `CyanLizard`, `Fly`, `Leech`, `SeaLeech`, `Snail`, `Vulture`, `GarbageWorm`, `LanternMouse`, `CicadaA`, `CicadaB`, `Spider`, `JetFish`, `BigEel`, `Deer`, `TubeWorm`, `DaddyLongLegs`, `BrotherLongLegs`, `TentaclePlant`, `PoleMimic`, `MirosBird`, `TempleGuard`, `Centipede`, `RedCentipede`, `Centiwing`, `SmallCentipede`, `Scavenger`, `Overseer`, `VultureGrub`, `EggBug`, `BigSpider`, `SpitterSpider`, `SmallNeedleWorm`, `BigNeedleWorm`, `DropBug`, `KingVulture`, `Hazer`
 
