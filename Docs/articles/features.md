@@ -205,6 +205,18 @@ Ex: `"karma_cap": 7`
 
 Initial karma cap from 0 to 9.
 
+### "the_mark"
+`boolean`\
+Ex: `"the_mark": true`
+
+Whether this character starts with the mark of communication.
+
+### "the_glow"
+`boolean`\
+Ex: `"the_glow": true`
+
+Whether this character starts with the neuron glow.
+
 ### "start_room"
 `string[]`\
 Ex: `"start_room": "LF_H01"`, `"start_room": [ "DS_RIVSTART", "LF_H01" ]`

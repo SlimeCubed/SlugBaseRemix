@@ -102,6 +102,12 @@ namespace SlugBase.Features
         /// <summary>"karma_cap": Initial karma cap.</summary>
         public static readonly GameFeature<int> KarmaCap = GameInt("karma_cap");
 
+        /// <summary>"the_mark": Start with mark of communication.</summary>
+        public static readonly GameFeature<bool> TheMark = GameBool("the_mark");
+
+        /// <summary>"the_glow": Start glowing.</summary>
+        public static readonly GameFeature<bool> TheGlow = GameBool("the_glow");
+
         /// <summary>"start_room": Initial room, plus backups from highest to lowest priority.</summary>
         public static readonly GameFeature<string[]> StartRoom = GameStrings("start_room", 1);
 

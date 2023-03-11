@@ -663,6 +663,7 @@ namespace SlugBase.Features
 
         // HasDreams: Add dreams
         // Karma, KarmaCap: Change initial values
+        // TheMark, TheGlow: Change starting state
         private static void SaveState_ctor(On.SaveState.orig_ctor orig, SaveState self, SlugcatStats.Name saveStateNumber, PlayerProgression progression)
         {
             orig(self, saveStateNumber, progression);
@@ -682,6 +683,12 @@ namespace SlugBase.Features
 
                 if (Karma.TryGet(chara, out int initKarma))
                     self.deathPersistentSaveData.karma = initKarma;
+
+                if (TheMark.TryGet(chara, out bool hasMark) && hasMark)
+                    self.deathPersistentSaveData.theMark = true;
+
+                if (TheGlow.TryGet(chara, out bool hasGlow) && hasGlow)
+                    self.theGlow = true;
             }
         }
 
