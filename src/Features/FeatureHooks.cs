@@ -51,6 +51,7 @@ namespace SlugBase.Features
             On.RainCycle.ctor += RainCycle_ctor;
             On.SlugcatStats.AutoGrabBatflys += SlugcatStats_AutoGrabBatflys;
             On.SlugcatStats.ctor += SlugcatStats_ctor;
+            On.SlugcatStats.SlugcatStartingKarma += SlugcatStats_SlugcatStartingKarma;
             On.SaveState.ctor += SaveState_ctor;
             On.WorldLoader.GeneratePopulation += WorldLoader_GeneratePopulation;
             On.OverseerAbstractAI.SetAsPlayerGuide += OverseerAbstractAI_SetAsPlayerGuide;
@@ -658,6 +659,20 @@ namespace SlugBase.Features
 
                 if (LoudnessMul.TryGet(chara, out var loudness))
                     self.loudnessFac = ApplyStarve(loudness, loudness[0]);
+            }
+        }
+
+        // KarmaCap: Fix cap resetting on echo encounter
+        private static int SlugcatStats_SlugcatStartingKarma(On.SlugcatStats.orig_SlugcatStartingKarma orig, SlugcatStats.Name slugcatNum)
+        {
+            if (SlugBaseCharacter.TryGet(slugcatNum, out var chara)
+                && KarmaCap.TryGet(chara, out int karmaCap))
+            {
+                return karmaCap;
+            }
+            else
+            {
+                return orig(slugcatNum);
             }
         }
 
