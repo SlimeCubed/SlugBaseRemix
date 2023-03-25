@@ -79,18 +79,8 @@ namespace SlugBase.DataTypes
                 {
                     foreach(var pair in overrides)
                     {
-                        var objType = new ObjType(pair.Key);
-                        var critType = new CritType(pair.Key);
-
-                        if((int)objType != -1)
-                        {
-                            ObjectOverrides[objType] = pair.Value.AsFloat();
-                        }
-
-                        if((int)critType != -1)
-                        {
-                            CreatureOverrides[critType] = pair.Value.AsFloat();
-                        }
+                        ObjectOverrides[new ObjType(pair.Key)] = pair.Value.AsFloat();
+                        CreatureOverrides[new CritType(pair.Key)] = pair.Value.AsFloat();
                     }
                 }
             }
