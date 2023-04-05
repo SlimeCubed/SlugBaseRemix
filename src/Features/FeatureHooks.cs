@@ -859,7 +859,7 @@ namespace SlugBase.Features
         // GuideOverseer: Remove when not present
         private static bool WorldLoader_OverseerSpawnConditions(On.WorldLoader.orig_OverseerSpawnConditions orig, WorldLoader self, SlugcatStats.Name character)
         {
-            if (SlugBaseCharacter.TryGet(character, out var chara) && !GuideOverseer.TryGet(chara, out _))
+            if (SlugBaseCharacter.TryGet(self.game?.StoryCharacter ?? character, out var chara) && !GuideOverseer.TryGet(chara, out _))
                 return false;
             else
                 return orig(self, character);
