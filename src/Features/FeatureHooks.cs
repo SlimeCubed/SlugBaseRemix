@@ -30,6 +30,10 @@ namespace SlugBase.Features
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
+            IL.HUD.Map.LoadConnectionPositions += ApplyWorldState;
+            IL.HUD.Map.Update += ApplyWorldState;
+            On.SlugcatStats.getSlugcatOptionalRegions += SlugcatStats_getSlugcatOptionalRegions;
+            On.SlugcatStats.getSlugcatStoryRegions += SlugcatStats_getSlugcatStoryRegions;
             On.AbstractCreature.setCustomFlags += AbstractCreature_setCustomFlags;
             new Hook(
                 typeof(OverWorld).GetProperty(nameof(OverWorld.PlayerCharacterNumber)).GetGetMethod(),
@@ -366,6 +370,51 @@ namespace SlugBase.Features
             {
                 SlugBasePlugin.Logger.LogError($"IL hook {nameof(PlayerGraphics_ApplyPalette)} failed!");
             }
+        }
+
+        // WorldState: Fix map connections
+        private static void ApplyWorldState(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            while (c.TryGotoNext(MoveType.After,
+                x => x.MatchCallOrCallvirt<PlayerProgression>("get_PlayingAsSlugcat")))
+            {
+                c.EmitDelegate<Func<SlugcatStats.Name, SlugcatStats.Name>>(name =>
+                {
+                    if (SlugBaseCharacter.TryGet(name, out var chara)
+                        && WorldState.TryGet(chara, out var copyWorld))
+                    {
+                        name = Utils.FirstValidEnum(copyWorld) ?? name;
+                    }
+
+                    return name;
+                });
+            }
+        }
+
+        // WorldState: Mark regions as optional for collections and safari
+        private static string[] SlugcatStats_getSlugcatOptionalRegions(On.SlugcatStats.orig_getSlugcatOptionalRegions orig, SlugcatStats.Name i)
+        {
+            if (SlugBaseCharacter.TryGet(i, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                i = Utils.FirstValidEnum(copyWorld) ?? i;
+            }
+
+            return orig(i);
+        }
+
+        // WorldState: Mark regions as accessible for collections and safari
+        private static string[] SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_getSlugcatStoryRegions orig, SlugcatStats.Name i)
+        {
+            if (SlugBaseCharacter.TryGet(i, out var chara)
+                && WorldState.TryGet(chara, out var copyWorld))
+            {
+                i = Utils.FirstValidEnum(copyWorld) ?? i;
+            }
+
+            return orig(i);
         }
 
         // WorldState: Stop some creatures from freezing when using Saint's world state
