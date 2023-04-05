@@ -38,6 +38,26 @@ namespace SlugBase
         /// <returns>The <see cref="SlugBaseCharacter"/>, or <c>null</c> if it was not found.</returns>
         public static SlugBaseCharacter Get(SlugcatStats.Name name) => Registry.GetOrDefault(name);
 
+        /// <summary>
+        /// Creates a new, blank <see cref="SlugBaseCharacter"/>.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="DisplayName"/>, <see cref="Description"/>, and <see cref="Features"/> to customize this character.
+        /// </remarks>
+        /// <param name="id">The new character's unique ID.</param>
+        /// <returns>A new <see cref="SlugBaseCharacter"/> with a default name, default description, and no features.</returns>
+        public static SlugBaseCharacter Create(string id)
+        {
+            var data = new Dictionary<string, object>()
+            {
+                { "id", id },
+                { "name", "No Name" },
+                { "description", "No description." }
+            };
+
+            return Registry.Add(JsonConverter.ToJson(data)).Value;
+        }
+
         static SlugBaseCharacter()
         {
             Registry.EntryReloaded += (_, args) =>
@@ -107,6 +127,35 @@ namespace SlugBase
                     value = default;
                     return false;
                 }
+            }
+
+            /// <summary>
+            /// Add a <see cref="Feature"/> or replace an existing <see cref="Feature"/>'s value.
+            /// </summary>
+            /// <remarks>
+            /// Some features are only read occasionally, such as when starting a game or entering a room.
+            /// Instead of modifying features during gameplay, consider defining a custom <see cref="Feature{T}"/> and corresponding <see cref="Data{THolder, TValue}"/>.
+            /// </remarks>
+            /// <param name="feature">The feature to add or replace.</param>
+            /// <param name="value">The feature's new value.</param>
+            /// <exception cref="JsonException"><paramref name="value"/> was not a valid value for <paramref name="feature"/>.</exception>
+            public void Set(Feature feature, JsonAny value)
+            {
+                _features[feature] = feature.Create(value);
+            }
+
+            /// <summary>
+            /// Remove a <see cref="Feature"/>.
+            /// </summary>
+            /// <remarks>
+            /// Some features are only read occasionally, such as when starting a game or entering a room.
+            /// Instead of modifying features during gameplay, consider defining a custom <see cref="Feature{T}"/> and corresponding <see cref="Data{THolder, TValue}"/>.
+            /// </remarks>
+            /// <param name="feature">The feature to remove.</param>
+            /// <returns><c>true</c> if the feature was present, <c>false</c> otherwise.</returns>
+            public bool Remove(Feature feature)
+            {
+                return _features.Remove(feature);
             }
 
             /// <summary>

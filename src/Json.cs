@@ -16,9 +16,6 @@ namespace SlugBase
         {
             _object = obj;
             _path = path;
-
-            if (Type == Element.Invalid)
-                throw new JsonException("Failed to parse text as JSON!", this);
         }
 
         /// <summary>Cast to <see cref="JsonObject"/>.</summary>
@@ -98,6 +95,9 @@ namespace SlugBase
         /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
         public bool? TryBool() => Type == Element.Bool ? AsBool() : null;
 
+        /// <summary>Test if this value is <c>null</c>.</summary>
+        public bool IsNull() => Type == Element.Null;
+
 
         /// <summary>Cast to <see cref="JsonObject"/>.</summary>
         /// <exception cref="JsonException"><paramref name="json"/> isn't a JSON object.</exception>
@@ -140,7 +140,7 @@ namespace SlugBase
         public static JsonAny Parse(string data) => new(JsonParser.Parse(data), new JsonPathNode("root", null));
 
         /// <summary>
-        /// The type of this element. This may not be <see cref="Element.Invalid"/>.
+        /// The type of this element.
         /// </summary>
         public Element Type => _object switch
         {
@@ -149,7 +149,8 @@ namespace SlugBase
             double => Element.Number,
             string => Element.String,
             bool => Element.Bool,
-            _ => Element.Invalid
+            null => Element.Null,
+            _ => throw new InvalidOperationException("Invalid value in JsonAny!")
         };
 
         /// <summary>
@@ -178,9 +179,9 @@ namespace SlugBase
             /// </summary>
             Bool,
             /// <summary>
-            /// A value that couldn't be parsed.
+            /// A <c>null</c> value.
             /// </summary>
-            Invalid
+            Null
         }
     }
 
