@@ -43,6 +43,9 @@ namespace SlugBase
         ///<summary>Convert to <see cref="bool"/>.</summary>
         public static bool ToBool(JsonAny json) => json.AsBool();
 
+        /// <summary>Convert to <see cref="SlugcatStats.Name"/>.</summary>
+        public static SlugcatStats.Name ToSlugcatName(JsonAny json) => Utils.GetName(json.AsString());
+
         /// <summary>
         /// Convert to <see cref="Color"/>.
         /// </summary>
@@ -114,6 +117,9 @@ namespace SlugBase
 
         ///<summary>Convert list to <see cref="string"/>[].</summary>
         public static string[] ToStrings(JsonAny json) => json.TryString() == null ? json.AsList().Select(ToString).ToArray() : new[] { json.AsString() };
+
+        ///<summary>Convert list to <see cref="SlugcatStats.Name"/>[].</summary>
+        public static SlugcatStats.Name[] ToSlugcatNames(JsonAny json) => json.TryString() == null ? json.AsList().Select(ToSlugcatName).ToArray() : new[] { ToSlugcatName(json) };
 
         ///<summary>Convert to <see cref="Enum"/> value.</summary>
         public static T ToEnum<T>(JsonAny json) where T : struct

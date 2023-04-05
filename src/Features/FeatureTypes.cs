@@ -38,6 +38,9 @@ namespace SlugBase.Features
         /// <summary>Create a player feature that takes one string.</summary>
         public static PlayerFeature<string> PlayerString(string id) => new(id, JsonUtils.ToString);
 
+        /// <summary>Create a player feature that takes a slugcat name.</summary>
+        public static PlayerFeature<SlugcatStats.Name> PlayerSlugcatName(string id) => new(id, ToSlugcatName);
+
         /// <summary>Create a player feature that takes an array of integers.</summary>
         public static PlayerFeature<int[]> PlayerInts(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToInts(AssertLength(json, minLength, maxLength)));
 
@@ -52,6 +55,9 @@ namespace SlugBase.Features
 
         /// <summary>Create a player feature that takes an array of strings.</summary>
         public static PlayerFeature<string[]> PlayerStrings(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToStrings(AssertLength(json, minLength, maxLength)));
+
+        /// <summary>Create a player feature that takes an array of slugcat names.</summary>
+        public static PlayerFeature<SlugcatStats.Name[]> PlayerSlugcatNames(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToSlugcatNames(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a player feature that takes a color.</summary>
         public static PlayerFeature<Color> PlayerColor(string id) => new(id, ToColor);
@@ -83,7 +89,10 @@ namespace SlugBase.Features
 
         /// <summary>Create a game feature that takes one string.</summary>
         public static GameFeature<string> GameString(string id) => new(id, JsonUtils.ToString);
-        
+
+        /// <summary>Create a game feature that takes a slugcat name.</summary>
+        public static GameFeature<SlugcatStats.Name> GameSlugcatName(string id) => new(id, ToSlugcatName);
+
         /// <summary>Create a game feature that takes an array of integers.</summary>
         public static GameFeature<int[]> GameInts(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToInts(AssertLength(json, minLength, maxLength)));
         
@@ -98,6 +107,9 @@ namespace SlugBase.Features
         
         /// <summary>Create a game feature that takes an array of strings.</summary>
         public static GameFeature<string[]> GameStrings(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToStrings(AssertLength(json, minLength, maxLength)));
+
+        /// <summary>Create a game feature that takes an array of slugcat names.</summary>
+        public static GameFeature<SlugcatStats.Name[]> GameSlugcatNames(string id, int minLength = 0, int maxLength = int.MaxValue) => new(id, json => ToSlugcatNames(AssertLength(json, minLength, maxLength)));
 
         /// <summary>Create a game feature that takes a color.</summary>
         public static GameFeature<Color> GameColor(string id) => new(id, ToColor);

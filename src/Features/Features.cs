@@ -148,18 +148,12 @@ namespace SlugBase.Features
         public static readonly GameFeature<MenuScene.SceneID> DeathScene = GameExtEnum<MenuScene.SceneID>("death_scene");
 
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
-        public static readonly GameFeature<SlugcatStats.Name[]> WorldState = new("world_state", json =>
-        {
-            if (json.TryList() is JsonList list)
-            {
-                return list.Select(value => Utils.GetName(value.AsString())).ToArray();
-            }
-            else
-            {
-                return new SlugcatStats.Name[] {
-                    Utils.GetName(json.AsString())
-                };
-            }
-        });
+        public static readonly GameFeature<SlugcatStats.Name[]> WorldState = GameSlugcatNames("world_state");
+
+        /// <summary>"timeline_before": The next character in the timeline.</summary>
+        public static readonly GameFeature<SlugcatStats.Name[]> TimelineBefore = GameSlugcatNames("timeline_before", 1);
+
+        /// <summary>"timeline_after": The previous character in the timeline.</summary>
+        public static readonly GameFeature<SlugcatStats.Name[]> TimelineAfter = GameSlugcatNames("timeline_after", 1);
     }
 }

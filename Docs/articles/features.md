@@ -307,3 +307,15 @@ Scene ID for non-starvation deaths.
 Ex: `"world_state": "Red"`, `"world_state": [ "Spear", "Red" ]`
 
 `SlugcatStats.Name` values to copy world state from. This includes spawns and room connections. If the first name does not exist, then the second will be tried and so on.
+
+### "timeline_before"
+`string[]`\
+Ex: `"timeline_before": "Red"`, `"timeline_after": [ "Artificer", "Red" ]`
+
+`SlugcatStats.Name` values to position this character before in the timeline. If the first name does not exist or is not on the timeline, then the second will be tried and so on. This takes precedence over `"timeline_after"`.
+
+### "timeline_after"
+`string[]`\
+Ex: `"timeline_after": "Yellow"`, `"timeline_after": [ "Rivulet", "Yellow" ]`
+
+`SlugcatStats.Name` values to position this character after in the timeline. If the first name does not exist or is not on the timeline, then the second will be tried and so on. `"timeline_before"` takes precedence over this.

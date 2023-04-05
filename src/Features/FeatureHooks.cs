@@ -20,6 +20,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.SlugcatStats.getSlugcatTimelineOrder += SlugcatStats_getSlugcatTimelineOrder;
             On.SlugcatStats.SlugcatCanMaul += SlugcatStats_SlugcatCanMaul;
             On.Player.CanMaulCreature += Player_CanMaulCreature;
             IL.Player.GrabUpdate += Player_GrabUpdate;
@@ -107,6 +108,81 @@ namespace SlugBase.Features
             {
                 args.Game.session.characterStats = new SlugcatStats(args.Character.Name, args.Game.session.characterStats.malnourished);
             }
+        }
+
+        // TimelineBefore, TimelineAfter: Apply timeline order
+        private static SlugcatStats.Name[] SlugcatStats_getSlugcatTimelineOrder(On.SlugcatStats.orig_getSlugcatTimelineOrder orig)
+        {
+            var order = orig();
+
+            try
+            {
+                IEnumerable<SlugBaseCharacter> timelineCharas = SlugBaseCharacter.Registry.Values
+                    .Where(chara => TimelineBefore.TryGet(chara, out _) || TimelineAfter.TryGet(chara, out _))
+                    .OrderBy(chara => chara.Name.value, StringComparer.InvariantCulture);
+
+                if (timelineCharas.Any())
+                {
+                    // Use topological sorting to remove load order dependency
+                    timelineCharas = BepInEx.Utility.TopologicalSort(timelineCharas, chara =>
+                    {
+                        // Get names
+                        TimelineBefore.TryGet(chara, out var before);
+                        TimelineAfter.TryGet(chara, out var after);
+
+                        IEnumerable<SlugcatStats.Name> names;
+                        if (before != null)
+                            names = after == null ? before : before.Concat(after);
+                        else
+                            names = after;
+
+                        // Return associated SlugBaseCharacters
+                        return names.Select(SlugBaseCharacter.Get).Where(chara => chara != null);
+                    });
+
+                    // Insert into list
+                    var orderList = order.ToList();
+
+                    foreach (var chara in timelineCharas)
+                    {
+                        bool added = false;
+                        if (TimelineBefore.TryGet(chara, out var before))
+                        {
+                            foreach (var beforeName in before)
+                            {
+                                int i = orderList.IndexOf(beforeName);
+                                if (i != -1)
+                                {
+                                    added = true;
+                                    orderList.Insert(i, chara.Name);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!added && TimelineAfter.TryGet(chara, out var after))
+                        {
+                            foreach (var afterName in after)
+                            {
+                                int i = orderList.IndexOf(afterName);
+                                if (i != -1)
+                                {
+                                    added = true;
+                                    orderList.Insert(i + 1, chara.Name);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    order = orderList.ToArray();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+
+            return order;
         }
 
         // CanMaul: Allow mauling
