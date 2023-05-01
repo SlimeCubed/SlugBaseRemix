@@ -45,6 +45,9 @@ namespace SlugBase.Features
 
         /// <summary>"back_spear": Store a spear on back.</summary>
         public static readonly PlayerFeature<bool> BackSpear = PlayerBool("back_spear");
+
+        /// <summary> "title_card": Add a intro titlecard to be randomly selected. Must be 1366x768 pixels big to display correctly. </summary>
+        public static readonly PlayerFeature<bool> TitleCard = PlayerBool("title_card");
         
         /// <summary>"alignments": Initial community reputation.</summary>
         public static readonly PlayerFeature<Dictionary<CreatureCommunities.CommunityID, RepOverride>> CommunityAlignments = new("alignments", json =>

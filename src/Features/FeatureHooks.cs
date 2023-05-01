@@ -63,6 +63,7 @@ namespace SlugBase.Features
             On.WorldLoader.OverseerSpawnConditions += WorldLoader_OverseerSpawnConditions;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+            IL.Menu.IntroRoll.ctor += AddIntroRollImage;
 
             SlugBaseCharacter.Refreshed += Refreshed;
         }
@@ -896,6 +897,36 @@ namespace SlugBase.Features
                         break;
                     }
                 }
+            }
+        }
+        private static void AddIntroRollImage(ILContext il)
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchStloc(3)))
+                {
+                    return;
+                }
+
+                cursor.EmitDelegate((string[] strArray) =>
+                {
+                    foreach (var scug in SlugBaseCharacter.Registry.Keys)
+                    {
+                        if (SlugBaseCharacter.TryGet(scug, out var chara) && TitleCard.TryGet(chara, out bool hasTitlecard) && hasTitlecard)
+                        {
+                            Array.Resize<string>(ref strArray, strArray.Length+1);
+                            strArray[strArray.Length-1] = scug.value.ToLower();
+                            Debug.Log($"Added {scug.ToString()} to the titlecard possibilities");
+                        }
+                    }
+                    return strArray;
+                });
+            }
+            catch (Exception err)
+            {
+                Debug.Log(err);
             }
         }
     }
