@@ -16,7 +16,7 @@ using SlugBase.Interface;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.2.0")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.2.1")]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
@@ -64,6 +64,7 @@ namespace SlugBase
                     Futile.atlasManager.LoadAtlas("atlases/slugbase");
 
                     ErrorList.Instance = ErrorList.Attach();
+                    FeatureManager.LogErrors();
 
                     CoreHooks.Apply();
                     AssetHooks.Apply();
@@ -82,7 +83,7 @@ namespace SlugBase
             {
                 orig(self);
 
-                ErrorList.Instance.Clear();
+                ErrorList.Instance.ClearFileErrors();
                 ScanFiles();
             };
         }

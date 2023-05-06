@@ -4,7 +4,7 @@
         <key>fileFormatVersion</key>
         <int>6</int>
         <key>texturePackerVersion</key>
-        <string>7.0.1</string>
+        <string>7.0.2</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -176,6 +176,7 @@
             <key type="filename">slugbase/ui/cancel.png</key>
             <key type="filename">slugbase/ui/character.png</key>
             <key type="filename">slugbase/ui/edit.png</key>
+            <key type="filename">slugbase/ui/plugin.png</key>
             <key type="filename">slugbase/ui/reload.png</key>
             <key type="filename">slugbase/ui/scene.png</key>
             <struct type="IndividualSpriteSettings">
