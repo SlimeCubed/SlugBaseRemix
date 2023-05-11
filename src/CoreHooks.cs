@@ -68,7 +68,8 @@ namespace SlugBase
 
             foreach (var id in SlugBaseCharacter.Registry.Keys)
             {
-                self.slugcatColorOrder.Add(id);
+                if(!SlugcatStats.HiddenOrUnplayableSlugcat(id))
+                    self.slugcatColorOrder.Add(id);
             }
 
             for (int i = 0; i < self.slugcatColorOrder.Count; i++)

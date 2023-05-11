@@ -18,7 +18,7 @@
 },
 "slugbase/ui/edit.png":
 {
-	"frame": {"x":1,"y":18,"w":16,"h":16},
+	"frame": {"x":35,"y":1,"w":16,"h":16},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
@@ -26,11 +26,19 @@
 },
 "slugbase/ui/error.png":
 {
-	"frame": {"x":18,"y":18,"w":32,"h":32},
+	"frame": {"x":1,"y":18,"w":32,"h":32},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
 	"sourceSize": {"w":32,"h":32}
+},
+"slugbase/ui/plugin.png":
+{
+	"frame": {"x":34,"y":18,"w":16,"h":16},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+	"sourceSize": {"w":16,"h":16}
 },
 "slugbase/ui/reload.png":
 {
@@ -53,8 +61,8 @@
 	"version": "1.0",
 	"image": "slugbase.png",
 	"format": "RGBA8888",
-	"size": {"w":51,"h":68},
+	"size": {"w":52,"h":68},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:475f9b5b91525a2f54dfa573579e2c20:63f24e7f16a824ee774c67ec68c7c86e:01dac5fee6de78d510e2ccf92c050df5$"
+	"smartupdate": "$TexturePacker:SmartUpdate:06080aa7f53dc373648d71f60e3b26bf:6f6bab3a320e2ae125762e35d632a24c:01dac5fee6de78d510e2ccf92c050df5$"
 }
 }

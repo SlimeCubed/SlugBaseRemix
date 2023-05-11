@@ -224,13 +224,10 @@ namespace SlugBase.Features
         {
             // Change damage
             ILCursor c = new(il);
-            if (c.TryGotoNext(
-                MoveType.Before,
-                x => x.MatchLdcR4(1f),
-                x => x.MatchLdcR4(15f),
-                x => x.MatchCallOrCallvirt<Creature>(nameof(Creature.Violence))))
+            if (c.TryGotoNext(x => x.MatchLdsfld<Creature.DamageType>(nameof(Creature.DamageType.Bite)))
+                && c.TryGotoNext(x => x.MatchCallOrCallvirt<Creature>(nameof(Creature.Violence)))
+                && c.TryGotoPrev(MoveType.After, x => x.MatchLdcR4(1f)))
             {
-                c.Index += 1;
                 c.Emit(OpCodes.Ldarg_0);
                 c.EmitDelegate<Func<float, Player, float>>((baseDamage, player) =>
                 {

@@ -74,11 +74,11 @@ namespace SlugBase.Interface
             return list;
         }
 
-        public void Clear()
+        public void ClearFileErrors()
         {
             lock(_errors)
             {
-                _errors.Clear();
+                _errors.RemoveAll(error => error.File != null);
             }
         }
 
@@ -239,6 +239,7 @@ namespace SlugBase.Interface
         {
             ErrorIcon.Character => "slugbase/ui/character",
             ErrorIcon.Scene => "slugbase/ui/scene",
+            ErrorIcon.Plugin => "slugbase/ui/plugin",
             _ => "pixel"
         };
 
@@ -266,7 +267,8 @@ namespace SlugBase.Interface
         public enum ErrorIcon
         {
             Character,
-            Scene
+            Scene,
+            Plugin
         }
     }
 }
