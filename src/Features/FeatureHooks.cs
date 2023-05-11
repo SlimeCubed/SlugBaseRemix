@@ -898,33 +898,39 @@ namespace SlugBase.Features
         }
         private static void AddIntroRollImage(ILContext il)
         {
-            try
+            var cursor = new ILCursor(il);
+            if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchLdloc(3)))
             {
-                var cursor = new ILCursor(il);
-
-                if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchStloc(3)))
+                return;
+            }
+            cursor.RemoveRange(8);
+            if (!cursor.TryGotoPrev(MoveType.After, i => i.MatchLdstr("Intro_Roll_C_")))
+            {
+                return;
+            }
+            cursor.EmitDelegate((string str) =>
+            {
+                //Debug.Log("Removed instructions and made it to destination, please remain seated with your seatbelts on!");
+                List<string> strList = new List<string> {
+                    "gourmand",
+                    "rivulet",
+                    "spear",
+                    "artificer",
+                    "saint"
+                };
+                int prevLength = strList.Count;
+                foreach (var scug in SlugBaseCharacter.Registry.Keys)
                 {
-                    return;
-                }
-
-                cursor.EmitDelegate((string[] strArray) =>
-                {
-                    foreach (var scug in SlugBaseCharacter.Registry.Keys)
+                    if (SlugBaseCharacter.TryGet(scug, out var chara) && TitleCard.TryGet(chara, out string titleCardName) && titleCardName != null && titleCardName != "")
                     {
-                        if (SlugBaseCharacter.TryGet(scug, out var chara) && TitleCard.TryGet(chara, out bool hasTitlecard) && hasTitlecard)
-                        {
-                            Array.Resize<string>(ref strArray, strArray.Length+1);
-                            strArray[strArray.Length-1] = scug.value.ToLower();
-                            Debug.Log($"Added {scug.ToString()} to the titlecard possibilities");
-                        }
+                        Debug.Log($"Added {titleCardName} to the draw pile");
+                        strList.Add(titleCardName);
                     }
-                    return strArray;
-                });
-            }
-            catch (Exception err)
-            {
-                Debug.Log(err);
-            }
+                }
+                Debug.Log($"List Length: {strList.Count}");
+                int randNum = Random.Range(0, strList.Count);
+                return (randNum >= prevLength)? strList[randNum] : $"Intro_Roll_C_{strList[randNum]}";
+            });
         }
     }
 }
