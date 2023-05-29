@@ -319,3 +319,9 @@ Ex: `"timeline_before": "Red"`, `"timeline_after": [ "Artificer", "Red" ]`
 Ex: `"timeline_after": "Yellow"`, `"timeline_after": [ "Rivulet", "Yellow" ]`
 
 `SlugcatStats.Name` values to position this character after in the timeline. If the first name does not exist or is not on the timeline, then the second will be tried and so on. `"timeline_before"` takes precedence over this.
+
+### "title_card"
+`string`\
+Ex: `"title_card": "Title_Card_MySlugcat"`
+
+Image to use instead of `illustrations/intro_roll_c.png` on the title screen, relative to the `illustrations` folder. The card will be picked randomly if multiple modded characters are installed. The image should be 1366 by 768 pixels to fill the screen.
