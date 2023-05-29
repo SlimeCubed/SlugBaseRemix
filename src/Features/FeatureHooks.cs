@@ -63,7 +63,7 @@ namespace SlugBase.Features
             On.WorldLoader.OverseerSpawnConditions += WorldLoader_OverseerSpawnConditions;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
-            IL.Menu.IntroRoll.ctor += AddIntroRollImage;
+            IL.Menu.IntroRoll.ctor += IntroRoll_ctor;
 
             SlugBaseCharacter.Refreshed += Refreshed;
         }
@@ -896,41 +896,79 @@ namespace SlugBase.Features
                 }
             }
         }
-        private static void AddIntroRollImage(ILContext il)
+
+        // TitleCard: Add to pool
+        private static void IntroRoll_ctor(ILContext il)
         {
             var cursor = new ILCursor(il);
-            if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchLdloc(3)))
+
+            // MSC is active
+            if (cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
+                && cursor.TryGotoNext(MoveType.After, i => i.MatchCallOrCallvirt<string>(nameof(string.Concat))))
             {
-                return;
-            }
-            cursor.RemoveRange(8);
-            if (!cursor.TryGotoPrev(MoveType.After, i => i.MatchLdstr("Intro_Roll_C_")))
-            {
-                return;
-            }
-            cursor.EmitDelegate((string str) =>
-            {
-                //Debug.Log("Removed instructions and made it to destination, please remain seated with your seatbelts on!");
-                List<string> strList = new List<string> {
-                    "gourmand",
-                    "rivulet",
-                    "spear",
-                    "artificer",
-                    "saint"
-                };
-                int prevLength = strList.Count;
-                foreach (var scug in SlugBaseCharacter.Registry.Keys)
+                cursor.Emit(OpCodes.Ldloc_3);
+                cursor.EmitDelegate<Func<string, string[], string>>((titleImage, oldTitleImages) =>
                 {
-                    if (SlugBaseCharacter.TryGet(scug, out var chara) && TitleCard.TryGet(chara, out string titleCardName) && titleCardName != null && titleCardName != "")
+                    // Get a list of all SlugBase title images
+                    var newTitleImages = new List<string>();
+                    foreach(var chara in SlugBaseCharacter.Registry.Values)
                     {
-                        Debug.Log($"Added {titleCardName} to the draw pile");
-                        strList.Add(titleCardName);
+                        if(TitleCard.TryGet(chara, out var newTitleImage)
+                            && !string.IsNullOrEmpty(newTitleImage))
+                        {
+                            newTitleImages.Add(newTitleImage);
+                        }
                     }
-                }
-                Debug.Log($"List Length: {strList.Count}");
-                int randNum = Random.Range(0, strList.Count);
-                return (randNum >= prevLength)? strList[randNum] : $"Intro_Roll_C_{strList[randNum]}";
-            });
+
+                    // Switch title if random choice is from SlugBase
+                    if (newTitleImages.Count > 0)
+                    {
+                        int choice = Random.Range(0, newTitleImages.Count + oldTitleImages.Length);
+                        if (choice < newTitleImages.Count)
+                        {
+                            titleImage = newTitleImages[choice];
+                        }
+                    }
+
+                    return titleImage;
+                });
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, MSC, failed!");
+            }
+
+            // MSC is not active
+            cursor.Index = 0;
+            if(cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
+                && cursor.TryGotoPrev(i => i.MatchLdstr("Intro_Roll_C")))
+            {
+                cursor.EmitDelegate<Func<string, string>>(titleImage =>
+                {
+                    // Get a list of all SlugBase title images
+                    var newTitleImages = new List<string>();
+                    foreach (var chara in SlugBaseCharacter.Registry.Values)
+                    {
+                        if (TitleCard.TryGet(chara, out var newTitleImage)
+                            && !string.IsNullOrEmpty(newTitleImage))
+                        {
+                            newTitleImages.Add(newTitleImage);
+                        }
+                    }
+
+                    // Switch title to random choice from SlugBase characters
+                    if (newTitleImages.Count > 0)
+                    {
+                        titleImage = newTitleImages[Random.Range(0, newTitleImages.Count)];
+                    }
+
+                    return titleImage;
+                });
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, no MSC, failed!");
+            }
         }
     }
 }
