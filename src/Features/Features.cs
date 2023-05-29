@@ -155,5 +155,8 @@ namespace SlugBase.Features
 
         /// <summary>"timeline_after": The previous character in the timeline.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> TimelineAfter = GameSlugcatNames("timeline_after", 1);
+
+        /// <summary>"title_card": Add a intro titlecard to be randomly selected. Must be 1366x768 pixels big to display correctly.</summary>
+        public static readonly GameFeature<string> TitleCard = GameString("title_card");
     }
 }

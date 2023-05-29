@@ -63,6 +63,7 @@ namespace SlugBase.Features
             On.WorldLoader.OverseerSpawnConditions += WorldLoader_OverseerSpawnConditions;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
             On.SaveState.setDenPosition += SaveState_setDenPosition;
+            IL.Menu.IntroRoll.ctor += IntroRoll_ctor;
 
             SlugBaseCharacter.Refreshed += Refreshed;
         }
@@ -893,6 +894,80 @@ namespace SlugBase.Features
                         break;
                     }
                 }
+            }
+        }
+
+        // TitleCard: Add to pool
+        private static void IntroRoll_ctor(ILContext il)
+        {
+            var cursor = new ILCursor(il);
+
+            // MSC is active
+            if (cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
+                && cursor.TryGotoNext(MoveType.After, i => i.MatchCallOrCallvirt<string>(nameof(string.Concat))))
+            {
+                cursor.Emit(OpCodes.Ldloc_3);
+                cursor.EmitDelegate<Func<string, string[], string>>((titleImage, oldTitleImages) =>
+                {
+                    // Get a list of all SlugBase title images
+                    var newTitleImages = new List<string>();
+                    foreach(var chara in SlugBaseCharacter.Registry.Values)
+                    {
+                        if(TitleCard.TryGet(chara, out var newTitleImage)
+                            && !string.IsNullOrEmpty(newTitleImage))
+                        {
+                            newTitleImages.Add(newTitleImage);
+                        }
+                    }
+
+                    // Switch title if random choice is from SlugBase
+                    if (newTitleImages.Count > 0)
+                    {
+                        int choice = Random.Range(0, newTitleImages.Count + oldTitleImages.Length);
+                        if (choice < newTitleImages.Count)
+                        {
+                            titleImage = newTitleImages[choice];
+                        }
+                    }
+
+                    return titleImage;
+                });
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, MSC, failed!");
+            }
+
+            // MSC is not active
+            cursor.Index = 0;
+            if(cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
+                && cursor.TryGotoPrev(i => i.MatchLdstr("Intro_Roll_C")))
+            {
+                cursor.EmitDelegate<Func<string, string>>(titleImage =>
+                {
+                    // Get a list of all SlugBase title images
+                    var newTitleImages = new List<string>();
+                    foreach (var chara in SlugBaseCharacter.Registry.Values)
+                    {
+                        if (TitleCard.TryGet(chara, out var newTitleImage)
+                            && !string.IsNullOrEmpty(newTitleImage))
+                        {
+                            newTitleImages.Add(newTitleImage);
+                        }
+                    }
+
+                    // Switch title to random choice from SlugBase characters
+                    if (newTitleImages.Count > 0)
+                    {
+                        titleImage = newTitleImages[Random.Range(0, newTitleImages.Count)];
+                    }
+
+                    return titleImage;
+                });
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, no MSC, failed!");
             }
         }
     }
