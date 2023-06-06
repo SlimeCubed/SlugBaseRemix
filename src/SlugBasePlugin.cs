@@ -69,6 +69,7 @@ namespace SlugBase
                     CoreHooks.Apply();
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
+                    ExpeditionHooks.Apply();
 
                     SlugBaseCharacter.Registry.WatchForChanges = true;
                     CustomScene.Registry.WatchForChanges = true;
