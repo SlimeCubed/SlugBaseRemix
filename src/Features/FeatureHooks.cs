@@ -10,11 +10,13 @@ using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using MonoMod.RuntimeDetour;
+using System.IO;
 
 namespace SlugBase.Features
 {
     using static PlayerFeatures;
     using static GameFeatures;
+    using static System.Net.Mime.MediaTypeNames;
 
     internal static class FeatureHooks
     {
@@ -30,20 +32,7 @@ namespace SlugBase.Features
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             IL.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
-            IL.HUD.Map.LoadConnectionPositions += ApplyWorldState;
-            IL.HUD.Map.Update += ApplyWorldState;
-            On.SlugcatStats.getSlugcatOptionalRegions += SlugcatStats_getSlugcatOptionalRegions;
-            On.SlugcatStats.getSlugcatStoryRegions += SlugcatStats_getSlugcatStoryRegions;
-            On.AbstractCreature.setCustomFlags += AbstractCreature_setCustomFlags;
-            new Hook(
-                typeof(OverWorld).GetProperty(nameof(OverWorld.PlayerCharacterNumber)).GetGetMethod(),
-                OverWorld_get_PlayerCharacterNumber
-            );
-            On.RoomSettings.ctor += RoomSettings_ctor;
-            On.Region.GetProperRegionAcronym += Region_GetProperRegionAcronym;
-            On.Region.LoadAllRegions += Region_LoadAllRegions;
-            On.Region.GetRegionFullName += Region_GetRegionFullName;
-            On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
+            
             On.Player.CanEatMeat += Player_CanEatMeat;
             IL.Player.EatMeatUpdate += Player_EatMeatUpdate;
             On.Player.ObjectEaten += Player_ObjectEaten;
@@ -66,6 +55,8 @@ namespace SlugBase.Features
             IL.Menu.IntroRoll.ctor += IntroRoll_ctor;
 
             SlugBaseCharacter.Refreshed += Refreshed;
+
+            WorldHooks.Apply();
         }
 
         // Apply some changes immediately for fast iteration
@@ -370,146 +361,6 @@ namespace SlugBase.Features
             }
         }
 
-        // WorldState: Fix map connections
-        private static void ApplyWorldState(ILContext il)
-        {
-            var c = new ILCursor(il);
-
-            while (c.TryGotoNext(MoveType.After,
-                x => x.MatchCallOrCallvirt<PlayerProgression>("get_PlayingAsSlugcat")))
-            {
-                c.EmitDelegate<Func<SlugcatStats.Name, SlugcatStats.Name>>(name =>
-                {
-                    if (SlugBaseCharacter.TryGet(name, out var chara)
-                        && WorldState.TryGet(chara, out var copyWorld))
-                    {
-                        name = Utils.FirstValidEnum(copyWorld) ?? name;
-                    }
-
-                    return name;
-                });
-            }
-        }
-
-        // WorldState: Mark regions as optional for collections and safari
-        private static string[] SlugcatStats_getSlugcatOptionalRegions(On.SlugcatStats.orig_getSlugcatOptionalRegions orig, SlugcatStats.Name i)
-        {
-            if (SlugBaseCharacter.TryGet(i, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                i = Utils.FirstValidEnum(copyWorld) ?? i;
-            }
-
-            return orig(i);
-        }
-
-        // WorldState: Mark regions as accessible for collections and safari
-        private static string[] SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_getSlugcatStoryRegions orig, SlugcatStats.Name i)
-        {
-            if (SlugBaseCharacter.TryGet(i, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                i = Utils.FirstValidEnum(copyWorld) ?? i;
-            }
-
-            return orig(i);
-        }
-
-        // WorldState: Stop some creatures from freezing when using Saint's world state
-        private static void AbstractCreature_setCustomFlags(On.AbstractCreature.orig_setCustomFlags orig, AbstractCreature self)
-        {
-            orig(self);
-
-            if (ModManager.MSC
-                && self.Room.world.game.IsStorySession
-                && SlugBaseCharacter.TryGet(self.Room.world.game.StoryCharacter, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld)
-                && Utils.FirstValidEnum(copyWorld) == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Saint)
-            {
-                if (self.creatureTemplate.BlizzardAdapted)
-                {
-                    self.HypothermiaImmune = true;
-                }
-                if (self.creatureTemplate.BlizzardWanderer)
-                {
-                    self.ignoreCycle = true;
-                }
-            }
-        }
-
-        // WorldState: Change region world files
-        private static SlugcatStats.Name OverWorld_get_PlayerCharacterNumber(Func<OverWorld, SlugcatStats.Name> orig, OverWorld self)
-        {
-            var playerChar = orig(self);
-
-            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                playerChar = Utils.FirstValidEnum(copyWorld) ?? playerChar;
-            }
-
-            return playerChar;
-        }
-
-        // WorldState: Change conditional settings
-        private static void RoomSettings_ctor(On.RoomSettings.orig_ctor orig, RoomSettings self, string name, Region region, bool template, bool firstTemplate, SlugcatStats.Name playerChar)
-        {
-            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                playerChar = Utils.FirstValidEnum(copyWorld) ?? playerChar;
-            }
-
-            orig(self, name, region, template, firstTemplate, playerChar);
-        }
-
-        // WorldState: Swap regions based on character
-        private static string Region_GetProperRegionAcronym(On.Region.orig_GetProperRegionAcronym orig, SlugcatStats.Name character, string baseAcronym)
-        {
-            if (SlugBaseCharacter.TryGet(character, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                character = Utils.FirstValidEnum(copyWorld) ?? character;
-            }
-
-            return orig(character, baseAcronym);
-        }
-
-        // WorldState: Change regions on fast travel screen
-        private static Region[] Region_LoadAllRegions(On.Region.orig_LoadAllRegions orig, SlugcatStats.Name storyIndex)
-        {
-            if (SlugBaseCharacter.TryGet(storyIndex, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                storyIndex = Utils.FirstValidEnum(copyWorld) ?? storyIndex;
-            }
-
-            return orig(storyIndex);
-        }
-
-        // WorldState: Change region names
-        private static string Region_GetRegionFullName(On.Region.orig_GetRegionFullName orig, string regionAcro, SlugcatStats.Name slugcatIndex)
-        {
-            if (SlugBaseCharacter.TryGet(slugcatIndex, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                slugcatIndex = Utils.FirstValidEnum(copyWorld) ?? slugcatIndex;
-            }
-
-            return orig(regionAcro, slugcatIndex);
-        }
-
-        // WorldState: Change character filters
-        private static void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues(On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
-        {
-            if(SlugBaseCharacter.TryGet(playerCharacter, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                playerCharacter = Utils.FirstValidEnum(copyWorld) ?? playerCharacter;
-            }
-
-            orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
-        }
 
         // Diet: Corpse edibility
         private static bool Player_CanEatMeat(On.Player.orig_CanEatMeat orig, Player self, Creature crit)

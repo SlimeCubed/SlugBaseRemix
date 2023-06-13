@@ -12,6 +12,11 @@ namespace SlugBase
         {
             return values.FirstOrDefault(val => val != null && val.Index != -1);
         }
+        public static List<T> AllValidEnums<T>(IEnumerable<T> values)
+            where T : ExtEnum<T>
+        {
+            return values.Where(val => val != null && val.Index != -1).ToList();
+        }
 
         public static Name GetName(string text)
         {
