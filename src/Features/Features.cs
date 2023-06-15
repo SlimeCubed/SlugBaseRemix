@@ -150,6 +150,9 @@ namespace SlugBase.Features
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> WorldState = GameSlugcatNames("world_state");
 
+        /// <summary>"story_regions": The new or removed story regions from an inherited world_state.</summary>
+        public static readonly GameFeature<string[]> StoryRegions = GameStrings("story_regions");
+
         /// <summary>"timeline_before": The next character in the timeline.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> TimelineBefore = GameSlugcatNames("timeline_before", 1);
 
