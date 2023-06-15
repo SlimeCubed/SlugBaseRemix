@@ -2,7 +2,7 @@
 	"id": "slime-cubed.slugbase",
 	"name": "SlugBase",
 	"authors": "Slime_Cubed",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"description": "A framework for adding new characters to the game.<LINE>Get started making your own here: https://slimecubed.github.io/slugbase/",
 	"requirements": [],
 	"requirements_names": [],

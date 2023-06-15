@@ -10,6 +10,7 @@ using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using MonoMod.RuntimeDetour;
+using System.IO;
 
 namespace SlugBase.Features
 {
@@ -62,7 +63,7 @@ namespace SlugBase.Features
             On.OverseerAbstractAI.SetAsPlayerGuide += OverseerAbstractAI_SetAsPlayerGuide;
             On.WorldLoader.OverseerSpawnConditions += WorldLoader_OverseerSpawnConditions;
             On.PlayerGraphics.DefaultSlugcatColor += PlayerGraphics_DefaultSlugcatColor;
-            On.SaveState.setDenPosition += SaveState_setDenPosition;
+            On.SaveState.GetStoryDenPosition += SaveState_GetStoryDenPosition;
             IL.Menu.IntroRoll.ctor += IntroRoll_ctor;
 
             SlugBaseCharacter.Refreshed += Refreshed;
@@ -877,28 +878,34 @@ namespace SlugBase.Features
             }
         }
 
-        // Den: Set initial den
-        private static void SaveState_setDenPosition(On.SaveState.orig_setDenPosition orig, SaveState self)
+        // StartRoom: Set initial den
+        private static string SaveState_GetStoryDenPosition(On.SaveState.orig_GetStoryDenPosition orig, SlugcatStats.Name slugcat, out bool isVanilla)
         {
-            orig(self);
-
-            // The expedition den is already set in the base method, so just ignore the slugbase stuff if in expedition 
-            if (!(ModManager.Expedition && self.progression.rainWorld.ExpeditionMode))
+            if (SlugBaseCharacter.TryGet(slugcat, out var chara)
+                && chara.Features.TryGet(StartRoom, out string[] dens))
             {
-                if (SlugBaseCharacter.TryGet(self.saveStateNumber, out var chara)
-                    && chara.Features.TryGet(StartRoom, out string[] dens))
+                // Search through dens until a valid one is found
+                foreach (var den in dens)
                 {
-                    // Search through dens until a valid one is found
-                    foreach (var den in dens)
+                    if (WorldLoader.FindRoomFile(den, false, ".txt") != null)
                     {
-                        if (WorldLoader.FindRoomFile(den, false, ".txt") != null)
+                        // Adapted from SaveState.TrySetVanillaDen
+                        string root = Custom.RootFolderDirectory();
+                        string regionName = "";
+                        if (den.Contains("_"))
                         {
-                            self.denPosition = den;
-                            break;
+                            regionName = den.Split('_')[0];
                         }
+
+                        isVanilla = File.Exists(Path.Combine(root, "World", regionName + "-Rooms", den + ".txt"))
+                                 || File.Exists(Path.Combine(root, "World", "Gate Shelters", den + ".txt"));
+
+                        return den;
                     }
                 }
             }
+
+            return orig(slugcat, out isVanilla);
         }
 
         // TitleCard: Add to pool
