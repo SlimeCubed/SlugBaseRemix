@@ -6,3 +6,5 @@
   href: features.md
 - name: Custom Features
   href: custom-features.md
+- name: World State Tutorial
+  href: world-state-tutorial.md

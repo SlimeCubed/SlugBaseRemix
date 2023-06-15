@@ -308,6 +308,8 @@ Ex: `"world_state": "Red"`, `"world_state": [ "Spear", "Red" ]`
 
 `SlugcatStats.Name` values to copy world state from. This includes spawns and room connections. If the first name does not exist, then the second will be tried and so on.
 
+See [World State Tutorial](world-state-tutorial.md) for more information.
+
 ### "timeline_before"
 `string[]`\
 Ex: `"timeline_before": "Red"`, `"timeline_after": [ "Artificer", "Red" ]`
