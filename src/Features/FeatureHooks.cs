@@ -886,7 +886,7 @@ namespace SlugBase.Features
             if (!(ModManager.Expedition && self.progression.rainWorld.ExpeditionMode))
             {
                 if (SlugBaseCharacter.TryGet(self.saveStateNumber, out var chara)
-                && chara.Features.TryGet(StartRoom, out string[] dens))
+                    && chara.Features.TryGet(StartRoom, out string[] dens))
                 {
                     // Search through dens until a valid one is found
                     foreach (var den in dens)
