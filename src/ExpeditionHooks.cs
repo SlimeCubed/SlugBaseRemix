@@ -213,14 +213,14 @@ namespace SlugBase
                 SlugcatStats.Name name = ExpeditionGame.playableCharacters[num];
                 if (SlugBaseCharacter.TryGet(name, out var chara))
                 {
-                    self.slugcatName.text = chara.DisplayName.ToUpper();
+                    self.slugcatName.text = self.menu.Translate(chara.DisplayName).ToUpper();
 
                     if(!GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
                     {
                         description = chara.Description;
                     }
 
-                    self.slugcatDescription.text = description.Replace("<LINE>", Environment.NewLine);
+                    self.slugcatDescription.text = self.menu.Translate(description).Replace("<LINE>", Environment.NewLine);
                     self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
                 }
             }
