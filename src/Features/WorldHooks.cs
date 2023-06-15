@@ -12,11 +12,11 @@ using UnityEngine;
 namespace SlugBase.Features
 {
     using static GameFeatures;
-    using static System.Net.Mime.MediaTypeNames;
 
     internal static class WorldHooks
     {
-        public static bool DebugMode = true;
+        /// <summary>Path.DirectorySeparatorChar but shorter, because it takes too much space</summary>
+        public static char Separator => Path.DirectorySeparatorChar;
         public static void Apply()
         {
             //map_XX hooks
@@ -35,6 +35,7 @@ namespace SlugBase.Features
             On.Region.GetProperRegionAcronym += Region_GetProperRegionAcronym;
 
             //worldloader
+            IL.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_ILHook;
             On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
             On.WorldLoader.CreatingWorld += WorldLoader_CreatingWorld;
 
@@ -52,6 +53,8 @@ namespace SlugBase.Features
             //On.Region.LoadAllRegions += Region_LoadAllRegions; //nah, we want the hook to be individualized
         }
 
+        #region devtools
+        //doesn't work yet
         private static ConditionalWeakTable<PlacedObject.FilterData, List<SlugcatStats.Name>> Mentioned = new();
 
         public static List<SlugcatStats.Name> PlayerMentioned(this PlacedObject.FilterData p) => Mentioned.GetValue(p, _ => new());
@@ -117,6 +120,7 @@ namespace SlugBase.Features
                 });
             }
         }
+        #endregion
 
         #region Map & Properties
         // WorldState: Fix map connections
@@ -135,8 +139,9 @@ namespace SlugBase.Features
                     {
                         foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
                         {
-                            string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{self.RegionName}{Path.DirectorySeparatorChar}map_{self.RegionName}-{vname.value}.txt");
-                            if (File.Exists(path)) { name = vname; Debug.Log($"map slugbase found alternate world_state map for slug [{vname.value}]"); break; }
+                            string path = AssetManager.ResolveFilePath($"World{Separator}{self.RegionName}{Separator}map_{self.RegionName}-{vname.value}.txt");
+                            if (File.Exists(path)) 
+                            { return vname; }
                         }
                     }
 
@@ -171,7 +176,7 @@ namespace SlugBase.Features
                     {
                         foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
                         {
-                            string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{regionName}{Path.DirectorySeparatorChar}map_{regionName}-{vname.value}.txt");
+                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}map_{regionName}-{vname.value}.txt");
                             if (File.Exists(path))
                             { return vname; }
                         }
@@ -210,9 +215,9 @@ namespace SlugBase.Features
                     {
                         foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
                         {
-                            string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{regionName}{Path.DirectorySeparatorChar}Properties- {vname.value}.txt");
+                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}Properties- {vname.value}.txt");
                             if (File.Exists(path))
-                            { name = vname; break; }
+                            { return vname; }
                         }
                     }
 
@@ -272,7 +277,7 @@ namespace SlugBase.Features
             {
                 foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
                 {
-                    string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{name}{Path.DirectorySeparatorChar}properties-{vname.value}.txt");
+                    string path = AssetManager.ResolveFilePath($"World{Separator}{name}{Separator}properties-{vname.value}.txt");
                     if (File.Exists(path)) { storyIndex = vname; break; }
                 }
             }
@@ -312,7 +317,7 @@ namespace SlugBase.Features
             }
 
             //order by FullRegionOrder
-            for (int j = allRegions.Count; j > 0; j++)
+            for (int j = allRegions.Count - 1; j >= 0; j--)
             {
                 if (!regions.Contains(allRegions[j]))
                 { allRegions.RemoveAt(j); }
@@ -344,7 +349,7 @@ namespace SlugBase.Features
                 {
                     //this is very hacky I know, but it's easier than what I would do otherwise
                     //temporarily pretend the modded slug's worldstate is the current slug's
-                    chara2.Features.Set(StoryRegions, new JsonAny(names.Skip(Mathf.Max(0, j - 1)), null));
+                    chara2.Features.Set(StoryRegions, new JsonAny(names.Skip(Mathf.Max(0, j - 1)).Where(x => x != i), null));
                     regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
                     chara2.Features.Set(StoryRegions, new JsonAny(copyWorld2, null));
                 }
@@ -403,7 +408,7 @@ namespace SlugBase.Features
                 }
                 for (int i = 0; i < array.Length; i++)
                 {
-                    string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{Path.GetFileName(array[i])}{Path.DirectorySeparatorChar}equivalences.txt");
+                    string path = AssetManager.ResolveFilePath($"World{Separator}{Path.GetFileName(array[i])}{Separator}equivalences.txt");
                     if (!File.Exists(path)) continue;
 
                     string[] array2 = File.ReadAllText(path).Trim().Split(',');
@@ -438,6 +443,9 @@ namespace SlugBase.Features
             (On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game,
             SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
         {
+            //story the Real slug so their name can be used later to get worldstate
+            self.ActualPlayer().Value = playerCharacter;
+
             //guard clause
             if (self.singleRoomWorld || !SlugBaseCharacter.TryGet(playerCharacter, out var chara)
                 || !WorldState.TryGet(chara, out var copyWorld) || copyWorld.Length == 0)
@@ -446,32 +454,58 @@ namespace SlugBase.Features
                 return;
             }
 
-            //story the Real slug so their name can be used later to get worldstate
-            self.ActualPlayer().Value = playerCharacter;
-
             //open the world file and find the first slugcat mentioned
-            string path = $"World{Path.DirectorySeparatorChar}{worldName}{Path.DirectorySeparatorChar}world_{worldName}.txt";
+            string path = $"World{Separator}{worldName}{Separator}world_{worldName}.txt";
             string[] array = File.ReadAllLines(AssetManager.ResolveFilePath(path));
             playerCharacter = FirstSlugcatMentionedInWorld(array.ToList(), Utils.AllValidEnums(copyWorld).ToArray());
 
             orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
+        }
 
-            //find spawns file, if exists
-            foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
+        private static void WorldLoader_ctor_ILHook(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if (c.TryGotoNext(MoveType.Before, // this Action could go anywhere in the method as long as it's after the txt is loaded
+                //x => x.MatchRet() //I wish... but some things skip to this instruction
+                x => x.MatchLdarg(3),
+                x => x.MatchBrtrue(out _),
+                x => x.MatchLdarg(0),
+                x => x.MatchLdcI4(100),
+                x => x.MatchStfld<WorldLoader>("simulateUpdateTicks")
+                ))
             {
-                path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{worldName}{Path.DirectorySeparatorChar}spawns_{worldName}-{vname.value}.txt");
-                if (File.Exists(path))
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Action<WorldLoader>>((self) =>
                 {
-                    List<string> newSpawns = File.ReadAllLines(path).Where(x => !x.StartsWith("//")).ToList();
+                    if (self.singleRoomWorld || self.lines == null || self.lines.Count == 0) return;
 
                     int startIndex = self.lines.IndexOf("CREATURES");
                     int endIndex = self.lines.IndexOf("END CREATURES");
                     if (startIndex == -1 || endIndex == -1) return;
 
-                    self.lines.RemoveRange(startIndex + 1, endIndex - startIndex - 2);
-                    self.lines.InsertRange(startIndex + 1, newSpawns);
-                    break;
-                }
+                    SlugcatStats.Name[] names = new SlugcatStats.Name[] { self.ActualPlayer().Value };
+
+                    if (SlugBaseCharacter.TryGet(self.ActualPlayer().Value, out var chara) && WorldState.TryGet(chara, out var copyWorld) && copyWorld.Length != 0)
+                    { names = copyWorld; }
+
+                    foreach (var vname in Utils.AllValidEnums(names).ToArray())
+                    {
+                        string path = AssetManager.ResolveFilePath($"World{Separator}{self.worldName}{Separator}spawns_{self.worldName}-{vname.value}.txt");
+                        if (File.Exists(path))
+                        {
+                            List<string> newSpawns = File.ReadAllLines(path).Where(x => !x.StartsWith("//") && !string.IsNullOrEmpty(x) && x.Contains(":")).ToList();
+
+                            self.lines.RemoveRange(startIndex + 1, endIndex - startIndex - 2);
+                            self.lines.InsertRange(startIndex + 1, newSpawns);
+                            break;
+                        }
+                    }
+                });
+            }
+            else
+            {
+                Debug.Log("Failed to IL hook WorldLoader.ctor!!");
             }
         }
 
@@ -483,7 +517,8 @@ namespace SlugBase.Features
             foreach (SlugcatStats.Name name in names)
             {
                 //if it's not a slugbase character then it's assumed to have a valid world
-                if (!SlugBaseCharacter.TryGet(name, out _) && name.index >= 0) return name;
+                //jk, what if you want to load saint world but with Rivulet's UW
+                //if (!SlugBaseCharacter.TryGet(name, out _) && name.index >= 0) return name;
 
                 if (conditionalStart != -1 && conditionalEnd != -1)
                 {
@@ -519,8 +554,6 @@ namespace SlugBase.Features
         {
             SlugcatStats.Name currentName = self.playerCharacter;
             self.playerCharacter = self.ActualPlayer().Value;
-
-            Debug.Log($"playerchar is [{currentName?.value}], actualplayer is [{self.playerCharacter?.value}]");
 
             orig(self);
 
