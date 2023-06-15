@@ -1,12 +1,15 @@
 ﻿using Expedition;
 using UnityEngine;
-using MoreSlugcats;
 using System.Collections.Generic;
 using System;
-using Menu;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
 using System.IO;
+using System.Linq;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
+using Menu;
+using SlugBase.Features;
+using MSCSceneID = MoreSlugcats.MoreSlugcatsEnums.MenuSceneID;
+using SceneID = Menu.MenuScene.SceneID;
 
 namespace SlugBase
 {
@@ -29,15 +32,15 @@ namespace SlugBase
         // Adding custom slugs to the expedition playable characters
         private static List<SlugcatStats.Name> ExpeditionData_GetPlayableCharacters(On.Expedition.ExpeditionData.orig_GetPlayableCharacters orig)
         {
-            maxSlugPages = 0; // Gotta set this back to 0, cause if you for SOME UNGODLY REASON disable then re-enable MSC it creates additional empty pages
-            currentSlugPage = 0;
-            List<SlugcatStats.Name> list = orig.Invoke();
+            var list = orig();
 
-            list.AddRange(SlugBaseCharacter.Registry.Keys);
-
-            for (int i = 0; i < list.Count; i++)
+            foreach(var chara in SlugBaseCharacter.Registry.Values
+                .OrderBy(chara => chara.Name.value))
             {
-                if (i % 8 == 0) maxSlugPages++;
+                if(!GameFeatures.ExpeditionEnabled.TryGet(chara, out var enabled) || enabled)
+                {
+                    list.Add(chara.Name);
+                }
             }
 
             return list;
@@ -45,9 +48,9 @@ namespace SlugBase
 
         private static bool ExpeditionProgression_CheckUnlocked(On.Expedition.ExpeditionProgression.orig_CheckUnlocked orig, ProcessManager manager, SlugcatStats.Name slugcat)
         {
-            if (SlugBaseCharacter.TryGet(slugcat, out var chara)) return true;
+            if (SlugBaseCharacter.TryGet(slugcat, out _)) return true;
 
-            return orig.Invoke(manager, slugcat);
+            return orig(manager, slugcat);
         }
 
         // Adding custom slugs to the expedition select page
@@ -78,10 +81,11 @@ namespace SlugBase
         // Adding control arrows and rearranging stuff based on the "pages"
         private static void CharacterSelectPage_ctor(On.Menu.CharacterSelectPage.orig_ctor orig, CharacterSelectPage self, Menu.Menu menu, MenuObject owner, Vector2 pos)
         {
-            orig.Invoke(self, menu, owner, pos);
+            orig(self, menu, owner, pos);
 
             if (ExpeditionGame.playableCharacters.Count > 8)
             {
+                maxSlugPages = (ExpeditionGame.playableCharacters.Count + 7) / 8;
                 currentSlugPage = 0;
                 ConstructPage(self, menu);
 
@@ -99,17 +103,14 @@ namespace SlugBase
 
                 menu.selectedObject = self.slugcatButtons[1];
                 // Preventing errors for when expedition saved a selected slugcat far in the list and then the mod got disabled
-                if ((menu as ExpeditionMenu).currentSelection >= ExpeditionGame.playableCharacters.Count ||
-                    (menu as ExpeditionMenu).currentSelection < 0)
+
+                var expeditionMenu = (ExpeditionMenu)menu;
+                if (expeditionMenu.currentSelection >= ExpeditionGame.playableCharacters.Count
+                    || expeditionMenu.currentSelection < 0)
                 {
-                    (menu as ExpeditionMenu).currentSelection = 1;
+                    expeditionMenu.currentSelection = 1;
                 }
             }
-
-            //foreach (var scug in ExpeditionGame.unlockedExpeditionSlugcats)
-            //{
-            //    SlugBasePlugin.Logger.LogMessage(scug);
-            //}
         }
 
         // Rearranging slugcat select buttons based on the current custom slug page
@@ -146,7 +147,7 @@ namespace SlugBase
         //Controls for the slugcat page switch buttons
         private static void CharacterSelectPage_Singal(On.Menu.CharacterSelectPage.orig_Singal orig, CharacterSelectPage self, MenuObject sender, string message)
         {
-            orig.Invoke(self, sender, message);
+            orig(self, sender, message);
 
             if (message == "CUSTOMSLUGPAGE_LEFT")
             {
@@ -167,45 +168,45 @@ namespace SlugBase
 
         // Possible random background scenes to appear for custom slugs
         // (I put them in an array like this cause some select scenes dont work, and some wouldnt fit)
-        private static MenuScene.SceneID[] randomScenes =
+        private static readonly SceneID[] randomScenes =
         {
-            MenuScene.SceneID.MainMenu_Downpour,
-            MenuScene.SceneID.Intro_1_Tree,
-            MenuScene.SceneID.Intro_2_Branch,
-            MenuScene.SceneID.Intro_3_In_Tree,
-            MenuScene.SceneID.Intro_4_Walking,
-            MenuScene.SceneID.Intro_5_Hunting,
-            MenuScene.SceneID.Intro_8_Climbing,
-            MenuScene.SceneID.Intro_9_Rainy_Climb,
-            MenuScene.SceneID.Intro_10_Fall,
-            MenuScene.SceneID.Intro_10_5_Separation,
-            MenuScene.SceneID.Intro_11_Drowning,
-            MenuScene.SceneID.Landscape_CC,
-            MenuScene.SceneID.Landscape_DS,
-            MenuScene.SceneID.Landscape_GW,
-            MenuScene.SceneID.Landscape_HI,
-            MenuScene.SceneID.Landscape_LF,
-            MenuScene.SceneID.Landscape_SB,
-            MenuScene.SceneID.Landscape_SH,
-            MenuScene.SceneID.Landscape_SI,
-            MenuScene.SceneID.Landscape_SL,
-            MenuScene.SceneID.Landscape_SU,
-            MenuScene.SceneID.Dream_Moon_Friend,
-            MenuScene.SceneID.Dream_Pebbles,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_MS,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_LC,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_OE,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_HR,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_UG,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_VS,
-            MoreSlugcatsEnums.MenuSceneID.Landscape_CL,
+            SceneID.MainMenu_Downpour,
+            SceneID.Intro_1_Tree,
+            SceneID.Intro_2_Branch,
+            SceneID.Intro_3_In_Tree,
+            SceneID.Intro_4_Walking,
+            SceneID.Intro_5_Hunting,
+            SceneID.Intro_8_Climbing,
+            SceneID.Intro_9_Rainy_Climb,
+            SceneID.Intro_10_Fall,
+            SceneID.Intro_10_5_Separation,
+            SceneID.Intro_11_Drowning,
+            SceneID.Landscape_CC,
+            SceneID.Landscape_DS,
+            SceneID.Landscape_GW,
+            SceneID.Landscape_HI,
+            SceneID.Landscape_LF,
+            SceneID.Landscape_SB,
+            SceneID.Landscape_SH,
+            SceneID.Landscape_SI,
+            SceneID.Landscape_SL,
+            SceneID.Landscape_SU,
+            SceneID.Dream_Moon_Friend,
+            SceneID.Dream_Pebbles,
+            new (nameof(MSCSceneID.Landscape_MS)),
+            new (nameof(MSCSceneID.Landscape_LC)),
+            new (nameof(MSCSceneID.Landscape_OE)),
+            new (nameof(MSCSceneID.Landscape_HR)),
+            new (nameof(MSCSceneID.Landscape_UG)),
+            new (nameof(MSCSceneID.Landscape_VS)),
+            new (nameof(MSCSceneID.Landscape_CL)),
         };
 
         // Assigning the name, description, and a random background scene
         private static void CharacterSelectPage_UpdateSelectedSlugcat(On.Menu.CharacterSelectPage.orig_UpdateSelectedSlugcat orig, CharacterSelectPage self, int num)
         {
             if (num < 0 || num >= ExpeditionGame.playableCharacters.Count) num = 1; // This might not be necessary, but better be safe
-            orig.Invoke(self, num);
+            orig(self, num);
 
             if (num > (ModManager.MSC ? 7 : 2))
             {
@@ -213,9 +214,14 @@ namespace SlugBase
                 if (SlugBaseCharacter.TryGet(name, out var chara))
                 {
                     self.slugcatName.text = chara.DisplayName.ToUpper();
-                    self.slugcatDescription.text = chara.Description;
+
+                    if(!GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
+                    {
+                        description = chara.Description;
+                    }
+
+                    self.slugcatDescription.text = description.Replace("<LINE>", Environment.NewLine);
                     self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
-                    //SlugBasePlugin.Logger.LogMessage(self.slugcatScene);
                 }
             }
         }
@@ -223,7 +229,7 @@ namespace SlugBase
         // Getting the slugbase slugcat portrait
         private static MenuIllustration CharacterSelectPage_GetSlugcatPortrait(On.Menu.CharacterSelectPage.orig_GetSlugcatPortrait orig, CharacterSelectPage self, SlugcatStats.Name slugcat, Vector2 pos)
         {
-            MenuIllustration image = orig.Invoke(self, slugcat, pos);
+            MenuIllustration image = orig(self, slugcat, pos);
 
             if (SlugBaseCharacter.TryGet(slugcat, out var chara))
             {
