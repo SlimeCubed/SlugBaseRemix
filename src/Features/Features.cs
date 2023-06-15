@@ -123,7 +123,7 @@ namespace SlugBase.Features
         /// <summary>"cycle_length_max": Maximum cycle length in minutes.</summary>
         public static readonly GameFeature<float> CycleLengthMax = GameFloat("cycle_length_max");
 
-        /// <summary>"perma_unlock_gates": Maximum cycle length in minutes.</summary>
+        /// <summary>"perma_unlock_gates": Permanently unlock gates once used.</summary>
         public static readonly GameFeature<bool> PermaUnlockGates = GameBool("perma_unlock_gates");
 
         /// <summary>"food_min": Food needed to sleep.</summary>
@@ -158,5 +158,11 @@ namespace SlugBase.Features
 
         /// <summary>"title_card": Add a intro titlecard to be randomly selected. Must be 1366x768 pixels big to display correctly.</summary>
         public static readonly GameFeature<string> TitleCard = GameString("title_card");
+
+        /// <summary>"expedition_enabled": Enable Expedition mode for this character.</summary>
+        public static readonly GameFeature<bool> ExpeditionEnabled = GameBool("expedition_enabled");
+
+        /// <summary>"expedition_description": Character description in Expedition mode.</summary>
+        public static readonly GameFeature<string> ExpeditionDescription = GameString("expedition_description");
     }
 }

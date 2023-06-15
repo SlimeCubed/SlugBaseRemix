@@ -16,7 +16,7 @@ using SlugBase.Interface;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.3.0")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.4.0")]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
@@ -69,6 +69,7 @@ namespace SlugBase
                     CoreHooks.Apply();
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
+                    ExpeditionHooks.Apply();
 
                     SlugBaseCharacter.Registry.WatchForChanges = true;
                     CustomScene.Registry.WatchForChanges = true;

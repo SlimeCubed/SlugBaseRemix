@@ -882,16 +882,20 @@ namespace SlugBase.Features
         {
             orig(self);
 
-            if(SlugBaseCharacter.TryGet(self.saveStateNumber, out var chara)
-                && chara.Features.TryGet(StartRoom, out string[] dens))
+            // The expedition den is already set in the base method, so just ignore the slugbase stuff if in expedition 
+            if (!(ModManager.Expedition && self.progression.rainWorld.ExpeditionMode))
             {
-                // Search through dens until a valid one is found
-                foreach(var den in dens)
+                if (SlugBaseCharacter.TryGet(self.saveStateNumber, out var chara)
+                    && chara.Features.TryGet(StartRoom, out string[] dens))
                 {
-                    if (WorldLoader.FindRoomFile(den, false, ".txt") != null)
+                    // Search through dens until a valid one is found
+                    foreach (var den in dens)
                     {
-                        self.denPosition = den;
-                        break;
+                        if (WorldLoader.FindRoomFile(den, false, ".txt") != null)
+                        {
+                            self.denPosition = den;
+                            break;
+                        }
                     }
                 }
             }

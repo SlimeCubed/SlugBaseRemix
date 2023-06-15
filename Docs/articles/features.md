@@ -325,3 +325,15 @@ Ex: `"timeline_after": "Yellow"`, `"timeline_after": [ "Rivulet", "Yellow" ]`
 Ex: `"title_card": "Title_Card_MySlugcat"`
 
 Image to use instead of `illustrations/intro_roll_c.png` on the title screen, relative to the `illustrations` folder. The card will be picked randomly if multiple modded characters are installed. The image should be 1366 by 768 pixels to fill the screen.
+
+### "expedition_enabled"
+`boolean`\
+Ex: `"expedition_enabled": false`
+
+Whether to allow this character in Expedition mode. This defaults to `true`.
+
+### "expedition_description"
+`string`\
+Ex: `"expedition_description": "First line of description.<LINE>Second line of description."`
+
+Description on Expedition mode's character select screen. If unspecified, this character's story mode description will be used.
