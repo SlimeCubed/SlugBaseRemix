@@ -8,6 +8,7 @@ using System.Security.Permissions;
 using UnityEngine;
 using SlugBase.Assets;
 using SlugBase.Interface;
+using SlugBase.SaveData;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -70,6 +71,7 @@ namespace SlugBase
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
                     ExpeditionHooks.Apply();
+                    SaveDataHooks.Apply();
 
                     SlugBaseCharacter.Registry.WatchForChanges = true;
                     CustomScene.Registry.WatchForChanges = true;
