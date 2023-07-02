@@ -349,9 +349,12 @@ namespace SlugBase.Features
                 {
                     //this is very hacky I know, but it's easier than what I would do otherwise
                     //temporarily pretend the modded slug's worldstate is the current slug's
-                    chara2.Features.Set(StoryRegions, new JsonAny(names.Skip(Mathf.Max(0, j - 1)).Where(x => x != i), null));
+                    chara2.Features.Set(StoryRegions, JsonConverter.ToJsonAny(names.Skip(j).Where(x => x != i).Select(x => (object)x.value).ToList()));
                     regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
-                    chara2.Features.Set(StoryRegions, new JsonAny(copyWorld2, null));
+
+                    //this will technically remove any invalid enums from the world state, thereby changing it
+                    //if there's some way to get the raw string[] then that'd be better but idk how
+                    chara2.Features.Set(StoryRegions, JsonConverter.ToJsonAny(Utils.AllValidEnums(copyWorld2).Select(x => (object)x.value).ToList()));
                 }
                 else
                 {
@@ -448,7 +451,7 @@ namespace SlugBase.Features
 
             //guard clause
             if (self.singleRoomWorld || !SlugBaseCharacter.TryGet(playerCharacter, out var chara)
-                || !WorldState.TryGet(chara, out var copyWorld) || copyWorld.Length == 0)
+                || !WorldState.TryGet(chara, out var copyWorld) || Utils.AllValidEnums(copyWorld).Count == 0)
             {
                 orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
                 return;
