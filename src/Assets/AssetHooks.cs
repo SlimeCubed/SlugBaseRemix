@@ -142,9 +142,9 @@ namespace SlugBase.Assets
                         }
 
                         // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
-                        foreach (var image in customIntroOutroScene.Images) {
-                            Debug.Log($"Slugbase added new scene {image.Name}");
-                            self.playList.Add(new Scene(new SceneID(image.Name, false), self.ConvertTime(0, image.StartAt, 0), self.ConvertTime(0, image.FadeInDoneAt, 0), self.ConvertTime(0, image.FadeOutStartAt, 0)));
+                        foreach (var scene in customIntroOutroScene.Scenes) {
+                            Debug.Log($"Slugbase added new scene {scene.Name}");
+                            self.playList.Add(new Scene(new SceneID(scene.Name, false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                         }
                         self.processAfterSlideShow = ProcessManager.ProcessID.Game;
                         break;
@@ -159,18 +159,25 @@ namespace SlugBase.Assets
             // I do not know of a way to get the SlugcatStats.Name reliably in this method, so a loop through all in the Registry to match them to a value in the IntroScene field is necessary
             foreach(var chara in SlugBaseCharacter.Registry.Values) {
                 if (IntroScene.TryGet(chara, out var newScene) && CustomIntroOutroScene.Registry.TryGet(newScene, out var customIntroOutroScene)) {
-                    foreach (var image in customIntroOutroScene.Images) {
-                        Debug.Log($"Slugbase: {customIntroOutroScene.Images}");
-                        if (new SceneID(image.Name, false) == self.sceneID)
+                    foreach (var scene in customIntroOutroScene.Scenes) {
+                        Debug.Log($"Slugbase: {customIntroOutroScene.Scenes}");
+                        if (new SceneID(scene.Name, false) == self.sceneID)
                         {
-                            Debug.Log("Now replacing scene");
-                            self.sceneFolder = customIntroOutroScene.SceneFolder;
-                            //Debug.Log($"Slugbase Log Path: {self.sceneFolder}");
-                            self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
+                            Debug.Log("Now doing thing I hate everything");
+                            foreach (var image in scene.Images) {
+                                self.sceneFolder = customIntroOutroScene.SceneFolder;
+                                //Debug.Log($"Slugbase Log Path: {self.sceneFolder}");
+                                self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
+                            }
                         }
                     }
                 }
             }
+        }
+
+        public static void NewOutro(SlideShowID ID)
+        {
+            
         }
     }
 }

@@ -4,11 +4,12 @@ using System;
 using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
+using System.Collections.Generic;
 
 namespace SlugBase.Assets
 {
     /// <summary>
-    /// A scene added by SlugBase.
+    /// An intro cutscene added by SlugBase.
     /// </summary>
     public class CustomIntroOutroScene
     {
@@ -35,23 +36,23 @@ namespace SlugBase.Assets
         /// <summary>
         /// An array of images in this scene.
         /// </summary>
-        public Image[] Images { get; }
+        public Scene[] Scenes { get; }
 
         private CustomIntroOutroScene(SlideShowID id, JsonObject json)
         {
             ID = id;
 
-            Images = json.GetList("images")
-                .Select(img => new Image(img.AsObject()))
+            Scenes = json.GetList("scenes")
+                .Select(img => new Scene(img.AsObject()))
                 .ToArray();
 
             SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
             // Don't know if I should force it to defalut to the normal intro theme or leave it empty so that it's an option for people to not have any music (But who would choose that? Someone probably)
             // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
-            try {
-                Music = new MMusic(json.GetObject("music"));
+            if (json.TryGet("music") is JsonAny music) {
+                Music = new MMusic(music.AsObject());
             }
-            catch {
+            else {
                 Music = new MMusic("RW_Intro_Theme", 40f);
             }
         }
@@ -67,29 +68,10 @@ namespace SlugBase.Assets
             public string Name { get; set; }
 
             /// <summary>
-            /// The pixel position of this image's bottom left corner in the scene. (683, 384) is the center of the screen
+            /// The pixel position of this image's bottom left corner in the scene. (683, 384) is the center of the screen for flatmode, (0,0) for depth mode
             /// </summary>
             public Vector2 Position { get; set; }
 
-            /// <summary>
-            /// The second that this image will start fading in
-            /// </summary>
-            public int StartAt { get; set; } = 0;
-
-            /// <summary>
-            /// The second that this image will finish fading in
-            /// </summary>
-            public int FadeInDoneAt { get; set; } = 0;
-
-            /// <summary>
-            /// The second that this image will finish fading out
-            /// </summary>
-            public int FadeOutStartAt { get; set; } = 0;
-
-            /// <summary>
-            /// If <c>true</c>, this image will display when in flat mode and will be hidden otherwise.
-            /// </summary>
-            public bool Flatmode { get; set; }
 
             /// <summary>
             /// Creates a new image.
@@ -110,6 +92,64 @@ namespace SlugBase.Assets
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
             public Image(JsonObject json) : this(json.GetString("name"), ToVector2(json.Get("pos")))
+            {
+            }
+        }
+
+        /// <summary>
+        /// A scene from a <see cref="CustomIntroOutroScene"/> that holds data about when to appear and what images to use for what amount of time
+        /// </summary>
+        public class Scene
+        {
+            /// <summary>
+            /// The unique name of the scene to load.
+            /// </summary>
+            public string Name { get; set; }
+
+            /// <summary>
+            /// The list of images the scene has
+            /// </summary>
+            public List<Image> Images {get; set; }
+
+            /// <summary>
+            /// The second that this scene will start fading in
+            /// </summary>
+            public int StartAt { get; set; } = 0;
+
+            /// <summary>
+            /// The second that this image will finish fading in
+            /// </summary>
+            public int FadeInDoneAt { get; set; } = 0;
+
+            /// <summary>
+            /// The second that this image will finish fading out
+            /// </summary>
+            public int FadeOutStartAt { get; set; } = 0;
+
+            /// <summary>
+            /// If <c>true</c>, this image will display when in flat mode and will be hidden otherwise.
+            /// </summary>
+            public bool Flatmode { get; set; }
+            
+            /// <summary>
+            /// Creates a new image.
+            /// </summary>
+            /// <param name="name">The file name.</param>
+            /// <param name="images">The list of images the scene gets.</param>
+            /// <exception cref="ArgumentNullException"></exception>
+            public Scene (string name, List<Image> images)
+            {
+                Name = name;
+                Images = images;
+            }
+
+            /// <summary>
+            /// Creates a new scene from JSON.
+            /// </summary>
+            /// <param name="json">The JSON data to load from.</param>
+            public Scene (JsonObject json) : this(json.GetString("name"), json.GetList("images")
+                                                                                                    .Select(img => new Image(img.AsObject()))
+                                                                                                    .ToList())
             {
                 StartAt = json.TryGet("displayat")?.AsInt() ?? 0;
                 FadeInDoneAt = json.TryGet("fadeinfinish")?.AsInt() ?? 3;
@@ -158,14 +198,14 @@ namespace SlugBase.Assets
             /// <param name="json">The JSON data to load from. </param>
             public MMusic(JsonObject json) : this(json.GetString("name"))
             {
-                float fadeIn;
-                // This try catch feels really hacky, surely there's a better way? But GetFloat Can't return null so I can't use ?? ...
-                try {
-                    fadeIn = json.GetFloat("fadein");
-                } catch {
-                    fadeIn = 40f;
+                if (json.TryGet("fadein") is JsonAny fadeIn)
+                {
+                    FadeIn = fadeIn.AsFloat();
                 }
-                FadeIn = fadeIn;
+                else
+                {
+                    FadeIn = 40f;
+                }
             }
         }
     }
