@@ -144,9 +144,10 @@ namespace SlugBase.Assets
                         // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
                         foreach (var scene in customIntroOutroScene.Scenes) {
                             Debug.Log($"Slugbase added new scene {scene.Name}");
-                            self.playList.Add(new Scene(new SceneID(scene.Name, false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                         }
                         self.processAfterSlideShow = ProcessManager.ProcessID.Game;
+                        // Not strictly necessary here, but I'll include it
                         break;
                     }
                 }
@@ -161,13 +162,13 @@ namespace SlugBase.Assets
                 if (IntroScene.TryGet(chara, out var newScene) && CustomIntroOutroScene.Registry.TryGet(newScene, out var customIntroOutroScene)) {
                     foreach (var scene in customIntroOutroScene.Scenes) {
                         Debug.Log($"Slugbase: {customIntroOutroScene.Scenes}");
-                        if (new SceneID(scene.Name, false) == self.sceneID)
+                        if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}", false) == self.sceneID)
                         {
-                            Debug.Log("Now doing thing I hate everything");
                             foreach (var image in scene.Images) {
                                 self.sceneFolder = customIntroOutroScene.SceneFolder;
                                 //Debug.Log($"Slugbase Log Path: {self.sceneFolder}");
                                 self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
+                                Debug.Log($"Slugbase added image {image.Name} to scene");
                             }
                         }
                     }
