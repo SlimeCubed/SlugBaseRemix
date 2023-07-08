@@ -148,11 +148,15 @@ namespace SlugBase.Features
         public static readonly GameFeature<MenuScene.SceneID> DeathScene = GameExtEnum<MenuScene.SceneID>("death_scene");
 
         /// <summary>"intro_scene": Add an intro scene in the style of Survivor or Gormaund.</summary>
-        public static readonly GameFeature<SlideShow.SlideShowID> IntroScene = GameExtEnum<SlideShow.SlideShowID>("intro_scene");
+        public static readonly GameFeature<SlideShow.SlideShowID> IntroScene = GameExtEnum<SlideShow.SlideShowID>("intro_slideshow");
 
         /// <summary>"outro_scene": Add an outro scene for a slugbase slugcat. </summary>
-        public static readonly GameFeature<SlideShow.SlideShowID> OutroScene = GameExtEnum<SlideShow.SlideShowID>("outro_scene");
-        // This ideally should be able to support an arbitrary amount of outros for alternate endings, but I do not know how to make a GameFeature list with an ExtEnum. Personally I'd also be fine with only allowing two, one being `outro_scene_alt`, seems like a reasonable compromise
+        public static readonly GameFeature<SlideShow.SlideShowID[]> OutroScenes = new("outro_slideshows", json =>
+        {
+            var list = json.AsList();
+            return list.Select(JsonUtils.ToExtEnum<SlideShow.SlideShowID>).ToArray();
+        });
+        // This ideally should be able to support an arbitrary amount of outros for alternate endings. Personally I'd also be fine with only allowing two, one being `outro_scene_alt`, seems like a reasonable compromise
 
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> WorldState = GameSlugcatNames("world_state");

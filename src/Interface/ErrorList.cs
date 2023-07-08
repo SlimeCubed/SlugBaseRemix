@@ -71,11 +71,11 @@ namespace SlugBase.Interface
                 Debug.LogException(args.Exception);
             };
 
-            CustomIntroOutroScene.Registry.LoadFailed += (_, args) =>
+            CustomSlideshow.Registry.LoadFailed += (_, args) =>
             {
                 Action retry = null;
                 if (args.Path != null)
-                    retry = () => CustomIntroOutroScene.Registry.TryAddFromFile(args.Path);
+                    retry = () => CustomSlideshow.Registry.TryAddFromFile(args.Path);
 
                 list.AddError(ErrorIcon.Scene, args.ErrorMessage, args.Path, retry);
 

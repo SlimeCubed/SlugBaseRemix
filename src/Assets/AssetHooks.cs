@@ -22,8 +22,9 @@ namespace SlugBase.Assets
             On.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
             
             IL.Menu.SlugcatSelectMenu.StartGame += SlugcatSelectMenu_StartGame;
+            IL.RainWorldGame.ExitToVoidSeaSlideShow += RainWorldGame_ExitToVoidSeaSlideShow;
             IL.Menu.SlideShow.ctor += SlideShow_ctor;
-            On.Menu.MenuScene.BuildScene += MenuScene_BuildScene_Intro;
+            On.Menu.MenuScene.BuildScene += MenuScene_BuildScene_IntroOutro;
         }
 
         // Use paths as atlas names instead of just the file name
@@ -76,6 +77,7 @@ namespace SlugBase.Assets
                 }
             }
         }
+        
         public static void SlugcatSelectMenu_StartGame(ILContext il)
         {
             ILCursor cursor = new(il);
@@ -86,7 +88,7 @@ namespace SlugBase.Assets
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.EmitDelegate((SlugcatStats.Name storyGameCharacter) => {
                 if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newScene)) {
-                    Debug.Log("Did thing 1 part 1");
+                    Debug.Log("Slugbase Did thing 1 part 1");
                     return true;
                 }
                 return false;
@@ -103,10 +105,26 @@ namespace SlugBase.Assets
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.EmitDelegate((SlugcatSelectMenu self, SlugcatStats.Name storyGameCharacter) =>
             {
-                if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newScene)) {
+                if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newSlideShowID)) {
                     // Reason why the slideshows can't use MenuScene I believe (Maybe I could just change it to make it work, but it works now fine and that would still then use a foreach loop here anyway)
-                    Debug.Log("Did thing 1 part 2");
-                    self.manager.nextSlideshow = newScene;
+                    Debug.Log("Slugbase Did thing 1 part 2");
+                    self.manager.nextSlideshow = newSlideShowID;
+                }
+            });
+        }
+        public static void RainWorldGame_ExitToVoidSeaSlideShow(ILContext il)
+        {
+            ILCursor c = new(il);
+            
+            c.GotoNext(MoveType.Before, i => i.MatchCallOrCallvirt<ProcessManager>("RequestMainProcessSwitch"));
+            c.GotoPrev(MoveType.Before, i => i.MatchLdarg(0));
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate((RainWorldGame self) =>
+            {
+                if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && OutroScenes.TryGet(chara, out var newOutroSSIDs))
+                {
+                    self.manager.nextSlideshow = newOutroSSIDs[0];
                 }
             });
         }
@@ -126,15 +144,15 @@ namespace SlugBase.Assets
                 // Unsure if looping is better, or trying to grab the SlugcatStats.Name from manager.sceneSlot or RWCustom.Custom.rainWorld.lastActiveSaveSlot
                 // I feel looping since it won't ever be accidentally null or the wrong value, and prevent the scene from playing at all
                 foreach(var chara in SlugBaseCharacter.Registry.Values) {
-                    if (IntroScene.TryGet(chara, out var newScene) && slideShowID == newScene && CustomIntroOutroScene.Registry.TryGet(newScene, out var customIntroOutroScene)) {
-                        Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newScene}");
-
+                    if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
+                    {
+                        Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Intro");
                         try {
-                            if (manager.musicPlayer != null && customIntroOutroScene.Music.Name != "")
+                            if (manager.musicPlayer != null && customIntroSlideshow.Music.Name != "")
                             {
-                                self.waitForMusic = customIntroOutroScene.Music.Name;
+                                self.waitForMusic = customIntroSlideshow.Music.Name;
                                 self.stall = false;
-                                manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customIntroOutroScene.Music.FadeIn);
+                                manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customIntroSlideshow.Music.FadeIn);
                             }
                         }
                         catch (Exception err) {
@@ -142,43 +160,93 @@ namespace SlugBase.Assets
                         }
 
                         // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
-                        foreach (var scene in customIntroOutroScene.Scenes) {
-                            Debug.Log($"Slugbase added new scene {scene.Name}");
-                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                        foreach (var scene in customIntroSlideshow.Scenes) {
+                            Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{scene.Name}_intro");
+                            // Append stuff to the name so that each one is unique, even if it's not in the json
+                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                         }
                         self.processAfterSlideShow = ProcessManager.ProcessID.Game;
-                        // Not strictly necessary here, but I'll include it
-                        break;
+                    }
+
+                    if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
+                    {
+                        foreach (var newOutroSlideShowID in newOutroSlideShowIDList)
+                        {
+                            if (slideShowID == newOutroSlideShowID && slideShowID == newOutroSlideShowID && CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow))
+                            {
+                                Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Outro");
+                                try {
+                                    if (manager.musicPlayer != null && customOutroSlideshow.Music.Name != "")
+                                    {
+                                        self.waitForMusic = customOutroSlideshow.Music.Name;
+                                        self.stall = false;
+                                        manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customOutroSlideshow.Music.FadeIn);
+                                    }
+                                }
+                                catch (Exception err) {
+                                    SlugBasePlugin.Logger.LogError($"Slugbase music loading error\n{err}");
+                                }
+
+                                // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
+                                foreach (var scene in customOutroSlideshow.Scenes) {
+                                    Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{scene.Name}");
+                                    // Append stuff to the name so that each one is unique, even if it's not in the json
+                                    self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                                }
+                                self.processAfterSlideShow = ProcessManager.ProcessID.Credits;
+                            }
+                        }
                     }
                 }
             });
         }
-        public static void MenuScene_BuildScene_Intro(On.Menu.MenuScene.orig_BuildScene orig, MenuScene self)
+        public static void MenuScene_BuildScene_IntroOutro(On.Menu.MenuScene.orig_BuildScene orig, MenuScene self)
         {
             orig(self);
 
-            // I do not know of a way to get the SlugcatStats.Name reliably in this method, so a loop through all in the Registry to match them to a value in the IntroScene field is necessary
             foreach(var chara in SlugBaseCharacter.Registry.Values) {
-                if (IntroScene.TryGet(chara, out var newScene) && CustomIntroOutroScene.Registry.TryGet(newScene, out var customIntroOutroScene)) {
-                    foreach (var scene in customIntroOutroScene.Scenes) {
-                        Debug.Log($"Slugbase: {customIntroOutroScene.Scenes}");
-                        if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}", false) == self.sceneID)
+                if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
+                {
+                    foreach (var scene in customIntroSlideshow.Scenes)
+                    {
+                        Debug.Log("Slugbase checking if sceneID matches");
+                        if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}_intro", false) == self.sceneID)
                         {
+                            Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{scene.Name}_intro");
                             foreach (var image in scene.Images) {
-                                self.sceneFolder = customIntroOutroScene.SceneFolder;
+                                self.sceneFolder = customIntroSlideshow.SceneFolder;
                                 //Debug.Log($"Slugbase Log Path: {self.sceneFolder}");
                                 self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
-                                Debug.Log($"Slugbase added image {image.Name} to scene");
+                                Debug.Log($"Slugbase added image {image.Name} to scene {scene.Name}");
+                            }
+                        }
+                    }
+                }
+
+                if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
+                {
+                    foreach (var newOutroSlideShowID in newOutroSlideShowIDList)
+                    {
+                        if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow))
+                        {
+                            foreach (var scene in customOutroSlideshow.Scenes)
+                            {
+                                Debug.Log("Slugbase checking if sceneID matches");
+                                if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}", false) == self.sceneID)
+                                {
+                                    Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{scene.Name}");
+                                    foreach (var image in scene.Images)
+                                    {
+                                        self.sceneFolder = customOutroSlideshow.SceneFolder;
+                                        self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
+                                        Debug.Log($"Slugbase added image {image.Name} to scene ");
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-
-        public static void NewOutro(SlideShowID ID)
-        {
-            
         }
     }
 }

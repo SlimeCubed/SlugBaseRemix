@@ -11,12 +11,12 @@ namespace SlugBase.Assets
     /// <summary>
     /// An intro cutscene added by SlugBase.
     /// </summary>
-    public class CustomIntroOutroScene
+    public class CustomSlideshow
     {
         /// <summary>
-        /// Stores all registered <see cref="CustomIntroOutroScene"/>s.
+        /// Stores all registered <see cref="CustomSlideshow"/>s.
         /// </summary>
-        public static JsonRegistry<SlideShowID, CustomIntroOutroScene> Registry { get; } = new((key, json) => new(key, json));
+        public static JsonRegistry<SlideShowID, CustomSlideshow> Registry { get; } = new((key, json) => new(key, json));
 
         /// <summary>
         /// This scene's unique ID.
@@ -38,7 +38,7 @@ namespace SlugBase.Assets
         /// </summary>
         public Scene[] Scenes { get; }
 
-        private CustomIntroOutroScene(SlideShowID id, JsonObject json)
+        private CustomSlideshow(SlideShowID id, JsonObject json)
         {
             ID = id;
 
@@ -58,7 +58,7 @@ namespace SlugBase.Assets
         }
 
         /// <summary>
-        /// An image from a <see cref="CustomIntroOutroScene"/>.
+        /// An image from a <see cref="CustomSlideshow"/>.
         /// </summary>
         public class Image
         {
@@ -97,7 +97,7 @@ namespace SlugBase.Assets
         }
 
         /// <summary>
-        /// A scene from a <see cref="CustomIntroOutroScene"/> that holds data about when to appear and what images to use for what amount of time
+        /// A scene from a <see cref="CustomSlideshow"/> that holds data about when to appear and what images to use for what amount of time
         /// </summary>
         public class Scene
         {
@@ -159,7 +159,7 @@ namespace SlugBase.Assets
         }
 
         /// <summary>
-        /// Data about a song from a <see cref="CustomIntroOutroScene"/>.
+        /// Data about a song from a <see cref="CustomSlideshow"/>.
         /// </summary>
         public class MMusic{
 
@@ -207,6 +207,11 @@ namespace SlugBase.Assets
                     FadeIn = 40f;
                 }
             }
+        }
+        public static void NewOutro(SlideShowID ID, ProcessManager manager)
+        {
+            manager.nextSlideshow = ID;
+            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
         }
     }
 }
