@@ -14,6 +14,20 @@ namespace SlugBase.Assets
     public class CustomScene
     {
         /// <summary>
+        /// The ID of the next custom dream to play, as a string
+        /// </summary>
+        public static string nextDreamID { get; private set; } = "";
+        
+        /// <summary>
+        /// Set the dream scene that will display when the player next hibernates.
+        /// </summary>
+        /// <param name="name">The id of the scene to display.</param>
+        public static void QueueDream(string name)
+        {
+            nextDreamID = name;
+        }
+
+        /// <summary>
         /// Stores all registered <see cref="CustomScene"/>s.
         /// </summary>
         public static JsonRegistry<SceneID, CustomScene> Registry { get; } = new((key, json) => new(key, json));

@@ -6,6 +6,7 @@ using Menu;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine;
+using static DreamsState;
 using static Menu.MenuScene;
 using static Menu.SlideShow;
 using static SlugBase.Features.GameFeatures;
@@ -18,15 +19,22 @@ namespace SlugBase.Assets
 
         public static void Apply()
         {
+            // Static menu hooks building (select screen, dreams)
             IL.Menu.MenuIllustration.LoadFile_string += MenuIllustration_LoadFile_string;
             On.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
             
+            // Slideshow hooks
             IL.Menu.SlugcatSelectMenu.StartGame += SlugcatSelectMenu_StartGame;
             IL.RainWorldGame.ExitToVoidSeaSlideShow += RainWorldGame_ExitToVoidSeaSlideShow;
             IL.Menu.SlideShow.ctor += SlideShow_ctor;
-            On.Menu.MenuScene.BuildScene += MenuScene_BuildScene_IntroOutro;
+            On.Menu.MenuScene.BuildScene += MenuScene_BuildScene_IntroOutroSlideshow;
+
+            // Dream hooks
+            IL.RainWorldGame.Win += RainWorldGame_Win;
+            On.Menu.DreamScreen.SceneFromDream += SceneID_SceneFromDream;
         }
 
+        
         // Use paths as atlas names instead of just the file name
         private static void MenuIllustration_LoadFile_string(ILContext il)
         {
@@ -78,6 +86,8 @@ namespace SlugBase.Assets
             }
         }
         
+        // These hooks assign the SlideShowID to the ProcessManager.nextSlideshow
+        #region Assign the next slideshowID
         public static void SlugcatSelectMenu_StartGame(ILContext il)
         {
             ILCursor cursor = new(il);
@@ -87,6 +97,7 @@ namespace SlugBase.Assets
 
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.EmitDelegate((SlugcatStats.Name storyGameCharacter) => {
+                Debug.Log("Slugbase start game slideshow hook");
                 if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newScene)) {
                     Debug.Log("Slugbase Did thing 1 part 1");
                     return true;
@@ -128,6 +139,10 @@ namespace SlugBase.Assets
                 }
             });
         }
+        #endregion
+        
+        // These hooks assign the scenes, images, ect, actually build stuff for the slideshows specifically
+        #region Build the Slideshow
         public static void SlideShow_ctor(ILContext il)
         {
             ILCursor cursor = new(il);
@@ -141,9 +156,16 @@ namespace SlugBase.Assets
             cursor.Emit(OpCodes.Ldarg_2);
             cursor.EmitDelegate((SlideShow self, ProcessManager manager, SlideShowID slideShowID) =>
             {
-                // Unsure if looping is better, or trying to grab the SlugcatStats.Name from manager.sceneSlot or RWCustom.Custom.rainWorld.lastActiveSaveSlot
-                // I feel looping since it won't ever be accidentally null or the wrong value, and prevent the scene from playing at all
-                foreach(var chara in SlugBaseCharacter.Registry.Values) {
+                SlugcatStats.Name name = null;
+                if (manager.oldProcess is Menu.SlugcatSelectMenu slugcatmenu)
+                {
+                    name = slugcatmenu.slugcatPages[slugcatmenu.slugcatPageIndex].slugcatNumber;
+                }
+                if (manager.oldProcess is RainWorldGame rainGame)
+                {
+                    name = rainGame.StoryCharacter;
+                }
+                if (SlugBaseCharacter.TryGet(name, out var chara)) {
                     if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                     {
                         Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Intro");
@@ -159,15 +181,14 @@ namespace SlugBase.Assets
                             SlugBasePlugin.Logger.LogError($"Slugbase music loading error\n{err}");
                         }
 
-                        // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
+                        // Would maybe be less confusing if some maths were done here for the timing so that the user can just put times relative to the previous images' times, but idk
                         foreach (var scene in customIntroSlideshow.Scenes) {
-                            Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{scene.Name}_intro");
+                            Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
                             // Append stuff to the name so that each one is unique, even if it's not in the json
-                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                         }
                         self.processAfterSlideShow = ProcessManager.ProcessID.Game;
                     }
-
                     if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
                     {
                         foreach (var newOutroSlideShowID in newOutroSlideShowIDList)
@@ -189,52 +210,65 @@ namespace SlugBase.Assets
 
                                 // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
                                 foreach (var scene in customOutroSlideshow.Scenes) {
-                                    Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{scene.Name}");
+                                    Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}");
                                     // Append stuff to the name so that each one is unique, even if it's not in the json
-                                    self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                                    self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                                 }
-                                self.processAfterSlideShow = ProcessManager.ProcessID.Credits;
+                                if (customOutroSlideshow.Credits)
+                                {
+                                    self.processAfterSlideShow = ProcessManager.ProcessID.Credits;
+                                }
+                                else
+                                {
+                                    self.processAfterSlideShow = ProcessManager.ProcessID.Statistics;
+                                }
                             }
                         }
                     }
                 }
             });
         }
-        public static void MenuScene_BuildScene_IntroOutro(On.Menu.MenuScene.orig_BuildScene orig, MenuScene self)
+        public static void MenuScene_BuildScene_IntroOutroSlideshow(On.Menu.MenuScene.orig_BuildScene orig, MenuScene self)
         {
             orig(self);
 
-            foreach(var chara in SlugBaseCharacter.Registry.Values) {
-                if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
+            SlugcatStats.Name name = null;
+            if (self.menu.manager.oldProcess is Menu.SlugcatSelectMenu slugcatmenu) {
+                name = slugcatmenu.slugcatPages[slugcatmenu.slugcatPageIndex].slugcatNumber;
+            }
+            if (self.menu.manager.oldProcess is RainWorldGame rainGame)
+            {
+                name = rainGame.StoryCharacter;
+            }
+            if (SlugBaseCharacter.TryGet(name, out var chara)) {
+                if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && (self.menu is SlideShow slideShow) && slideShow.slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                 {
                     foreach (var scene in customIntroSlideshow.Scenes)
                     {
                         Debug.Log("Slugbase checking if sceneID matches");
-                        if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}_intro", false) == self.sceneID)
+                        if (new SceneID($"Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro", false) == self.sceneID)
                         {
-                            Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{scene.Name}_intro");
+                            Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
                             foreach (var image in scene.Images) {
                                 self.sceneFolder = customIntroSlideshow.SceneFolder;
-                                //Debug.Log($"Slugbase Log Path: {self.sceneFolder}");
                                 self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, false, true));
                                 Debug.Log($"Slugbase added image {image.Name} to scene {scene.Name}");
                             }
                         }
                     }
                 }
-
                 if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
                 {
                     foreach (var newOutroSlideShowID in newOutroSlideShowIDList)
                     {
-                        if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow))
+                        if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow) && (self.menu is SlideShow outroShow) && outroShow.slideShowID == newOutroSlideShowID)
                         {
                             foreach (var scene in customOutroSlideshow.Scenes)
                             {
                                 Debug.Log("Slugbase checking if sceneID matches");
-                                if (new SceneID($"Slugbase_{chara.Name.value}_{scene.Name}", false) == self.sceneID)
+                                if (new SceneID($"Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}", false) == self.sceneID)
                                 {
-                                    Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{scene.Name}");
+                                    Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}");
                                     foreach (var image in scene.Images)
                                     {
                                         self.sceneFolder = customOutroSlideshow.SceneFolder;
@@ -248,5 +282,46 @@ namespace SlugBase.Assets
                 }
             }
         }
+        #endregion
+        
+        #region Dream Hooks
+        private static void RainWorldGame_Win(ILContext il)
+        {
+            ILCursor cursor = new ILCursor(il);
+            ILLabel label = il.DefineLabel();
+
+            // Just insert at the top of the method, calling near the bottom was presenting some troubles and not switching processes 'correctly' (It went to DreamID.Empty no matter what)
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate((RainWorldGame self) => {
+                if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && CustomScene.nextDreamID != "")
+                {
+                    self.GetStorySession.saveState.dreamsState.upcomingDream = new DreamID(CustomScene.nextDreamID, false);
+                    Debug.Log($"Slugbase force dream {CustomScene.nextDreamID}");
+                    self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Dream);
+                    return true;
+                }
+                Debug.Log($"Slugbase no match for DreamID {CustomScene.nextDreamID}.");
+                if (CustomScene.nextDreamID != "") Debug.LogError($"No match found for DreamID: {CustomScene.nextDreamID}");
+                return false;
+            });
+            // If the above it true, don't bother with the rest of the method, just in case it messes something up. (Have not actually tested with a normal dream yet!)
+            cursor.Emit(OpCodes.Brfalse_S, label);
+            cursor.Emit(OpCodes.Ret);
+            cursor.MarkLabel(label);
+        }
+        private static SceneID SceneID_SceneFromDream(On.Menu.DreamScreen.orig_SceneFromDream orig, Menu.DreamScreen self, DreamsState.DreamID dreamID)
+        {
+            SceneID origSceneID = orig(self, dreamID);
+            if (self.manager.oldProcess is RainWorldGame rainGame && SlugBaseCharacter.TryGet(rainGame.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && dreamID.value == CustomScene.nextDreamID)
+            {
+                Debug.Log($"Slugbase new scene from dream {dreamID.value}");
+                CustomScene.QueueDream("");
+                return new SceneID(dreamID.value, false);
+            }
+            Debug.Log("Slugbase returning normal SceneID");
+            if (CustomScene.nextDreamID != "") Debug.LogError($"dreamID ({dreamID}) did not match {CustomScene.nextDreamID}");  // This should realistically never trigger (probably)
+            return origSceneID;
+        }
+        #endregion
     }
 }

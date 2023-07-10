@@ -38,6 +38,11 @@ namespace SlugBase.Assets
         /// </summary>
         public Scene[] Scenes { get; }
 
+        /// <summary>
+        /// If the game goes to the credits after playing the slideshow or the sleep screen
+        /// </summary>
+        public bool Credits { get; }
+
         private CustomSlideshow(SlideShowID id, JsonObject json)
         {
             ID = id;
@@ -55,6 +60,7 @@ namespace SlugBase.Assets
             else {
                 Music = new MMusic("RW_Intro_Theme", 40f);
             }
+            Credits = json.TryGet("credits")?.AsBool() ?? false;
         }
 
         /// <summary>
@@ -186,7 +192,7 @@ namespace SlugBase.Assets
             /// Creates data about a song to play.
             /// </summary>
             /// <param name="name">The sound name.</param>
-            /// <param name="fadeIn">The time for the music to fade in to full volume. </param>
+            /// <param name="fadeIn">The time for the music to fade in to full volume.</param>
             public MMusic(string name, float fadeIn) : this(name)
             {
                 FadeIn = fadeIn;
@@ -195,7 +201,7 @@ namespace SlugBase.Assets
             /// <summary>
             /// Creates data about a song to play from a JSON
             /// </summary>
-            /// <param name="json">The JSON data to load from. </param>
+            /// <param name="json">The JSON data to load from.</param>
             public MMusic(JsonObject json) : this(json.GetString("name"))
             {
                 if (json.TryGet("fadein") is JsonAny fadeIn)
@@ -208,9 +214,15 @@ namespace SlugBase.Assets
                 }
             }
         }
-        public static void NewOutro(SlideShowID ID, ProcessManager manager)
+        
+        /// <summary>
+        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager.
+        /// </summary>
+        /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
+        /// <param name="manager">The ProcessManager, needed to change the active process.</param>
+        public static void NewOutro(string ID, ProcessManager manager)
         {
-            manager.nextSlideshow = ID;
+            manager.nextSlideshow = new Menu.SlideShow.SlideShowID(ID, false);
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
         }
     }
