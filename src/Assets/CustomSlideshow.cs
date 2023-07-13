@@ -24,7 +24,7 @@ namespace SlugBase.Assets
             manager.nextSlideshow = new Menu.SlideShow.SlideShowID(ID, false);
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
         }
-        
+
         /// <summary>
         /// Stores all registered <see cref="CustomSlideshow"/>s.
         /// </summary>
@@ -73,7 +73,7 @@ namespace SlugBase.Assets
                 Music = new MMusic("RW_Intro_Theme", 40f);
             }
 
-            Credits = json.TryGet("credits")?.AsBool() ?? false;
+            Credits = json.TryGet("credits")?.AsBool() ?? true;
         }
 
         /// <summary>
