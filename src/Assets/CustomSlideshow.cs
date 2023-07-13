@@ -15,7 +15,7 @@ namespace SlugBase.Assets
     public class CustomSlideshow
     {
         /// <summary>
-        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager.
+        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager, in order to play an outro slideshow
         /// </summary>
         /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
         /// <param name="manager">The ProcessManager, needed to change the active process.</param>
@@ -46,12 +46,12 @@ namespace SlugBase.Assets
         public MMusic Music { get; }
 
         /// <summary>
-        /// An array of images in this scene.
+        /// An array of images and other data in this scene.
         /// </summary>
         public Scene[] Scenes { get; }
 
         /// <summary>
-        /// If the game goes to the credits after playing the slideshow or the statistics screen
+        /// If the game goes to the credits (true) after playing the slideshow or the statistics screen (false)
         /// </summary>
         public bool Credits { get; }
 
@@ -66,12 +66,8 @@ namespace SlugBase.Assets
             SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
             // Don't know if I should force it to defalut to the normal intro theme or leave it empty so that it's an option for people to not have any music (But who would choose that? Someone probably)
             // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
-            if (json.TryGet("music") is JsonAny music) {
-                Music = new MMusic(music.AsObject());
-            }
-            else {
-                Music = new MMusic("RW_Intro_Theme", 40f);
-            }
+            if (json.TryGet("music") is JsonAny music) { Music = new MMusic(music.AsObject()); }
+            else { Music = new MMusic("RW_Intro_Theme", 40f); }
 
             Credits = json.TryGet("credits")?.AsBool() ?? true;
         }
@@ -123,7 +119,7 @@ namespace SlugBase.Assets
             public Image(JsonObject json) : this(json.GetString("name"), ToVector2(json.Get("pos")))
             {
                 Depth = json.TryGet("depth")?.AsFloat() ?? 1f;
-                Shader = json.TryGet("shader")?.AsString() is string shader ? new(shader) : MenuDepthIllustration.MenuShader.Basic;
+                Shader = json.TryGet("shader")?.AsString() is string shader ? new(shader) : MenuDepthIllustration.MenuShader.Normal;
             }
         }
 
@@ -133,7 +129,7 @@ namespace SlugBase.Assets
         public class Scene
         {
             /// <summary>
-            /// The unique name of the scene to load.
+            /// The name of the scene to load.
             /// </summary>
             public string Name { get; set; }
 
@@ -145,17 +141,17 @@ namespace SlugBase.Assets
             /// <summary>
             /// The second that this scene will start fading in
             /// </summary>
-            public int StartAt { get; set; } = 0;
+            public int StartAt { get; set; }
 
             /// <summary>
             /// The second that this image will finish fading in
             /// </summary>
-            public int FadeInDoneAt { get; set; } = 0;
+            public int FadeInDoneAt { get; set; }
 
             /// <summary>
-            /// The second that this image will finish fading out
+            /// The second that this image will start fading out at
             /// </summary>
-            public int FadeOutStartAt { get; set; } = 0;
+            public int FadeOutStartAt { get; set; }
 
             /// <summary>
             /// The positions that the images will try to go to, if they are not in flatMode (Determined by the game)
@@ -163,7 +159,7 @@ namespace SlugBase.Assets
             public Vector2[] Movement { get; set; }
             
             /// <summary>
-            /// Creates a new image.
+            /// Creates a new Scene.
             /// </summary>
             /// <param name="name">The file name.</param>
             /// <param name="images">The list of images the scene gets.</param>
@@ -175,7 +171,7 @@ namespace SlugBase.Assets
             }
 
             /// <summary>
-            /// Creates a new scene from JSON.
+            /// Creates a new Scene from JSON.
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
             public Scene (JsonObject json) : this(json.GetString("name"), json.GetList("images")
@@ -196,7 +192,7 @@ namespace SlugBase.Assets
         public class MMusic{
 
             /// <summary>
-            /// The file name of the sound to use. This is combined with <see cref="SceneFolder"/>.
+            /// The file name of the sound to use. This comes from the 'StreamingAssets/music/songs' folder.
             /// </summary>
             public string Name { get; set; }
 

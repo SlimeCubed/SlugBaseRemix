@@ -19,7 +19,7 @@ namespace SlugBase.Assets
         public static string nextDreamID { get; private set; } = "";
         
         /// <summary>
-        /// Set the dream scene that will display when the player next hibernates.
+        /// Set the dream scene that will display when the player hibernates next.
         /// </summary>
         /// <param name="name">The id of the scene to display.</param>
         public static void QueueDream(string name)
