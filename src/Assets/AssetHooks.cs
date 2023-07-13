@@ -158,37 +158,12 @@ namespace SlugBase.Assets
             cursor.EmitDelegate((SlideShow self, ProcessManager manager, SlideShowID slideShowID) =>
             {
                 SlugcatStats.Name name = null;
-                if (manager.oldProcess is Menu.SlugcatSelectMenu slugcatmenu)
-                {
-                    name = slugcatmenu.slugcatPages[slugcatmenu.slugcatPageIndex].slugcatNumber;
-                }
-                if (manager.oldProcess is RainWorldGame rainGame)
-                {
-                    name = rainGame.StoryCharacter;
-                }
+                if (manager.oldProcess is Menu.SlugcatSelectMenu slugcatmenu) { name = slugcatmenu.slugcatPages[slugcatmenu.slugcatPageIndex].slugcatNumber; }
+                if (manager.oldProcess is RainWorldGame rainGame) { name = rainGame.StoryCharacter; }
                 if (SlugBaseCharacter.TryGet(name, out var chara)) {
                     if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                     {
-                        //Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Intro");
-                        try {
-                            if (manager.musicPlayer != null && customIntroSlideshow.Music.Name != "")
-                            {
-                                self.waitForMusic = customIntroSlideshow.Music.Name;
-                                self.stall = false;
-                                manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customIntroSlideshow.Music.FadeIn);
-                            }
-                        }
-                        catch (Exception err) {
-                            SlugBasePlugin.Logger.LogError($"Slugbase music loading error\n{err}");
-                        }
-
-                        // Would maybe be less confusing if some maths were done here for the timing so that the user can just put times relative to the previous images' times, but idk
-                        foreach (var scene in customIntroSlideshow.Scenes) {
-                            //Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
-                            // Append stuff to the name so that each one is unique, even if it's not in the json
-                            self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
-                        }
-                        self.processAfterSlideShow = ProcessManager.ProcessID.Game;
+                        BuildSlideShowScenes(self, customIntroSlideshow, manager, chara.Name.value, true);
                     }
                     if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
                     {
@@ -196,40 +171,13 @@ namespace SlugBase.Assets
                         {
                             if (slideShowID == newOutroSlideShowID && slideShowID == newOutroSlideShowID && CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow))
                             {
-                                //Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Outro");
-                                try {
-                                    if (manager.musicPlayer != null && customOutroSlideshow.Music.Name != "")
-                                    {
-                                        self.waitForMusic = customOutroSlideshow.Music.Name;
-                                        self.stall = false;
-                                        manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customOutroSlideshow.Music.FadeIn);
-                                    }
-                                }
-                                catch (Exception err) {
-                                    SlugBasePlugin.Logger.LogError($"Slugbase music loading error\n{err}");
-                                }
-
-                                // Would maybe be less confusing if I did some maths here for the timeing so that the user can just put times relative to the previous image's times, but idk
-                                foreach (var scene in customOutroSlideshow.Scenes) {
-                                    //Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}");
-                                    // Append stuff to the name so that each one is unique, even if it's not in the json
-                                    self.playList.Add(new Scene(new SceneID( $"Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
-                                }
-                                if (customOutroSlideshow.Credits)
-                                {
-                                    self.processAfterSlideShow = ProcessManager.ProcessID.Credits;
-                                }
-                                else
-                                {
-                                    self.processAfterSlideShow = ProcessManager.ProcessID.Statistics;
-                                }
+                                BuildSlideShowScenes(self, customOutroSlideshow, manager, chara.Name.value, false);
                             }
                         }
                     }
                 }
             });
         }
-        
         // This one is for just adding the dynamic motion to the images... so much for so little...
         public static void SlideShowMenuScene_ctor(On.Menu.SlideShowMenuScene.orig_ctor orig, SlideShowMenuScene self, Menu.Menu menu, MenuObject owner, SceneID sceneID)
         {
@@ -247,15 +195,7 @@ namespace SlugBase.Assets
             {
                 if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && self.menu is SlideShow slideShow && slideShow.slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                 {
-                    foreach (var scene in customIntroSlideshow.Scenes)
-                    {
-                        if (new SceneID($"Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro", false) == sceneID && !self.flatMode)
-                        {
-                            foreach (var move in scene.Movement) {
-                                self.cameraMovementPoints.Add(new Vector3(-move.x, -move.y, 0f));
-                            }
-                        }
-                    }
+                    AddSlideShowMovement(self, sceneID, customIntroSlideshow, chara.Name.value);
                 }
                 if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
                 {
@@ -263,17 +203,7 @@ namespace SlugBase.Assets
                     {
                         if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow) && self.menu is SlideShow outroShow && outroShow.slideShowID == newOutroSlideShowID)
                         {
-                            foreach (var scene in customOutroSlideshow.Scenes)
-                            {
-                                //Debug.Log("Slugbase checking if sceneID matches");
-                                if (new SceneID($"Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}", false) == self.sceneID && !self.flatMode)
-                                {
-                                    foreach (var move in scene.Movement)
-                                    {
-                                        self.cameraMovementPoints.Add(new Vector3(-move.x, -move.y, 0f));
-                                    }
-                                }
-                            }
+                            AddSlideShowMovement(self, sceneID, customOutroSlideshow, chara.Name.value);
                         }
                     }
                 }
@@ -295,25 +225,7 @@ namespace SlugBase.Assets
                 if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && self.menu is SlideShow slideShow && slideShow.slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                 {
                     self.sceneFolder = customIntroSlideshow.SceneFolder;
-                    foreach (var scene in customIntroSlideshow.Scenes)
-                    {
-                        //Debug.Log("Slugbase checking if sceneID matches");
-                        if (new SceneID($"Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro", false) == self.sceneID)
-                        {
-                            //Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
-                            foreach (var image in scene.Images) {
-                                if (self.flatMode)
-                                {
-                                    // Need to test if adding here is a good idea
-                                    self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
-                                }
-                                else
-                                {
-                                    self.AddIllustration(new MenuDepthIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, image.Depth, image.Shader));
-                                }
-                            }
-                        }
-                    }
+                    AddSlideShowImages(self, customIntroSlideshow, chara.Name.value);
                 }
                 if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
                 {
@@ -322,26 +234,7 @@ namespace SlugBase.Assets
                         if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow) && self.menu is SlideShow outroShow && outroShow.slideShowID == newOutroSlideShowID)
                         {
                             self.sceneFolder = customOutroSlideshow.SceneFolder;
-                            foreach (var scene in customOutroSlideshow.Scenes)
-                            {
-                                //Debug.Log("Slugbase checking if sceneID matches");
-                                if (new SceneID($"Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}", false) == self.sceneID)
-                                {
-                                    //Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customOutroSlideshow.ID}_{scene.Name}");
-                                    foreach (var image in scene.Images)
-                                    {
-                                        if (self.flatMode)
-                                        {
-                                            self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
-                                        }
-                                        else
-                                        {
-                                            self.AddIllustration(new MenuDepthIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, image.Depth, image.Shader));
-                                        }
-                                        //Debug.Log($"Slugbase added image {image.Name} to scene ");
-                                    }
-                                }
-                            }
+                            AddSlideShowImages(self, customOutroSlideshow, chara.Name.value);
                         }
                     }
                 }
@@ -386,6 +279,68 @@ namespace SlugBase.Assets
             //Debug.Log("Slugbase returning normal SceneID");
             if (CustomScene.nextDreamID != "") Debug.LogError($"dreamID ({dreamID}) did not match {CustomScene.nextDreamID}");  // This should realistically never trigger (probably)
             return origSceneID;
+        }
+        #endregion
+        
+        #region Please save yourself from the nesting hell
+        private static void BuildSlideShowScenes(SlideShow self, CustomSlideshow customSlideshow, ProcessManager manager, string charaName, bool intro)
+        {
+            //Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Intro");
+            try {
+                if (manager.musicPlayer != null && customSlideshow.Music.Name != "")
+                {
+                    self.waitForMusic = customSlideshow.Music.Name;
+                    self.stall = false;
+                    manager.musicPlayer.MenuRequestsSong(self.waitForMusic, 1.5f, customSlideshow.Music.FadeIn);
+                }
+            }
+            catch (Exception err) {
+                SlugBasePlugin.Logger.LogError($"Slugbase music loading error\n{err}");
+            }
+
+            // Would maybe be less confusing if some maths were done here for the timing so that the user can just put times relative to the previous images' times, but idk
+            foreach (var scene in customSlideshow.Scenes) {
+                //Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
+                // Append stuff to the name so that each one is unique, even if it's not in the json
+                self.playList.Add(new Scene(new SceneID( $"Slugbase_{charaName}_{customSlideshow.ID}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+            }
+            if (intro) { self.processAfterSlideShow = ProcessManager.ProcessID.Game; }
+            else if (customSlideshow.Credits) { self.processAfterSlideShow = ProcessManager.ProcessID.Credits; }
+            else { self.processAfterSlideShow = ProcessManager.ProcessID.Statistics; }
+        }
+        private static void AddSlideShowMovement(SlideShowMenuScene self, SceneID sceneID, CustomSlideshow customSlideshow, string charaName)
+        {
+            foreach (var scene in customSlideshow.Scenes)
+            {
+                if (new SceneID($"Slugbase_{charaName}_{customSlideshow.ID}_{scene.Name}_intro", false) == sceneID && !self.flatMode)
+                {
+                    foreach (var move in scene.Movement) {
+                        self.cameraMovementPoints.Add(new Vector3(-move.x, -move.y, 0f));
+                    }
+                }
+            }
+        }
+        private static void AddSlideShowImages(MenuScene self, CustomSlideshow customSlideshow, string charaName)
+        {
+            foreach (var scene in customSlideshow.Scenes)
+            {
+                //Debug.Log("Slugbase checking if sceneID matches");
+                if (new SceneID($"Slugbase_{charaName}_{customSlideshow.ID}_{scene.Name}_intro", false) == self.sceneID)
+                {
+                    //Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
+                    foreach (var image in scene.Images) {
+                        if (self.flatMode)
+                        {
+                            // Need to test if adding here is a good idea
+                            self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
+                        }
+                        else
+                        {
+                            self.AddIllustration(new MenuDepthIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, image.Depth, image.Shader));
+                        }
+                    }
+                }
+            }
         }
         #endregion
     }
