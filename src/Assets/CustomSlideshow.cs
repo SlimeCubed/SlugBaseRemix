@@ -185,13 +185,8 @@ namespace SlugBase.Assets
                 StartAt = json.TryGet("displayat")?.AsInt() ?? 0;
                 FadeInDoneAt = json.TryGet("fadeinfinish")?.AsInt() ?? 3;
                 FadeOutStartAt = json.TryGet("fadeoutstart")?.AsInt() ?? 8;
-                // Find out better way to do this
-                try {
-                    Movement = json.GetList("movepositions").Select(vec => ToVector2(vec)).ToArray();
-                }
-                catch {
-                    Movement = new Vector2[1]{new(0,0)};
-                }
+                if (json.TryGet("movepositions")?.TryList() is JsonList list) { Movement = list.Select(vec => ToVector2(vec)).ToArray(); }
+                else { Movement = new Vector2[1]{new(0,0)}; }
             }
         }
 
