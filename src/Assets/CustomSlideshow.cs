@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
 using System.Collections.Generic;
+using Menu;
 
 namespace SlugBase.Assets
 {
@@ -13,6 +14,17 @@ namespace SlugBase.Assets
     /// </summary>
     public class CustomSlideshow
     {
+        /// <summary>
+        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager.
+        /// </summary>
+        /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
+        /// <param name="manager">The ProcessManager, needed to change the active process.</param>
+        public static void NewOutro(string ID, ProcessManager manager)
+        {
+            manager.nextSlideshow = new Menu.SlideShow.SlideShowID(ID, false);
+            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
+        }
+        
         /// <summary>
         /// Stores all registered <see cref="CustomSlideshow"/>s.
         /// </summary>
@@ -39,7 +51,7 @@ namespace SlugBase.Assets
         public Scene[] Scenes { get; }
 
         /// <summary>
-        /// If the game goes to the credits after playing the slideshow or the sleep screen
+        /// If the game goes to the credits after playing the slideshow or the statistics screen
         /// </summary>
         public bool Credits { get; }
 
@@ -60,6 +72,7 @@ namespace SlugBase.Assets
             else {
                 Music = new MMusic("RW_Intro_Theme", 40f);
             }
+
             Credits = json.TryGet("credits")?.AsBool() ?? false;
         }
 
@@ -77,6 +90,16 @@ namespace SlugBase.Assets
             /// The pixel position of this image's bottom left corner in the scene. (683, 384) is the center of the screen for flatmode, (0,0) for depth mode
             /// </summary>
             public Vector2 Position { get; set; }
+
+            /// <summary>
+            /// The depth of this image in the scene.
+            /// </summary>
+            public float Depth { get; set; } = 1f;
+
+            /// <summary>
+            /// The shader to use when rendering. Defaults to <see cref="MenuDepthIllustration.MenuShader.Normal"/>.
+            /// </summary>
+            public MenuDepthIllustration.MenuShader Shader { get; set; }
 
 
             /// <summary>
@@ -99,6 +122,8 @@ namespace SlugBase.Assets
             /// <param name="json">The JSON data to load from.</param>
             public Image(JsonObject json) : this(json.GetString("name"), ToVector2(json.Get("pos")))
             {
+                Depth = json.TryGet("depth")?.AsFloat() ?? 1f;
+                Shader = json.TryGet("shader")?.AsString() is string shader ? new(shader) : MenuDepthIllustration.MenuShader.Basic;
             }
         }
 
@@ -133,9 +158,9 @@ namespace SlugBase.Assets
             public int FadeOutStartAt { get; set; } = 0;
 
             /// <summary>
-            /// If <c>true</c>, this image will display when in flat mode and will be hidden otherwise.
+            /// The positions that the images will try to go to, if they are not in flatMode (Determined by the game)
             /// </summary>
-            public bool Flatmode { get; set; }
+            public Vector2[] Movement { get; set; }
             
             /// <summary>
             /// Creates a new image.
@@ -160,7 +185,13 @@ namespace SlugBase.Assets
                 StartAt = json.TryGet("displayat")?.AsInt() ?? 0;
                 FadeInDoneAt = json.TryGet("fadeinfinish")?.AsInt() ?? 3;
                 FadeOutStartAt = json.TryGet("fadeoutstart")?.AsInt() ?? 8;
-                Flatmode = json.TryGet("flatmode")?.AsBool() ?? false;
+                // Find out better way to do this
+                try {
+                    Movement = json.GetList("movepositions").Select(vec => ToVector2(vec)).ToArray();
+                }
+                catch {
+                    Movement = new Vector2[1]{new(0,0)};
+                }
             }
         }
 
@@ -213,17 +244,6 @@ namespace SlugBase.Assets
                     FadeIn = 40f;
                 }
             }
-        }
-        
-        /// <summary>
-        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager.
-        /// </summary>
-        /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
-        /// <param name="manager">The ProcessManager, needed to change the active process.</param>
-        public static void NewOutro(string ID, ProcessManager manager)
-        {
-            manager.nextSlideshow = new Menu.SlideShow.SlideShowID(ID, false);
-            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
         }
     }
 }
