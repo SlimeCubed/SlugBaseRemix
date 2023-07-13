@@ -15,7 +15,7 @@ namespace SlugBase.Assets
     public class CustomSlideshow
     {
         /// <summary>
-        /// Match the ID to the id in a slideshow's json file, and provide the ProcessManager, in order to play an outro slideshow
+        /// Must match the ID to the id in a slideshow's json file, and provide the ProcessManager, in order to play an outro slideshow
         /// </summary>
         /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
         /// <param name="manager">The ProcessManager, needed to change the active process.</param>
@@ -38,7 +38,7 @@ namespace SlugBase.Assets
         /// <summary>
         /// A path relative to StreamingAssets to load images from.
         /// </summary>
-        public string SceneFolder { get; }
+        public string SlideshowFolder { get; }
 
         /// <summary>
         /// The music to play during a custom intro or outro
@@ -63,13 +63,13 @@ namespace SlugBase.Assets
                 .Select(img => new Scene(img.AsObject()))
                 .ToArray();
 
-            SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
+            SlideshowFolder = json.TryGet("slideshow_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
             // Don't know if I should force it to defalut to the normal intro theme or leave it empty so that it's an option for people to not have any music (But who would choose that? Someone probably)
             // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
             if (json.TryGet("music") is JsonAny music) { Music = new MMusic(music.AsObject()); }
             else { Music = new MMusic("RW_Intro_Theme", 40f); }
 
-            Credits = json.TryGet("credits")?.AsBool() ?? true;
+            Credits = json.TryGet("to_credits")?.AsBool() ?? true;
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace SlugBase.Assets
         public class Image
         {
             /// <summary>
-            /// The file name of the image to load. This is combined with <see cref="SceneFolder"/>.
+            /// The file name of the image to load. This is combined with <see cref="SlideshowFolder"/>.
             /// </summary>
             public string Name { get; set; }
 
@@ -129,7 +129,7 @@ namespace SlugBase.Assets
         public class Scene
         {
             /// <summary>
-            /// The name of the scene to load.
+            /// The name of the scene.
             /// </summary>
             public string Name { get; set; }
 
@@ -178,11 +178,10 @@ namespace SlugBase.Assets
                                                                                                     .Select(img => new Image(img.AsObject()))
                                                                                                     .ToList())
             {
-                StartAt = json.TryGet("displayat")?.AsInt() ?? 0;
-                FadeInDoneAt = json.TryGet("fadeinfinish")?.AsInt() ?? 3;
-                FadeOutStartAt = json.TryGet("fadeoutstart")?.AsInt() ?? 8;
-                if (json.TryGet("movepositions")?.TryList() is JsonList list) { Movement = list.Select(vec => ToVector2(vec)).ToArray(); }
-                else { Movement = new Vector2[1]{new(0,0)}; }
+                StartAt = json.TryGet("fade_in")?.AsInt() ?? 0;
+                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsInt() ?? 3;
+                FadeOutStartAt = json.TryGet("fade_out_start")?.AsInt() ?? 8;
+                Movement = json.TryGet("movements")?.AsList().Select(vec => ToVector2(vec)).ToArray() ?? new Vector2[1]{new(0,0)};
             }
         }
 

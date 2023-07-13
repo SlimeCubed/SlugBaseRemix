@@ -23,7 +23,7 @@ namespace SlugBase.Assets
             IL.Menu.MenuIllustration.LoadFile_string += MenuIllustration_LoadFile_string;
             On.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
             
-            // Slideshow hooks
+            // Slideshow hooks (Intro and Outro are covered)
             IL.Menu.SlugcatSelectMenu.StartGame += SlugcatSelectMenu_StartGame;
             IL.RainWorldGame.ExitToVoidSeaSlideShow += RainWorldGame_ExitToVoidSeaSlideShow;
             IL.Menu.SlideShow.ctor += SlideShow_ctor;
@@ -224,7 +224,7 @@ namespace SlugBase.Assets
             if (SlugBaseCharacter.TryGet(name, out var chara)) {
                 if (IntroScene.TryGet(chara, out var newIntroSlideShowID) && self.menu is SlideShow slideShow && slideShow.slideShowID == newIntroSlideShowID && CustomSlideshow.Registry.TryGet(newIntroSlideShowID, out var customIntroSlideshow))
                 {
-                    self.sceneFolder = customIntroSlideshow.SceneFolder;
+                    self.sceneFolder = customIntroSlideshow.SlideshowFolder;
                     AddSlideShowImages(self, customIntroSlideshow, chara.Name.value);
                 }
                 if (OutroScenes.TryGet(chara, out var newOutroSlideShowIDList))
@@ -233,7 +233,7 @@ namespace SlugBase.Assets
                     {
                         if (CustomSlideshow.Registry.TryGet(newOutroSlideShowID, out var customOutroSlideshow) && self.menu is SlideShow outroShow && outroShow.slideShowID == newOutroSlideShowID)
                         {
-                            self.sceneFolder = customOutroSlideshow.SceneFolder;
+                            self.sceneFolder = customOutroSlideshow.SlideshowFolder;
                             AddSlideShowImages(self, customOutroSlideshow, chara.Name.value);
                         }
                     }
@@ -242,6 +242,7 @@ namespace SlugBase.Assets
         }
         #endregion
         
+        // These hooks are for switching to a Dream if CustomScene.nextDreamID is not equal to ""
         #region Dream Hooks
         private static void RainWorldGame_Win(ILContext il)
         {
@@ -254,11 +255,9 @@ namespace SlugBase.Assets
                 if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && CustomScene.nextDreamID != "")
                 {
                     self.GetStorySession.saveState.dreamsState.upcomingDream = new DreamID(CustomScene.nextDreamID, false);
-                    //Debug.Log($"Slugbase force dream {CustomScene.nextDreamID}");
                     self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Dream);
                     return true;
                 }
-                //Debug.Log($"Slugbase no match for DreamID {CustomScene.nextDreamID}.");
                 if (CustomScene.nextDreamID != "") Debug.LogError($"No match found for DreamID: {CustomScene.nextDreamID}");
                 return false;
             });
@@ -272,11 +271,9 @@ namespace SlugBase.Assets
             SceneID origSceneID = orig(self, dreamID);
             if (self.manager.oldProcess is RainWorldGame rainGame && SlugBaseCharacter.TryGet(rainGame.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && dreamID.value == CustomScene.nextDreamID)
             {
-                //Debug.Log($"Slugbase new scene from dream {dreamID.value}");
                 CustomScene.QueueDream("");
                 return new SceneID(dreamID.value, false);
             }
-            //Debug.Log("Slugbase returning normal SceneID");
             if (CustomScene.nextDreamID != "") Debug.LogError($"dreamID ({dreamID}) did not match {CustomScene.nextDreamID}");  // This should realistically never trigger (probably)
             return origSceneID;
         }
@@ -285,9 +282,8 @@ namespace SlugBase.Assets
         #region Please save yourself from the nesting hell
         private static void BuildSlideShowScenes(SlideShow self, CustomSlideshow customSlideshow, ProcessManager manager, string charaName, bool intro)
         {
-            //Debug.Log($"Slugbase: (Cutscenes) Playing slideshow {newIntroSlideShowID}\nIs Intro");
             try {
-                if (manager.musicPlayer != null && customSlideshow.Music.Name != "")
+                if (manager.musicPlayer != null && customSlideshow.Music != null)
                 {
                     self.waitForMusic = customSlideshow.Music.Name;
                     self.stall = false;
@@ -300,8 +296,6 @@ namespace SlugBase.Assets
 
             // Would maybe be less confusing if some maths were done here for the timing so that the user can just put times relative to the previous images' times, but idk
             foreach (var scene in customSlideshow.Scenes) {
-                //Debug.Log($"Slugbase added new scene Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
-                // Append stuff to the name so that each one is unique, even if it's not in the json
                 self.playList.Add(new Scene(new SceneID( $"Slugbase_{charaName}_{customSlideshow.ID}_{scene.Name}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
             }
             if (intro) { self.processAfterSlideShow = ProcessManager.ProcessID.Game; }
@@ -324,14 +318,11 @@ namespace SlugBase.Assets
         {
             foreach (var scene in customSlideshow.Scenes)
             {
-                //Debug.Log("Slugbase checking if sceneID matches");
                 if (new SceneID($"Slugbase_{charaName}_{customSlideshow.ID}_{scene.Name}_intro", false) == self.sceneID)
                 {
-                    //Debug.Log($"Slugbase now Playing: Slugbase_{chara.Name.value}_{customIntroSlideshow.ID}_{scene.Name}_intro");
                     foreach (var image in scene.Images) {
                         if (self.flatMode)
                         {
-                            // Need to test if adding here is a good idea
                             self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
                         }
                         else
