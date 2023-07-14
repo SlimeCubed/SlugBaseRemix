@@ -33,8 +33,24 @@ namespace SlugBase.Assets
             // Dream hooks
             IL.RainWorldGame.Win += RainWorldGame_Win;
             On.Menu.DreamScreen.SceneFromDream += SceneID_SceneFromDream;
+
+            // Clean the next Dream
+            On.Menu.MainMenu.ctor += MainMenu_ctor;
+            On.Player.Die += Player_Die;
         }
 
+        #region Clear the upcoming dream if the player exits the campaign or dies
+        private static void Player_Die(On.Player.orig_Die orig, Player self)
+        {
+            orig(self);
+            CustomScene.QueueDream("");
+        }
+        private static void MainMenu_ctor(On.Menu.MainMenu.orig_ctor orig, MainMenu self, ProcessManager manager, bool showRegionSpecificBkg)
+        {
+            orig(self, manager, showRegionSpecificBkg);
+            CustomScene.QueueDream("");
+        }
+        #endregion
         
         // Use paths as atlas names instead of just the file name
         private static void MenuIllustration_LoadFile_string(ILContext il)
@@ -94,13 +110,14 @@ namespace SlugBase.Assets
             ILCursor cursor = new(il);
             ILLabel label = il.DefineLabel();
 
-            cursor.GotoNext(MoveType.Before, i => i.MatchLdarg(1), i => i.MatchLdsfld<SlugcatStats.Name>("White"));
+            if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchLdarg(1), i => i.MatchLdsfld<SlugcatStats.Name>("White")))
+            {
+                return;
+            };
 
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.EmitDelegate((SlugcatStats.Name storyGameCharacter) => {
-                Debug.Log("Slugbase start game slideshow hook");
                 if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newScene)) {
-                    Debug.Log("Slugbase Did thing 1 part 1");
                     return true;
                 }
                 return false;
@@ -118,8 +135,6 @@ namespace SlugBase.Assets
             cursor.EmitDelegate((SlugcatSelectMenu self, SlugcatStats.Name storyGameCharacter) =>
             {
                 if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newSlideShowID)) {
-                    // Reason why the slideshows can't use MenuScene I believe (Maybe I could just change it to make it work, but it works now fine and that would still then use a foreach loop here anyway)
-                    Debug.Log("Slugbase Did thing 1 part 2");
                     self.manager.nextSlideshow = newSlideShowID;
                 }
             });
