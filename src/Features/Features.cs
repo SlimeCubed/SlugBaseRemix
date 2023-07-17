@@ -151,11 +151,7 @@ namespace SlugBase.Features
         public static readonly GameFeature<SlideShow.SlideShowID> IntroScene = GameExtEnum<SlideShow.SlideShowID>("intro_slideshow");
 
         /// <summary>"outro_scene": Add an outro scene for a slugbase slugcat. </summary>
-        public static readonly GameFeature<SlideShow.SlideShowID[]> OutroScenes = new("outro_slideshows", json =>
-        {
-            var list = json.AsList();
-            return list.Select(JsonUtils.ToExtEnum<SlideShow.SlideShowID>).ToArray();
-        });
+        public static readonly GameFeature<SlideShow.SlideShowID> OutroScene = GameExtEnum<SlideShow.SlideShowID>("outro_slideshow");
         // This ideally should be able to support an arbitrary amount of outros for alternate endings. Personally I'd also be fine with only allowing two, one being `outro_scene_alt`, seems like a reasonable compromise
 
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>

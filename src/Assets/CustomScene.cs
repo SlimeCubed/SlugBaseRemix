@@ -16,7 +16,7 @@ namespace SlugBase.Assets
         /// <summary>
         /// The ID of the next custom dream to play, as a string
         /// </summary>
-        public static string nextDreamID { get; private set; } = "";
+        public static string NextDreamID { get; private set; } = "";
         
         /// <summary>
         /// Set the dream scene that will display when the player hibernates next.
@@ -24,7 +24,7 @@ namespace SlugBase.Assets
         /// <param name="name">The id of the scene to display.</param>
         public static void QueueDream(string name)
         {
-            nextDreamID = name;
+            NextDreamID = name;
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace SlugBase.Assets
         /// </summary>
         public float? SlugcatDepth { get; }
 
-        private CustomScene(SceneID id, JsonObject json)
+        internal CustomScene(SceneID id, JsonObject json)
         {
             ID = id;
 
@@ -84,6 +84,7 @@ namespace SlugBase.Assets
                 .Select(img => new Image(img.AsObject()))
                 .ToArray();
 
+            if (this is not SlugBase.Assets.CustomSlideshow.CustomSlideshowScene)
             IdleDepths = json.GetList("idle_depths")
                 .Select(depth => depth.AsFloat())
                 .ToArray();
