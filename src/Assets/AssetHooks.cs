@@ -33,6 +33,7 @@ namespace SlugBase.Assets
             // Dream hooks
             IL.RainWorldGame.Win += RainWorldGame_Win;
             On.Menu.DreamScreen.SceneFromDream += SceneID_SceneFromDream;
+            On.DreamsState.InitiateEventDream += DreamsState_InitiateEventDream;
         }
         
         // Use paths as atlas names instead of just the file name
@@ -186,7 +187,7 @@ namespace SlugBase.Assets
                     if (new SceneID($"Slugbase_{customSlideshow.ID}_{scene.ID}_intro", false) == sceneID && !self.flatMode)
                     {
                         foreach (var move in scene.Movement) {
-                            self.cameraMovementPoints.Add(new Vector3(-move.x, -move.y, 0f));
+                            self.cameraMovementPoints.Add(new (-move.x, -move.y, 0f));
                         }
                     }
                 }
@@ -218,23 +219,35 @@ namespace SlugBase.Assets
         }
         #endregion
         
-        // These hooks are for switching to a Dream if CustomScene.nextDreamID is not equal to ""
         #region Dream Hooks
         private static void RainWorldGame_Win(ILContext il)
         {
             ILCursor cursor = new ILCursor(il);
             ILLabel label = il.DefineLabel();
 
-            // Just insert at the top of the method, calling near the bottom was presenting some troubles and not switching processes 'correctly' (It went to DreamID.Empty no matter what)
+            if (!cursor.TryGotoNext(MoveType.After, i => i.MatchLdsfld<ModManager>("MSC")))
+            {
+                SlugBasePlugin.Logger.LogError("Slugbase cursor could not move 1");
+                return;
+            }
+            if (!cursor.TryGotoNext(moveType: MoveType.Before, i => i.MatchLdsfld<ModManager>("MSC")))
+            {
+                SlugBasePlugin.Logger.LogError("Slugbase cursor could not move 2");
+                return;
+            }
+
             cursor.Emit(OpCodes.Ldarg_0);
             cursor.EmitDelegate((RainWorldGame self) => {
-                if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && CustomScene.NextDreamID != "")
+                if (self.GetStorySession.saveState.dreamsState?.eventDream != null
+                    && SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara)
+                    && HasDreams.TryGet(chara, out bool dreams)
+                    && CustomScene.Registry.TryGet(self.GetStorySession.saveState.dreamsState.eventDream.DreamIDToSceneID(), out var dream))
                 {
-                    self.GetStorySession.saveState.dreamsState.upcomingDream = new DreamID(CustomScene.NextDreamID, false);
+                    Debug.Log($"Slugbase {(int)self.GetStorySession.saveState.dreamsState.eventDream}");
+                    self.GetStorySession.saveState.dreamsState.upcomingDream = self.GetStorySession.saveState.dreamsState.eventDream;
                     self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Dream);
                     return true;
                 }
-                if (CustomScene.NextDreamID != "") Debug.LogError($"No match found for DreamID: {CustomScene.NextDreamID}");
                 return false;
             });
             // If the above it true, don't bother with the rest of the method, just in case it messes something up. (Have not actually tested with a normal dream yet!)
@@ -242,17 +255,30 @@ namespace SlugBase.Assets
             cursor.Emit(OpCodes.Ret);
             cursor.MarkLabel(label);
         }
-        private static SceneID SceneID_SceneFromDream(On.Menu.DreamScreen.orig_SceneFromDream orig, Menu.DreamScreen self, DreamsState.DreamID dreamID)
+
+        // Without this hook, the eventDream dreamID could be overritten when visiting Moon or Pebbles for the first time. But it should still respect other custom dreams if they are not found in the CustomScene.Registry
+        private static void DreamsState_InitiateEventDream(On.DreamsState.orig_InitiateEventDream orig, DreamsState self, DreamID evDreamID)
+        {
+            orig(self, evDreamID);
+            if (evDreamID != self.eventDream && CustomScene.Registry.TryGet(evDreamID.DreamIDToSceneID(), out var dreamScene) && dreamScene.OverrideDream)
+            {
+                self.eventDream = evDreamID;
+            }
+        }
+        private static SceneID SceneID_SceneFromDream(On.Menu.DreamScreen.orig_SceneFromDream orig, DreamScreen self, DreamID dreamID)
         {
             SceneID origSceneID = orig(self, dreamID);
-            if (self.manager.oldProcess is RainWorldGame rainGame && SlugBaseCharacter.TryGet(rainGame.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && dreamID.value == CustomScene.NextDreamID)
+            if (self.manager.oldProcess is RainWorldGame rainGame && SlugBaseCharacter.TryGet(rainGame.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && CustomScene.Registry.TryGet(dreamID.DreamIDToSceneID(), out var dream))
             {
-                CustomScene.QueueDream("");
-                return new SceneID(dreamID.value, false);
+                return dreamID.DreamIDToSceneID();
             }
-            if (CustomScene.NextDreamID != "") Debug.LogError($"dreamID ({dreamID}) did not match {CustomScene.NextDreamID}");  // This should realistically never trigger (probably)
             return origSceneID;
         }
         #endregion
+
+        private static SceneID DreamIDToSceneID(this DreamID dreamID)
+        {
+            return new (dreamID.value);
+        }
     }
 }

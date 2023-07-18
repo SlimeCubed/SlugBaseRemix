@@ -12,19 +12,22 @@ namespace SlugBase.Assets
     /// A scene added by SlugBase.
     /// </summary>
     public class CustomScene
-    {
-        /// <summary>
-        /// The ID of the next custom dream to play, as a string
-        /// </summary>
-        public static string NextDreamID { get; private set; } = "";
-        
+    {        
         /// <summary>
         /// Set the dream scene that will display when the player hibernates next.
         /// </summary>
         /// <param name="name">The id of the scene to display.</param>
         public static void QueueDream(string name)
         {
-            NextDreamID = name;
+            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame rainGame && CustomScene.Registry.TryGet(new(name), out var customScene) && customScene.OverrideDream)
+            {
+                rainGame.GetStorySession.saveState.dreamsState.InitiateEventDream(new (name));
+                Debug.Log($"Slugbase set upcomingDream to {name}");
+            }
+            else if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is not RainWorldGame)
+            {
+                Debug.LogError("Dream set fail, curentMainLoop is not a RainWorldGame!");
+            }
         }
 
         /// <summary>
@@ -76,6 +79,11 @@ namespace SlugBase.Assets
         /// </summary>
         public float? SlugcatDepth { get; }
 
+        /// <summary>
+        /// If a scene is used as a Dream, should it replace any current dream
+        /// </summary>
+        public bool OverrideDream { get; }
+
         internal CustomScene(SceneID id, JsonObject json)
         {
             ID = id;
@@ -101,6 +109,8 @@ namespace SlugBase.Assets
                 SelectMenuOffset = ToVector2(selectMenuPos);
 
             SlugcatDepth = json.TryGet("slugcat_depth")?.AsFloat();
+
+            OverrideDream = json.TryGet("dream_override")?.AsBool() ?? true;
         }
 
         /// <summary>
