@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
 using static Menu.MenuScene;
+using System;
 
 namespace SlugBase.Assets
 {
@@ -22,18 +23,6 @@ namespace SlugBase.Assets
         {
             manager.nextSlideshow = new (ID);
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
-        }
-
-        internal SceneID GetScene(SceneID id)
-        {
-            foreach(CustomSlideshowScene scene in this.Scenes)
-            {
-                if (scene.ID == id)
-                {
-                    return scene.ID;
-                }
-            }
-            return null;
         }
 
         /// <summary>
@@ -88,19 +77,19 @@ namespace SlugBase.Assets
         {
 
             /// <summary>
-            /// The second that this scene will start fading in
+            /// The second that this scene will start fading in, in seconds
             /// </summary>
-            public int StartAt { get; set; }
+            public float StartAt { get; set; }
 
             /// <summary>
-            /// The second that this image will finish fading in
+            /// The second that this image will finish fading in, in seconds
             /// </summary>
-            public int FadeInDoneAt { get; set; }
+            public float FadeInDoneAt { get; set; }
 
             /// <summary>
-            /// The second that this image will start fading out at
+            /// The second that this image will start fading out at, in seconds
             /// </summary>
-            public int FadeOutStartAt { get; set; }
+            public float FadeOutStartAt { get; set; }
 
             /// <summary>
             /// The positions that the images will try to go to, if they are not in flatMode (Determined by the game)
@@ -113,9 +102,9 @@ namespace SlugBase.Assets
             /// <param name="json">The JSON data to load from.</param>
             public CustomSlideshowScene (JsonObject json) : base(new Menu.MenuScene.SceneID(json.GetString("name"), false), json)
             {
-                StartAt = json.TryGet("fade_in")?.AsInt() ?? 0;
-                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsInt() ?? 3;
-                FadeOutStartAt = json.TryGet("fade_out_start")?.AsInt() ?? 8;
+                StartAt = json.TryGet("fade_in")?.AsFloat() ?? 0;
+                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsFloat() ?? 3;
+                FadeOutStartAt = json.TryGet("fade_out_start")?.AsFloat() ?? 8;
                 Movement = json.TryGet("movements")?.AsList().Select(vec => ToVector2(vec)).ToArray() ?? new Vector2[1]{new(0,0)};
             }
         }

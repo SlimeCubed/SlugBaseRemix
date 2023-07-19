@@ -19,14 +19,17 @@ namespace SlugBase.Assets
         /// <param name="name">The id of the scene to display.</param>
         public static void QueueDream(string name)
         {
-            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame rainGame && CustomScene.Registry.TryGet(new(name), out var customScene) && customScene.OverrideDream)
+            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame rainGame && CustomScene.Registry.TryGet(new(name), out var customScene))
             {
                 rainGame.GetStorySession.saveState.dreamsState.InitiateEventDream(new (name));
-                Debug.Log($"Slugbase set upcomingDream to {name}");
             }
             else if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is not RainWorldGame)
             {
-                Debug.LogError("Dream set fail, curentMainLoop is not a RainWorldGame!");
+                Debug.LogError("Slugbase dream set fail, curentMainLoop is not a RainWorldGame!");
+            }
+            else if (!CustomScene.Registry.TryGet(new(name), out var scene))
+            {
+                Debug.LogError("Slugbase dream set fail, could not find matching scene");
             }
         }
 

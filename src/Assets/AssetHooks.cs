@@ -171,7 +171,7 @@ namespace SlugBase.Assets
                     }
 
                     foreach (var scene in customSlideshow.Scenes) {
-                        self.playList.Add(new Scene(customSlideshow.GetScene(scene.ID), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                        self.playList.Add(new Scene(scene.ID, scene.StartAt, scene.FadeInDoneAt, scene.FadeOutStartAt));
                     }
                     self.processAfterSlideShow = customSlideshow.Process;
                 }
@@ -180,17 +180,17 @@ namespace SlugBase.Assets
         public static void SlideShowMenuScene_ctor(On.Menu.SlideShowMenuScene.orig_ctor orig, SlideShowMenuScene self, Menu.Menu menu, MenuObject owner, SceneID sceneID)
         {
             orig(self, menu, owner, sceneID);
-            if (self.menu is SlideShow slideShow && CustomSlideshow.Registry.TryGet(slideShow.slideShowID, out var customSlideshow))
+            if (!self.flatMode && self.menu is SlideShow slideShow && CustomSlideshow.Registry.TryGet(slideShow.slideShowID, out var customSlideshow))
             {
-                foreach (var scene in customSlideshow.Scenes)
+                var scene = Array.Find(customSlideshow.Scenes, scene => scene.ID == sceneID);
+                if (scene != null)
                 {
-                    if (customSlideshow.GetScene(scene.ID) == sceneID && !self.flatMode)
-                    {
-                        foreach (var move in scene.Movement) {
-                            self.cameraMovementPoints.Add(new (-move.x, -move.y, 0f));
-                        }
+                    foreach (var move in scene.Movement) {
+                        // Unsure what exactly the z value does here
+                        self.cameraMovementPoints.Add(new (-move.x, -move.y, -1f));
                     }
                 }
+                else { Debug.LogError($"Slugbase could not find matching CustomSlideshowScene with matching ID {sceneID}"); }
             }
         }
         public static void MenuScene_BuildScene_IntroOutroSlideshow(On.Menu.MenuScene.orig_BuildScene orig, MenuScene self)
@@ -199,22 +199,21 @@ namespace SlugBase.Assets
             if (self.menu is SlideShow slideShow && CustomSlideshow.Registry.TryGet(slideShow.slideShowID, out var customSlideshow))
             {
                 self.sceneFolder = customSlideshow.SlideshowFolder;
-                foreach (var scene in customSlideshow.Scenes)
+                var scene = Array.Find(customSlideshow.Scenes, scene => scene.ID == self.sceneID);
+                if (scene != null)
                 {
-                    if (customSlideshow.GetScene(scene.ID) == self.sceneID)
-                    {
-                        foreach (var image in scene.Images) {
-                            if (self.flatMode)
-                            {
-                                self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
-                            }
-                            else
-                            {
-                                self.AddIllustration(new MenuDepthIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, image.Depth, image.Shader));
-                            }
+                    foreach (var image in scene.Images) {
+                        if (self.flatMode)
+                        {
+                            self.AddIllustration(new MenuIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position+new Vector2(683,384), false, true));
+                        }
+                        else
+                        {
+                            self.AddIllustration(new MenuDepthIllustration(self.menu, self, self.sceneFolder, image.Name, image.Position, image.Depth, image.Shader));
                         }
                     }
                 }
+                else { Debug.LogError($"Slugbase could not find matching CustomSlideshowScene with matching ID {self.sceneID}"); }
             }
         }
         #endregion
@@ -259,13 +258,15 @@ namespace SlugBase.Assets
         private static void DreamsState_InitiateEventDream(On.DreamsState.orig_InitiateEventDream orig, DreamsState self, DreamID evDreamID)
         {
             orig(self, evDreamID);
-            if (evDreamID != self.eventDream && CustomScene.Registry.TryGet(evDreamID.DreamIDToSceneID(), out var dreamScene) && dreamScene.OverrideDream)
+            // Comparing against evDreamID is the same as saving it's value and comparing against that, so just... don't do that and use evDreamID lol
+            if (self.eventDream != evDreamID && CustomScene.Registry.TryGet(evDreamID.DreamIDToSceneID(), out var dreamScene) && dreamScene.OverrideDream)
             {
                 self.eventDream = evDreamID;
             }
         }
         private static SceneID SceneID_SceneFromDream(On.Menu.DreamScreen.orig_SceneFromDream orig, DreamScreen self, DreamID dreamID)
         {
+            // Could use IL, but running orig first and returning later it's value later is easier (and technically better for compatability?)
             SceneID origSceneID = orig(self, dreamID);
             if (self.manager.oldProcess is RainWorldGame rainGame && SlugBaseCharacter.TryGet(rainGame.StoryCharacter, out var chara) && HasDreams.TryGet(chara, out bool dreams) && CustomScene.Registry.TryGet(dreamID.DreamIDToSceneID(), out var dream))
             {
@@ -275,6 +276,9 @@ namespace SlugBase.Assets
         }
         #endregion
 
+        /// <summary>
+        /// Turns a DreamID into a SceneID with the same string value
+        /// </summary>
         private static SceneID DreamIDToSceneID(this DreamID dreamID)
         {
             return new (dreamID.value);
