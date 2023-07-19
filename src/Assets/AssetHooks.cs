@@ -171,7 +171,7 @@ namespace SlugBase.Assets
                     }
 
                     foreach (var scene in customSlideshow.Scenes) {
-                        self.playList.Add(new Scene(new SceneID( $"Slugbase_{customSlideshow.ID}_{scene.ID}_intro", false), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
+                        self.playList.Add(new Scene(customSlideshow.GetScene(scene.ID), self.ConvertTime(0, scene.StartAt, 0), self.ConvertTime(0, scene.FadeInDoneAt, 0), self.ConvertTime(0, scene.FadeOutStartAt, 0)));
                     }
                     self.processAfterSlideShow = customSlideshow.Process;
                 }
@@ -184,7 +184,7 @@ namespace SlugBase.Assets
             {
                 foreach (var scene in customSlideshow.Scenes)
                 {
-                    if (new SceneID($"Slugbase_{customSlideshow.ID}_{scene.ID}_intro", false) == sceneID && !self.flatMode)
+                    if (customSlideshow.GetScene(scene.ID) == sceneID && !self.flatMode)
                     {
                         foreach (var move in scene.Movement) {
                             self.cameraMovementPoints.Add(new (-move.x, -move.y, 0f));
@@ -201,7 +201,7 @@ namespace SlugBase.Assets
                 self.sceneFolder = customSlideshow.SlideshowFolder;
                 foreach (var scene in customSlideshow.Scenes)
                 {
-                    if (new SceneID($"Slugbase_{customSlideshow.ID}_{scene.ID}_intro", false) == self.sceneID)
+                    if (customSlideshow.GetScene(scene.ID) == self.sceneID)
                     {
                         foreach (var image in scene.Images) {
                             if (self.flatMode)
@@ -243,7 +243,6 @@ namespace SlugBase.Assets
                     && HasDreams.TryGet(chara, out bool dreams)
                     && CustomScene.Registry.TryGet(self.GetStorySession.saveState.dreamsState.eventDream.DreamIDToSceneID(), out var dream))
                 {
-                    Debug.Log($"Slugbase {(int)self.GetStorySession.saveState.dreamsState.eventDream}");
                     self.GetStorySession.saveState.dreamsState.upcomingDream = self.GetStorySession.saveState.dreamsState.eventDream;
                     self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Dream);
                     return true;

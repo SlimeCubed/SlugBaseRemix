@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using SlideShowID = Menu.SlideShow.SlideShowID;
-using System;
 using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
-using System.Collections.Generic;
-using Menu;
+using static Menu.MenuScene;
 
 namespace SlugBase.Assets
 {
@@ -19,15 +17,23 @@ namespace SlugBase.Assets
         /// </summary>
         /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
         /// <param name="manager">The ProcessManager, needed to change the active process.</param>
-        public static void NewOutro(string ID, ProcessManager manager)
+        /// <param name="fadeOutSeconds">The time taken to fade to black.</param>
+        public static void NewOutro(ProcessManager manager, string ID, float fadeOutSeconds = 0.45f)
         {
-            manager.nextSlideshow = new Menu.SlideShow.SlideShowID(ID, false);
-            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow);
+            manager.nextSlideshow = new (ID);
+            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
         }
 
-        private static void GetScene(string name)
+        internal SceneID GetScene(SceneID id)
         {
-            throw new NotImplementedException();
+            foreach(CustomSlideshowScene scene in this.Scenes)
+            {
+                if (scene.ID == id)
+                {
+                    return scene.ID;
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -69,11 +75,10 @@ namespace SlugBase.Assets
                 .ToArray();
 
             SlideshowFolder = json.TryGet("slideshow_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
-            // Don't know if I should force it to defalut to the normal intro theme or leave it empty so that it's an option for people to not have any music (But who would choose that? Someone probably)
             // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
             if (json.TryGet("music") is JsonAny music) { Music = new SlideshowMusic(music.AsObject()); }
 
-            Process = new ProcessManager.ProcessID(json.GetString("next_process"), false);
+            Process = new ProcessManager.ProcessID(json.GetString("next_process"));
         }
 
         /// <summary>
