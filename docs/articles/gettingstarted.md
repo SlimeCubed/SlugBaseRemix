@@ -62,7 +62,7 @@ Custom scenes are made in a similar way to custom characters. To get started, yo
 - **"scene_folder"**: An optional path to the folder containing scene images. This is relative to `StreamingAssets` or your mod's folder, and defaults to `illustrations`.
 - **"images"**: A list of image objects that make up this scene.
   - **"name"**: A file name to append to "scene_folder" when loading this image.
-  - **"pos"**: The position of this image's bottom left corner relative to the bottom left of the screen.
+  - **"pos"**: The position of this image's bottom left corner relative to the bottom left of the screen. For an image of size `1366x768` this should be `[0,0]` to display in the center of the screen.
   - **"depth"**: The depth of this object in the scene. This only determines how it will be blurred and how parallax will be applied. Layering follows the order specified, with earlier images being layered below later ones.
   - **"shader"**: The shader to use when drawing this image. This may be "Normal", "Lighten", "LightEdges", "Rain", "Overlay", "Basic", "SoftLight", or "Multiply".
 - **"idle_depths"**: A list of depths for the camera to focus on. The actual focus depth may be up to 0.5 greater than this. The focus depth will also disregard these values while the mouse is in motion. If you need an image to not be blurry, change "shader" to "Basic" and remove its depth map.
@@ -72,3 +72,92 @@ A few optional properties are specific to the character select menu:
 - **"mark_pos"**: The position of the mark's center. This is typically above the character's head.
 - **"select_menu_pos"**: The offset of this scene when displayed in the select menu.
 - **"slugcat_depth"**: The depth of the slugcat image in this scene. This is used to apply parallax to the mark and glow.
+
+Hmmm, but wouldn't it be cool if we could also have an intro slideshow like Survivor or Gourmand...
+
+## Custom Slideshows
+Custom Slideshows are similar to Custom Scenes in implementation and share some commonalities. Much the same way you created your Character Select Menu, create a file called `slugbase\slideshows\slugecat_scholar.json`. The file name also does not need to be unique. The JSON object needs at least the "id", "next_process", "scenes" properties. Each entry in the "scenes" property also requires the properties "name", and "images":
+```json
+{
+  "id": "Scholar_Intro",
+  "slideshow_folder": "slugbase/slideshows/scholar_intro",
+	"next_process": "Game",
+  "music": {
+    "name": "RW_Intro_Theme",
+    "fade_in": 40
+  },
+  "scenes": [
+    {
+      "name": "scene1",
+      "images": [
+        {
+          "name": "background1",
+          "pos": [0,0],
+          "depth": 0.2,
+          "shader": "Basic"
+        },
+        {
+          "name": "scholar1",
+          "pos": [0,0],
+          "depth": 0.3
+        }
+      ],
+      "movements": [
+        [10, 15],
+        [8.7, 5]
+      ]
+    },
+    {
+      "name": "scene2",
+      "fade_in": 8.1,
+      "fade_in_finish": 11.25,
+      "fade_out_start": 17,
+      "images": [
+        {
+          "name": "background2",
+          "pos": [0,0],
+          "depth": 0.1,
+          "shader": "Basic"
+        },
+        {
+          "name": "background3",
+          "pos": [100,65],
+          "depth": 0.15,
+          "shader": "Basic"
+        },
+        {
+          "name": "scholar2",
+          "pos": [10,10],
+          "depth": 0.21,
+          "shader": "Basic"
+        }
+      ],
+      "movements": [
+        [-10,-25],
+        [-2.5,4],
+        [-3,7]
+      ]
+    }
+  ]
+}
+```
+
+- **"id"**: A unique ID. Your slideshow may fail to load if another slideshow has this ID!
+- **"slideshow_folder"**: An optional path to the folder containing slideshow images. This is relative to `StreamingAssets` or your mod's folder, and defaults to `illustrations`.
+- **"next_process"**: The process to go to when this slideshow is done playing. Common options will be `Game` for intro slideshows, and `Credits` or `Statistics` for outros.
+- **"music"**: Play some music during your slideshow! Nothing will play if this goes unspecified.
+  - **"name"**: The name of the music to play, should exactly match the name of one of the mp3 files in `StreamingAssets\music\songs`. A custom song can be added as easily as adding a mp3 file in `mymod\music\songs\mymusic.mp3`.
+  - **"fade_in"**: The music will gradually fade in, starting from 0 and lasting until the time in seconds specified here.
+- **"scenes"**: Groups of images to display, and when to display them. Each scene object here is similar to a `Custom Scene` but not related.
+  - **"name"**: This only needs to be unique in relation to other scenes in this slideshow's JSON.
+  - **"fade_in"**: The time in seconds for the scene's images to start fading in. If unspecified this defaults to `0`.
+  - **"fade_in_finish"**: The time in seconds when the scene's images finish their fade in animation. If unspecified this defaults to `3`.
+  - **"fade_out_start"**: The time in seconds when the scene's images begin to fade out. Id unspecified this defaults to `8`.
+  - **"images"**: The images to use in this scene, all displayed at once, with those in the list first being placed behind those later in the list.
+    - **"name"**: The name of the image to use, must match exactly.
+    - **"pos"**: The position of this image's bottom left corner relative to the bottom left of the screen. For an image of size `1366x768` this should be `[0,0]` to display in the center of the screen.
+    - **"depth"**: The depth of the image, should be in range from `0.0-1.0`. Values closer to 0 make the images less effected by movement.
+    - **"shader"**: The shader to use when drawing this image. This may be "Normal", "Lighten", "LightEdges", "Rain", "Overlay", "Basic", "SoftLight", or "Multiply".
+  - **"movements"**: A list of what dynamic movements the images in the scene will make. Values are relative to the initial position of images. If unspecified there will be no movement.
+
+Slideshows can be used for Intros when starting the game, and Outros when finishing the game. You can call a slideshow manually at any point by using `SlugBase.Assets.CustomSlideshow.NewOutro(ProcessManager, string, float)`
