@@ -24,10 +24,12 @@ namespace SlugBase.Assets
         public static void NewOutro(ProcessManager manager, string ID, string newMenuSelectScene = null, float fadeOutSeconds = 0.45f)
         {
             manager.nextSlideshow = new (ID);
-            if (newMenuSelectScene != null)
+            if (newMenuSelectScene != null && manager.currentMainLoop is RainWorldGame rainGame)
             {
-                manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set("menu_select_scene_alt", newMenuSelectScene);
+                manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set($"menu_select_scene_alt_{rainGame.StoryCharacter.value}", newMenuSelectScene);
+                rainGame.GetStorySession.saveState.SessionEnded(rainGame, true, manager.rainWorld.progression.currentSaveState.malnourished);
             }
+            //manager.rainWorld.progression.SaveWorldStateAndProgression(manager.rainWorld.progression.currentSaveState.malnourished);
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
         }
 

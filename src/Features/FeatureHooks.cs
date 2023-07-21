@@ -478,8 +478,8 @@ namespace SlugBase.Features
                     {
                         if (ascended && SelectMenuSceneAscended.TryGet(chara, out var ascendedScene))
                             sceneID = ascendedScene;
-                        else if (self.menu.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().TryGet<string>("menu_select_scene_alt", out var newSceneID) && newSceneID != null)
-                            sceneID = new(newSceneID);
+                        else if (self.menu.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().TryGet<string>($"menu_select_scene_alt_{chara.Name.value}", out string altScene) && altScene != null)
+                            sceneID = new(altScene);
                         else if (SelectMenuScene.TryGet(chara, out var normalScene))
                             sceneID = normalScene;
                     }

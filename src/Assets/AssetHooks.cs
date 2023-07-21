@@ -121,6 +121,7 @@ namespace SlugBase.Assets
             {
                 if (SlugBaseCharacter.TryGet(storyGameCharacter, out var chara) && IntroScene.TryGet(chara, out var newSlideShowID)) {
                     self.manager.nextSlideshow = newSlideShowID;
+                    self.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set<string>($"menu_select_scene_alt_{storyGameCharacter.value}", null);
                 }
             });
         }
@@ -137,7 +138,7 @@ namespace SlugBase.Assets
                 if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && OutroScene.TryGet(chara, out var OutroSlideShow))
                 {
                     self.manager.nextSlideshow = OutroSlideShow;
-                    self.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set<string>("menu_select_scene_alt", null);
+                    self.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set<string>($"menu_select_scene_alt_{chara.Name.value}", null);
                 }
             });
         }
