@@ -5,6 +5,7 @@ using System.Xml.Schema;
 using Menu;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using SlugBase.SaveData;
 using UnityEngine;
 using static DreamsState;
 using static Menu.MenuScene;
@@ -136,6 +137,7 @@ namespace SlugBase.Assets
                 if (SlugBaseCharacter.TryGet(self.StoryCharacter, out var chara) && OutroScene.TryGet(chara, out var OutroSlideShow))
                 {
                     self.manager.nextSlideshow = OutroSlideShow;
+                    self.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set<string>("menu_select_scene_alt", null);
                 }
             });
         }
@@ -242,13 +244,12 @@ namespace SlugBase.Assets
                     && HasDreams.TryGet(chara, out bool dreams)
                     && CustomScene.Registry.TryGet(self.GetStorySession.saveState.dreamsState.eventDream.DreamIDToSceneID(), out var dream))
                 {
-                    self.GetStorySession.saveState.dreamsState.upcomingDream = self.GetStorySession.saveState.dreamsState.eventDream;
+                    //self.GetStorySession.saveState.dreamsState.upcomingDream = self.GetStorySession.saveState.dreamsState.eventDream;
                     self.manager.RequestMainProcessSwitch(ProcessManager.ProcessID.Dream);
                     return true;
                 }
                 return false;
             });
-            // If the above it true, don't bother with the rest of the method, just in case it messes something up. (Have not actually tested with a normal dream yet!)
             cursor.Emit(OpCodes.Brfalse_S, label);
             cursor.Emit(OpCodes.Ret);
             cursor.MarkLabel(label);

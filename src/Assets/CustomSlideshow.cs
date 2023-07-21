@@ -5,6 +5,7 @@ using System.IO;
 using static SlugBase.JsonUtils;
 using static Menu.MenuScene;
 using System;
+using SlugBase.SaveData;
 
 namespace SlugBase.Assets
 {
@@ -19,9 +20,14 @@ namespace SlugBase.Assets
         /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
         /// <param name="manager">The ProcessManager, needed to change the active process.</param>
         /// <param name="fadeOutSeconds">The time taken to fade to black.</param>
-        public static void NewOutro(ProcessManager manager, string ID, float fadeOutSeconds = 0.45f)
+        /// <param name="newMenuSelectScene">The new scene to display on the charact select screen.</param>
+        public static void NewOutro(ProcessManager manager, string ID, string newMenuSelectScene = null, float fadeOutSeconds = 0.45f)
         {
             manager.nextSlideshow = new (ID);
+            if (newMenuSelectScene != null)
+            {
+                manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set("menu_select_scene_alt", newMenuSelectScene);
+            }
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
         }
 
@@ -59,13 +65,14 @@ namespace SlugBase.Assets
         {
             ID = id;
 
+            SlideshowFolder = json.TryGet("slideshow_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
+
+            // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
+            if (json.TryGet("music") is JsonAny music) { Music = new SlideshowMusic(music.AsObject()); }
+
             Scenes = json.GetList("scenes")
                 .Select(img => new CustomSlideshowScene(img.AsObject()))
                 .ToArray();
-
-            SlideshowFolder = json.TryGet("slideshow_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
-            // In order to use a custom song, it must be in .ogg format, and placed in mods/MyMod/music/songs directory (Thank the Videocult overlords it's that simple)
-            if (json.TryGet("music") is JsonAny music) { Music = new SlideshowMusic(music.AsObject()); }
 
             Process = new ProcessManager.ProcessID(json.GetString("next_process"));
         }
@@ -123,32 +130,14 @@ namespace SlugBase.Assets
             /// The amount of time the sound will fade in for, until it is at full volume.
             /// </summary>
             public float FadeIn { get; set; }
-            
-            /// <summary>
-            /// Creates new data about a song to play.
-            /// </summary>
-            /// <param name="name">The sound name.</param>
-            public SlideshowMusic(string name)
-            {
-                Name = name;
-            }
-
-            /// <summary>
-            /// Creates data about a song to play.
-            /// </summary>
-            /// <param name="name">The sound name.</param>
-            /// <param name="fadeIn">The time for the music to fade in to full volume.</param>
-            public SlideshowMusic(string name, float fadeIn) : this(name)
-            {
-                FadeIn = fadeIn;
-            }
 
             /// <summary>
             /// Creates data about a song to play from a JSON
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
-            public SlideshowMusic(JsonObject json) : this(json.GetString("name"))
+            public SlideshowMusic(JsonObject json)
             {
+                Name = json.GetString("name");
                 if (json.TryGet("fadein") is JsonAny fadeIn)
                 {
                     FadeIn = fadeIn.AsFloat();

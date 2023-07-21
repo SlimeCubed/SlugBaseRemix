@@ -11,6 +11,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using MonoMod.RuntimeDetour;
 using System.IO;
+using SlugBase.SaveData;
 
 namespace SlugBase.Features
 {
@@ -477,6 +478,8 @@ namespace SlugBase.Features
                     {
                         if (ascended && SelectMenuSceneAscended.TryGet(chara, out var ascendedScene))
                             sceneID = ascendedScene;
+                        else if (self.menu.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().TryGet<string>("menu_select_scene_alt", out var newSceneID) && newSceneID != null)
+                            sceneID = new(newSceneID);
                         else if (SelectMenuScene.TryGet(chara, out var normalScene))
                             sceneID = normalScene;
                     }
