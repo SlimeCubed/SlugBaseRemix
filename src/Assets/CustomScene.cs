@@ -96,9 +96,9 @@ namespace SlugBase.Assets
                 .ToArray();
 
             if (this is not SlugBase.Assets.CustomSlideshow.CustomSlideshowScene)
-            IdleDepths = json.GetList("idle_depths")
-                .Select(depth => depth.AsFloat())
-                .ToArray();
+                IdleDepths = json.GetList("idle_depths")
+                    .Select(depth => depth.AsFloat())
+                    .ToArray();
 
             SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
 

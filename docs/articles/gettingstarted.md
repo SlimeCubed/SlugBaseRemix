@@ -72,6 +72,7 @@ A few optional properties are specific to the character select menu:
 - **"mark_pos"**: The position of the mark's center. This is typically above the character's head.
 - **"select_menu_pos"**: The offset of this scene when displayed in the select menu.
 - **"slugcat_depth"**: The depth of the slugcat image in this scene. This is used to apply parallax to the mark and glow.
+- **"dream_override"**: If this scene is used as a dream, should it override Moon and Pebble dreams being set.
 
 Hmmm, but wouldn't it be cool if we could also have an intro slideshow like Survivor or Gourmand...
 
