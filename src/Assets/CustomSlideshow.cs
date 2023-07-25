@@ -27,9 +27,8 @@ namespace SlugBase.Assets
             if (newMenuSelectScene != null && manager.currentMainLoop is RainWorldGame rainGame)
             {
                 manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set($"menu_select_scene_alt_{rainGame.StoryCharacter.value}", newMenuSelectScene);
-                rainGame.GetStorySession.saveState.SessionEnded(rainGame, true, manager.rainWorld.progression.currentSaveState.malnourished);
+                manager.rainWorld.progression.SaveToDisk(true, true, true);
             }
-            //manager.rainWorld.progression.SaveWorldStateAndProgression(manager.rainWorld.progression.currentSaveState.malnourished);
             manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
         }
 
