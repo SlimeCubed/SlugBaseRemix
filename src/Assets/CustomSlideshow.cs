@@ -15,24 +15,6 @@ namespace SlugBase.Assets
     public class CustomSlideshow
     {
         /// <summary>
-        /// Must match the ID to the id in a slideshow's json file, and provide the ProcessManager, in order to play an outro slideshow
-        /// </summary>
-        /// <param name="ID">The ID of the slideshow to play, should be declared as a new Menu.SlideShow.SlideShowID(string, false) with the string matching the id of a slugbase slideshow .json file.</param>
-        /// <param name="manager">The ProcessManager, needed to change the active process.</param>
-        /// <param name="fadeOutSeconds">The time taken to fade to black.</param>
-        /// <param name="newMenuSelectScene">The new scene to display on the charact select screen.</param>
-        public static void NewOutro(ProcessManager manager, string ID, string newMenuSelectScene = null, float fadeOutSeconds = 0.45f)
-        {
-            manager.nextSlideshow = new (ID);
-            if (newMenuSelectScene != null && manager.currentMainLoop is RainWorldGame rainGame)
-            {
-                manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set($"menu_select_scene_alt_{rainGame.StoryCharacter.value}", newMenuSelectScene);
-                manager.rainWorld.progression.SaveToDisk(true, true, true);
-            }
-            manager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow, fadeOutSeconds);
-        }
-
-        /// <summary>
         /// Stores all registered <see cref="CustomSlideshow"/>s.
         /// </summary>
         public static JsonRegistry<SlideShowID, CustomSlideshow> Registry { get; } = new((key, json) => new(key, json));

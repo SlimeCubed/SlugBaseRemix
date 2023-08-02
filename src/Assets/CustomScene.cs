@@ -12,27 +12,7 @@ namespace SlugBase.Assets
     /// A scene added by SlugBase.
     /// </summary>
     public class CustomScene
-    {        
-        /// <summary>
-        /// Set the dream scene that will display when the player hibernates next.
-        /// </summary>
-        /// <param name="name">The id of the scene to display.</param>
-        public static void QueueDream(string name)
-        {
-            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame rainGame && CustomScene.Registry.TryGet(new(name), out var customScene))
-            {
-                rainGame.GetStorySession.saveState.dreamsState.InitiateEventDream(new (name));
-            }
-            else if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is not RainWorldGame)
-            {
-                Debug.LogError("Slugbase dream set fail, curentMainLoop is not a RainWorldGame!");
-            }
-            else if (!CustomScene.Registry.TryGet(new(name), out var scene))
-            {
-                Debug.LogError("Slugbase dream set fail, could not find matching scene");
-            }
-        }
-
+    {
         /// <summary>
         /// Stores all registered <see cref="CustomScene"/>s.
         /// </summary>
