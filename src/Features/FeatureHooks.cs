@@ -17,7 +17,6 @@ namespace SlugBase.Features
 {
     using static PlayerFeatures;
     using static GameFeatures;
-    using static System.Net.Mime.MediaTypeNames;
 
     internal static class FeatureHooks
     {
@@ -476,15 +475,26 @@ namespace SlugBase.Features
                     // Find scene ID
                     if(SlugBaseCharacter.TryGet(self.slugcatNumber, out var chara))
                     {
-                        if (ascended && SelectMenuSceneAscended.TryGet(chara, out var ascendedScene))
+                        // Custom override
+                        if (self.menu is SlugcatSelectMenu selectMenu
+                            && selectMenu.saveGameData.TryGetValue(self.slugcatNumber, out var saveData)
+                            && MinedSaveData.Data.TryGetValue(saveData, out var minedData)
+                            && minedData.SelectMenuScene?.Index > -1)
+                        {
+                            sceneID = minedData.SelectMenuScene;
+                        }
+                        
+                        // Ascended
+                        else if (ascended && SelectMenuSceneAscended.TryGet(chara, out var ascendedScene))
+                        {
                             sceneID = ascendedScene;
-                        else if (self.menu.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().TryGet<string>($"menu_select_scene_alt_{chara.Name.value}", out string altScene) && altScene != null)
-                            if (CustomScene.Registry.TryGet(new(altScene), out var scene))
-                                sceneID = scene.ID;
-                            else
-                                self.menu.manager.rainWorld.progression.miscProgressionData.GetSlugBaseData().Set<string>($"menu_select_scene_alt_{chara.Name.value}", null);
+                        }
+
+                        // Normal
                         else if (SelectMenuScene.TryGet(chara, out var normalScene))
+                        {
                             sceneID = normalScene;
+                        }
                     }
 
                     // Override extra properties like mark position

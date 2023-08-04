@@ -4,9 +4,20 @@
     {
         public static void Apply()
         {
+            On.Menu.SlugcatSelectMenu.MineForSaveData += SlugcatSelectMenu_MineForSaveData;
             On.DeathPersistentSaveData.ToString += DeathPersistentSaveData_ToString;
             On.MiscWorldSaveData.ToString += MiscWorldSaveData_ToString;
             On.PlayerProgression.MiscProgressionData.ToString += MiscProgressionData_ToString;
+        }
+
+        // Mine for SlugBase save data
+        private static Menu.SlugcatSelectMenu.SaveGameData SlugcatSelectMenu_MineForSaveData(On.Menu.SlugcatSelectMenu.orig_MineForSaveData orig, ProcessManager manager, SlugcatStats.Name slugcat)
+        {
+            var origData = orig(manager, slugcat);
+
+            MinedSaveData.Data.Add(origData, new MinedSaveData(manager.rainWorld, slugcat));
+
+            return origData;
         }
 
         private static string MiscProgressionData_ToString(On.PlayerProgression.MiscProgressionData.orig_ToString orig, PlayerProgression.MiscProgressionData self)

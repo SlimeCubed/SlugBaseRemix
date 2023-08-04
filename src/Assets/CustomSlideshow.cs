@@ -61,74 +61,86 @@ namespace SlugBase.Assets
         }
 
         /// <summary>
-        /// A scene from a <see cref="CustomSlideshow"/> that holds data about when to appear and what images to use for what amount of time
+        /// A scene from a <see cref="CustomSlideshow"/> that holds data about when to appear and what images to use for what amount of time.
         /// </summary>
         public class CustomSlideshowScene : CustomScene
         {
-
             /// <summary>
-            /// The second that this scene will start fading in, in seconds
+            /// The time that this scene will start fading in, in seconds.
             /// </summary>
             public float StartAt { get; set; }
 
             /// <summary>
-            /// The second that this image will finish fading in, in seconds
+            /// The time that this image will finish fading in, in seconds.
             /// </summary>
             public float FadeInDoneAt { get; set; }
 
             /// <summary>
-            /// The second that this image will start fading out at, in seconds
+            /// The time that this image will start fading out at, in seconds.
             /// </summary>
             public float FadeOutStartAt { get; set; }
 
             /// <summary>
-            /// The positions that the images will try to go to, if they are not in flatMode (Determined by the game)
+            /// The positions that the camera will focus on when playing this scene.
             /// </summary>
-            public Vector2[] Movement { get; set; }
+            /// <remarks>
+            /// X and Y represent the pixel position of the camera, while Z represents the focus depth.
+            /// </remarks>
+            public Vector3[] CameraMovement { get; set; }
 
             /// <summary>
             /// Creates a new Scene from JSON.
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
-            public CustomSlideshowScene (JsonObject json) : base(new Menu.MenuScene.SceneID(json.GetString("name"), false), json)
+            public CustomSlideshowScene(JsonObject json) : base(new SceneID(json.GetString("name"), false), json)
             {
-                StartAt = json.TryGet("fade_in")?.AsFloat() ?? 0;
-                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsFloat() ?? 3;
-                FadeOutStartAt = json.TryGet("fade_out_start")?.AsFloat() ?? 8;
-                Movement = json.TryGet("movements")?.AsList().Select(vec => ToVector2(vec)).ToArray() ?? new Vector2[1]{new(0,0)};
+                StartAt = json.TryGet("fade_in")?.AsFloat() ?? 0f;
+                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsFloat() ?? 3f;
+                FadeOutStartAt = json.TryGet("fade_out_start")?.AsFloat() ?? 8f;
+
+                if(json.TryGet("camera_path")?.AsList() is JsonList movementList)
+                {
+                    CameraMovement = new Vector3[movementList.Count];
+                    for(int i = 0; i < CameraMovement.Length; i++)
+                    {
+                        var vecList = movementList.GetList(i);
+                        CameraMovement[i] = new Vector3(
+                            vecList.GetFloat(0),
+                            vecList.GetFloat(1),
+                            vecList.TryGet(2)?.AsFloat() ?? -1f
+                        );
+                    }
+                }
+                else
+                {
+                    CameraMovement = new Vector3[] { new(0f, 0f, -1f) };
+                }
             }
         }
 
         /// <summary>
         /// Data about a song from a <see cref="CustomSlideshow"/>.
         /// </summary>
-        public class SlideshowMusic{
-
+        public class SlideshowMusic
+        {
             /// <summary>
-            /// The file name of the sound to use. This comes from the 'StreamingAssets/music/songs' folder.
+            /// The file name of the sound to use. This comes from the `StreamingAssets/music/songs` folder.
             /// </summary>
             public string Name { get; set; }
 
             /// <summary>
-            /// The amount of time the sound will fade in for, until it is at full volume.
+            /// The duration of the song's fade in, in seconds.
             /// </summary>
             public float FadeIn { get; set; }
 
             /// <summary>
-            /// Creates data about a song to play from a JSON
+            /// Load information about a slideshow song from JSON data.
             /// </summary>
             /// <param name="json">The JSON data to load from.</param>
             public SlideshowMusic(JsonObject json)
             {
                 Name = json.GetString("name");
-                if (json.TryGet("fadein") is JsonAny fadeIn)
-                {
-                    FadeIn = fadeIn.AsFloat();
-                }
-                else
-                {
-                    FadeIn = 40f;
-                }
+                FadeIn = json.TryGet("fadein")?.AsFloat() ?? 40f;
             }
         }
     }

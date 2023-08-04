@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
+using SlugBase.SaveData;
 
 namespace SlugBase.Assets
 {
@@ -17,6 +18,20 @@ namespace SlugBase.Assets
         /// Stores all registered <see cref="CustomScene"/>s.
         /// </summary>
         public static JsonRegistry<SceneID, CustomScene> Registry { get; } = new((key, json) => new(key, json));
+
+        /// <summary>
+        /// Set or unset the select menu scene override for a save state.
+        /// </summary>
+        /// <param name="save">The save state to modify.</param>
+        /// <param name="id">The new select menu scene ID, or <see langword="null"/> to remove the override.</param>
+        public static void SetSelectMenuScene(SaveState save, SceneID id)
+        {
+            var data = save.deathPersistentSaveData.GetSlugBaseData();
+            if (id == null)
+                data.RemoveInternal("SELECTSCENE");
+            else
+                data.SetInternal("SELECTSCENE", id.value);
+        }
 
         /// <summary>
         /// This scene's unique ID.
@@ -63,7 +78,7 @@ namespace SlugBase.Assets
         public float? SlugcatDepth { get; }
 
         /// <summary>
-        /// If a scene is used as a Dream, should it replace any current dream
+        /// If a scene is used as a dream, should it replace any current dream
         /// </summary>
         public bool OverrideDream { get; }
 
