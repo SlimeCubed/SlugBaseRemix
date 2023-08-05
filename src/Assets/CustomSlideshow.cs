@@ -2,7 +2,6 @@
 using SlideShowID = Menu.SlideShow.SlideShowID;
 using System.Linq;
 using System.IO;
-using static SlugBase.JsonUtils;
 using static Menu.MenuScene;
 using System;
 using SlugBase.SaveData;
@@ -60,6 +59,11 @@ namespace SlugBase.Assets
             Process = new ProcessManager.ProcessID(json.GetString("next_process"));
         }
 
+        internal CustomSlideshowScene GetScene(SceneID id)
+        {
+            return Scenes.FirstOrDefault(scene => scene.ID == id);
+        }
+
         /// <summary>
         /// A scene from a <see cref="CustomSlideshow"/> that holds data about when to appear and what images to use for what amount of time.
         /// </summary>
@@ -94,9 +98,9 @@ namespace SlugBase.Assets
             /// <param name="json">The JSON data to load from.</param>
             public CustomSlideshowScene(JsonObject json) : base(new SceneID(json.GetString("name"), false), json)
             {
-                StartAt = json.TryGet("fade_in")?.AsFloat() ?? 0f;
-                FadeInDoneAt = json.TryGet("fade_in_finish")?.AsFloat() ?? 3f;
-                FadeOutStartAt = json.TryGet("fade_out_start")?.AsFloat() ?? 8f;
+                StartAt = json.GetFloat("fade_in_start");
+                FadeInDoneAt = json.TryGet("fade_in_end")?.AsFloat() ?? (StartAt + 1f);
+                FadeOutStartAt = json.GetFloat("fade_out_start");
 
                 if(json.TryGet("camera_path")?.AsList() is JsonList movementList)
                 {

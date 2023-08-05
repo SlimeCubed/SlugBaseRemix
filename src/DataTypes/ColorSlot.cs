@@ -1,6 +1,9 @@
-﻿using System;
+﻿using MoreSlugcats;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static SlugBase.Features.PlayerFeatures;
 
 namespace SlugBase.DataTypes
 {

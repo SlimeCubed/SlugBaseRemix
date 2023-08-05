@@ -71,6 +71,7 @@ namespace SlugBase
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
                     ExpeditionHooks.Apply();
+                    JollyCoopHooks.Apply();
                     SaveDataHooks.Apply();
 
                     SlugBaseCharacter.Registry.WatchForChanges = true;
@@ -87,8 +88,15 @@ namespace SlugBase
             {
                 orig(self);
 
-                ErrorList.Instance.ClearFileErrors();
-                ScanFiles();
+                try
+                {
+                    ErrorList.Instance.ClearFileErrors();
+                    ScanFiles();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             };
         }
 

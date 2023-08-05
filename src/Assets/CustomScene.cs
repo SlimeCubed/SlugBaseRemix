@@ -78,7 +78,7 @@ namespace SlugBase.Assets
         public float? SlugcatDepth { get; }
 
         /// <summary>
-        /// If a scene is used as a dream, should it replace any current dream
+        /// If a scene is used as a dream, should it replace any current dream.
         /// </summary>
         public bool OverrideDream { get; }
 
@@ -90,7 +90,7 @@ namespace SlugBase.Assets
                 .Select(img => new Image(img.AsObject()))
                 .ToArray();
 
-            if (this is not SlugBase.Assets.CustomSlideshow.CustomSlideshowScene)
+            if (this is not CustomSlideshow.CustomSlideshowScene)
                 IdleDepths = json.GetList("idle_depths")
                     .Select(depth => depth.AsFloat())
                     .ToArray();

@@ -2,6 +2,7 @@
 using System.Linq;
 using Name = SlugcatStats.Name;
 using MSCName = MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName;
+using UnityEngine;
 
 namespace SlugBase
 {
@@ -38,6 +39,29 @@ namespace SlugBase
             where T : ExtEnum<T>
         {
             return ExtEnum<T>.values.entries.FirstOrDefault(value => value.Equals(name, System.StringComparison.InvariantCultureIgnoreCase)) ?? name;
+        }
+
+        public static List<Color> StringsToColors(IEnumerable<string> stringList)
+        {
+            if (stringList == null) return null;
+            var colorList = new List<Color>();
+            foreach (string color in stringList)
+            {
+                ColorUtility.TryParseHtmlString("#" + color, out Color loadedColor);
+                colorList.Add(loadedColor);
+            }
+            return colorList;
+        }
+
+        public static List<string> ColorsToStrings(IEnumerable<Color> colorList)
+        {
+            if (colorList == null) return null;
+            var stringList = new List<string>();
+            foreach (Color color in colorList)
+            {
+                stringList.Add(ColorUtility.ToHtmlStringRGB(color));
+            }
+            return stringList;
         }
     }
 }

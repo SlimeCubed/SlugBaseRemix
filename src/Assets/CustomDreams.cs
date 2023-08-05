@@ -18,7 +18,7 @@ namespace SlugBase.Assets
         /// <param name="dream">The dream ID to add.</param>
         /// <param name="scene">The scene ID to display when the dream occurs.</param>
         /// <exception cref="ArgumentNullException"><paramref name="dream"/> is <see langword="null"/>.</exception>
-        public static void RegisterDream(DreamID dream, SceneID scene)
+        public static void SetDreamScene(DreamID dream, SceneID scene)
         {
             if (dream == null) throw new ArgumentNullException(nameof(dream));
 
@@ -33,10 +33,9 @@ namespace SlugBase.Assets
         /// </summary>
         /// <param name="storySession">The current story game session.</param>
         /// <param name="dreamID">The id of the dream to queue.</param>
-        /// <param name="overrideExisting">Whether to replace the current dream.</param>
         /// <exception cref="ArgumentNullException"><paramref name="dreamID"/> or <paramref name="storySession"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="dreamID"/> wasn't registered with <see cref="RegisterDream(DreamID, SceneID)"/>.</exception>
-        public static void QueueDream(StoryGameSession storySession, DreamID dreamID, bool overrideExisting)
+        /// <exception cref="ArgumentException"><paramref name="dreamID"/> wasn't registered with <see cref="SetDreamScene(DreamID, SceneID)"/>.</exception>
+        public static void QueueDream(StoryGameSession storySession, DreamID dreamID)
         {
             if (!_dreamScenes.ContainsKey(dreamID)) throw new ArgumentException("dreamID must be registered with RegisterDream before use!", nameof(dreamID));
             if (storySession == null) throw new ArgumentNullException(nameof(storySession));

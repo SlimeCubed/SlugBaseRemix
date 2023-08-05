@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using MonoMod.RuntimeDetour;
 using System.IO;
 using SlugBase.SaveData;
 
@@ -478,6 +477,7 @@ namespace SlugBase.Features
                         // Custom override
                         if (self.menu is SlugcatSelectMenu selectMenu
                             && selectMenu.saveGameData.TryGetValue(self.slugcatNumber, out var saveData)
+                            && saveData != null
                             && MinedSaveData.Data.TryGetValue(saveData, out var minedData)
                             && minedData.SelectMenuScene?.Index > -1)
                         {

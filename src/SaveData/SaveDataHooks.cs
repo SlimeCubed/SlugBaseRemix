@@ -15,7 +15,8 @@
         {
             var origData = orig(manager, slugcat);
 
-            MinedSaveData.Data.Add(origData, new MinedSaveData(manager.rainWorld, slugcat));
+            if(origData != null)
+                MinedSaveData.Data.Add(origData, new MinedSaveData(manager.rainWorld, slugcat));
 
             return origData;
         }
