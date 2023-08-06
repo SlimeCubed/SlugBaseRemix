@@ -21,6 +21,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            IL.DreamsState.StaticEndOfCycleProgress += DreamsState_StaticEndOfCycleProgress;
             On.SlugcatStats.getSlugcatTimelineOrder += SlugcatStats_getSlugcatTimelineOrder;
             On.SlugcatStats.SlugcatCanMaul += SlugcatStats_SlugcatCanMaul;
             On.Player.CanMaulCreature += Player_CanMaulCreature;
@@ -102,6 +103,34 @@ namespace SlugBase.Features
             if (args.Game.session.characterStats.name == args.Character.Name)
             {
                 args.Game.session.characterStats = new SlugcatStats(args.Character.Name, args.Game.session.characterStats.malnourished);
+            }
+        }
+
+        // UseDefaultDreams: Remove default dreams
+        private static void DreamsState_StaticEndOfCycleProgress(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            if(c.TryGotoNext(MoveType.AfterLabel,
+                x => x.MatchLdarg(0),
+                x => x.MatchBrtrue(out _)))
+            {
+                var skipRet = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate((SaveState saveState) =>
+                {
+                    return saveState != null
+                        && SlugBaseCharacter.TryGet(saveState.saveStateNumber, out var chara)
+                        && UseDefaultDreams.TryGet(chara, out bool useDefaultDreams)
+                        && !useDefaultDreams;
+                });
+                c.Emit(OpCodes.Brfalse, skipRet);
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(skipRet);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(DreamsState_StaticEndOfCycleProgress)} failed!");
             }
         }
 

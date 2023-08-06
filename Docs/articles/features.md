@@ -242,6 +242,12 @@ Ex: `"has_dreams": true`
 
 Whether this character has a dream state.
 
+### "use_default_dreams"
+`boolean`\
+Ex: `"use_default_dreams": false`
+
+Whether this character uses Survivor's dreams. This defaults to `true`.
+
 ### "cycle_length_min"
 `float`\
 Ex: `"cycle_length_min": 5.5`

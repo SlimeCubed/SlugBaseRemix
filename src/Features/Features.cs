@@ -117,6 +117,9 @@ namespace SlugBase.Features
         /// <summary>"has_dreams": Whether or not to track dream state.</summary>
         public static readonly GameFeature<bool> HasDreams = GameBool("has_dreams");
 
+        /// <summary>"use_default_dreams": Whether or not to show Survivor's dreams.</summary>
+        public static readonly GameFeature<bool> UseDefaultDreams = GameBool("use_default_dreams");
+
         /// <summary>"cycle_length_min": Minimum cycle length in minutes.</summary>
         public static readonly GameFeature<float> CycleLengthMin = GameFloat("cycle_length_min");
 
