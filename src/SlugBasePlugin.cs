@@ -17,7 +17,7 @@ using SlugBase.SaveData;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.6.0")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.7.0")]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
