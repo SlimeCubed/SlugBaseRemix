@@ -71,10 +71,12 @@ namespace SlugBase
                     AssetHooks.Apply();
                     FeatureHooks.Apply();
                     ExpeditionHooks.Apply();
+                    JollyCoopHooks.Apply();
                     SaveDataHooks.Apply();
 
                     SlugBaseCharacter.Registry.WatchForChanges = true;
                     CustomScene.Registry.WatchForChanges = true;
+                    CustomSlideshow.Registry.WatchForChanges = true;
                 }
                 catch(Exception e)
                 {
@@ -86,8 +88,15 @@ namespace SlugBase
             {
                 orig(self);
 
-                ErrorList.Instance.ClearFileErrors();
-                ScanFiles();
+                try
+                {
+                    ErrorList.Instance.ClearFileErrors();
+                    ScanFiles();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             };
         }
 
@@ -95,12 +104,14 @@ namespace SlugBase
         {
             SlugBaseCharacter.Registry.ScanDirectory("slugbase");
             CustomScene.Registry.ScanDirectory("slugbase/scenes");
+            CustomSlideshow.Registry.ScanDirectory("slugbase/slideshows");
         }
 
         public void Update()
         {
             SlugBaseCharacter.Registry.ReloadChangedFiles();
             CustomScene.Registry.ReloadChangedFiles();
+            CustomSlideshow.Registry.ReloadChangedFiles();
         }
     }
 }

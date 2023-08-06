@@ -147,6 +147,13 @@ namespace SlugBase.Features
         /// <summary>"death_scene": The scene for this slugcat when losing from a non-starvation death.</summary>
         public static readonly GameFeature<MenuScene.SceneID> DeathScene = GameExtEnum<MenuScene.SceneID>("death_scene");
 
+        /// <summary>"intro_scene": Add an intro scene in the style of Survivor or Gormaund.</summary>
+        public static readonly GameFeature<SlideShow.SlideShowID> IntroScene = GameExtEnum<SlideShow.SlideShowID>("intro_slideshow");
+
+        /// <summary>"outro_scene": Add an outro scene for a slugbase slugcat. </summary>
+        public static readonly GameFeature<SlideShow.SlideShowID> OutroScene = GameExtEnum<SlideShow.SlideShowID>("outro_slideshow");
+        // This ideally should be able to support an arbitrary amount of outros for alternate endings. Personally I'd also be fine with only allowing two, one being `outro_scene_alt`, seems like a reasonable compromise
+
         /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> WorldState = GameSlugcatNames("world_state");
 

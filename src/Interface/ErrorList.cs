@@ -71,6 +71,17 @@ namespace SlugBase.Interface
                 Debug.LogException(args.Exception);
             };
 
+            CustomSlideshow.Registry.LoadFailed += (_, args) =>
+            {
+                Action retry = null;
+                if (args.Path != null)
+                    retry = () => CustomSlideshow.Registry.TryAddFromFile(args.Path);
+
+                list.AddError(ErrorIcon.Scene, args.ErrorMessage, args.Path, retry);
+
+                Debug.LogException(args.Exception);
+            };
+
             return list;
         }
 

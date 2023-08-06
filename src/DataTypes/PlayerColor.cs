@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static SlugBase.Features.PlayerFeatures;
 
@@ -88,6 +90,48 @@ namespace SlugBase.DataTypes
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Gets a color from the "custom_colors" feature by name for the given SlugBase character graphics.
+        /// </summary>
+        /// <param name="playerGraphics">The player graphics to get the color of.</param>
+        /// <param name="name">The name of the custom color.</param>
+        /// <exception cref="ArgumentException"><paramref name="playerGraphics"/> is not a <see cref="SlugBaseCharacter"/> instance, or does not have the "custom_colors" feature.</exception>
+        /// <exception cref="KeyNotFoundException">No custom color was found matching <paramref name="name"/>.</exception>
+        public static Color GetCustomColor(PlayerGraphics playerGraphics, string name)
+        {
+            if (!SlugBaseCharacter.TryGet(playerGraphics.player.SlugCatClass, out var chara))
+                throw new ArgumentException("Player was not added by SlugBase!", nameof(playerGraphics));
+
+            if (!CustomColors.TryGet(chara, out _))
+                throw new ArgumentException("Player does not have the \"custom_colors\" feature!");
+
+            if (new PlayerColor(name).GetColor(playerGraphics) is not Color color)
+                throw new KeyNotFoundException($"Could not find custom color: \"{name}\"!");
+
+            return color;
+        }
+
+        /// <summary>
+        /// Gets a color from the "custom_colors" feature by index for the given SlugBase character graphics.
+        /// </summary>
+        /// <param name="playerGraphics">The player graphics to get the color of.</param>
+        /// <param name="index">The index of the custom color.</param>
+        /// <exception cref="ArgumentException"><paramref name="playerGraphics"/> is not a <see cref="SlugBaseCharacter"/> instance, or does not have the "custom_colors" feature.</exception>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is out of range of the "custom_colors" list.</exception>
+        public static Color GetCustomColor(PlayerGraphics playerGraphics, int index)
+        {
+            if (!SlugBaseCharacter.TryGet(playerGraphics.player.SlugCatClass, out var chara))
+                throw new ArgumentException("Player was not added by SlugBase!", nameof(playerGraphics));
+
+            if (!CustomColors.TryGet(chara, out var colorSlots))
+                throw new ArgumentException("Player does not have the \"custom_colors\" feature!");
+
+            if (index < 0 || index >= colorSlots.Length)
+                throw new IndexOutOfRangeException($"Could not find custom color with index {index}!");
+
+            return colorSlots[index].GetColor(playerGraphics);
         }
     }
 }

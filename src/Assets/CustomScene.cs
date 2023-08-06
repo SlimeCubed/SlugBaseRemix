@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.IO;
 using static SlugBase.JsonUtils;
+using SlugBase.SaveData;
 
 namespace SlugBase.Assets
 {
@@ -17,6 +18,20 @@ namespace SlugBase.Assets
         /// Stores all registered <see cref="CustomScene"/>s.
         /// </summary>
         public static JsonRegistry<SceneID, CustomScene> Registry { get; } = new((key, json) => new(key, json));
+
+        /// <summary>
+        /// Set or unset the select menu scene override for a save state.
+        /// </summary>
+        /// <param name="save">The save state to modify.</param>
+        /// <param name="id">The new select menu scene ID, or <see langword="null"/> to remove the override.</param>
+        public static void SetSelectMenuScene(SaveState save, SceneID id)
+        {
+            var data = save.deathPersistentSaveData.GetSlugBaseData();
+            if (id == null)
+                data.RemoveInternal("SELECTSCENE");
+            else
+                data.SetInternal("SELECTSCENE", id.value);
+        }
 
         /// <summary>
         /// This scene's unique ID.
@@ -62,7 +77,12 @@ namespace SlugBase.Assets
         /// </summary>
         public float? SlugcatDepth { get; }
 
-        private CustomScene(SceneID id, JsonObject json)
+        /// <summary>
+        /// If a scene is used as a dream, should it replace any current dream.
+        /// </summary>
+        public bool OverrideDream { get; }
+
+        internal CustomScene(SceneID id, JsonObject json)
         {
             ID = id;
 
@@ -70,9 +90,10 @@ namespace SlugBase.Assets
                 .Select(img => new Image(img.AsObject()))
                 .ToArray();
 
-            IdleDepths = json.GetList("idle_depths")
-                .Select(depth => depth.AsFloat())
-                .ToArray();
+            if (this is not CustomSlideshow.CustomSlideshowScene)
+                IdleDepths = json.GetList("idle_depths")
+                    .Select(depth => depth.AsFloat())
+                    .ToArray();
 
             SceneFolder = json.TryGet("scene_folder")?.AsString().Replace('/', Path.DirectorySeparatorChar);
 
@@ -86,6 +107,8 @@ namespace SlugBase.Assets
                 SelectMenuOffset = ToVector2(selectMenuPos);
 
             SlugcatDepth = json.TryGet("slugcat_depth")?.AsFloat();
+
+            OverrideDream = json.TryGet("dream_override")?.AsBool() ?? true;
         }
 
         /// <summary>

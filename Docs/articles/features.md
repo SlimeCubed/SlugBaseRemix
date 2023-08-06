@@ -302,6 +302,18 @@ Ex: `"death_scene": "MySlugcatDeath"`
 
 Scene ID for non-starvation deaths.
 
+### "intro_slideshow"
+`string`\
+Ex: `"intro_slideshow": "Scholar_Intro"`
+
+Slideshow ID to use for the intro slideshow when starting a campaign for the first time.
+
+### "outro_slideshow"
+`string`\
+Ex: `"outro_slideshow": "Scholar_Outro"`
+
+Slideshow ID to use for the void sea slideshow.
+
 ### "world_state"
 `string[]`\
 Ex: `"world_state": "Red"`, `"world_state": [ "Spear", "Red" ]`
