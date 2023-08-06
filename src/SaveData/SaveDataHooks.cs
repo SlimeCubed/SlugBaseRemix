@@ -5,7 +5,7 @@
         public static void Apply()
         {
             On.Menu.SlugcatSelectMenu.MineForSaveData += SlugcatSelectMenu_MineForSaveData;
-            On.DeathPersistentSaveData.ToString += DeathPersistentSaveData_ToString;
+            On.DeathPersistentSaveData.SaveToString += DeathPersistentSaveData_SaveToString;
             On.MiscWorldSaveData.ToString += MiscWorldSaveData_ToString;
             On.PlayerProgression.MiscProgressionData.ToString += MiscProgressionData_ToString;
         }
@@ -33,10 +33,10 @@
             return orig(self);
         }
 
-        private static string DeathPersistentSaveData_ToString(On.DeathPersistentSaveData.orig_ToString orig, DeathPersistentSaveData self)
+        private static string DeathPersistentSaveData_SaveToString(On.DeathPersistentSaveData.orig_SaveToString orig, DeathPersistentSaveData self, bool saveAsIfPlayerDied, bool saveAsIfPlayerQuit)
         {
             self.GetSlugBaseData().SaveToStrings(self.unrecognizedSaveStrings);
-            return orig(self);
+            return orig(self, saveAsIfPlayerDied, saveAsIfPlayerQuit);
         }
     }
 }
