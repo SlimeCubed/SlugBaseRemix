@@ -589,7 +589,7 @@ namespace SlugBase.Features
         private static void RainCycle_ctor(On.RainCycle.orig_ctor orig, RainCycle self, World world, float minutes)
         {
             bool hasMin = CycleLengthMin.TryGet(world.game, out float minLen);
-            bool hasMax = CycleLengthMin.TryGet(world.game, out float maxLen);
+            bool hasMax = CycleLengthMax.TryGet(world.game, out float maxLen);
             if (hasMin || hasMax)
             {
                 if (!hasMin) minLen = world.game.setupValues.cycleTimeMin / 60f;
