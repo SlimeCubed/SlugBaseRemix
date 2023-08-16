@@ -1,5 +1,6 @@
 ﻿using Expedition;
 using UnityEngine;
+using RWCustom;
 using System.Collections.Generic;
 using System;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Linq;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using Menu;
+using MoreSlugcats;
 using SlugBase.Features;
 using MSCSceneID = MoreSlugcats.MoreSlugcatsEnums.MenuSceneID;
 using SceneID = Menu.MenuScene.SceneID;
@@ -41,6 +43,19 @@ namespace SlugBase
                 {
                     list.Add(chara.Name);
                 }
+            }
+
+            // Adding Inv, Slugpup, and Nightcat to Expedition selection
+            if (File.Exists(Custom.RootFolderDirectory() + 
+                (Path.DirectorySeparatorChar +
+                "pandemonium.txt").ToLowerInvariant()))
+            {
+                if (ModManager.MSC)
+                {
+                    list.Add(MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel);
+                    list.Add(MoreSlugcatsEnums.SlugcatStatsName.Slugpup);
+                }
+                list.Add(SlugcatStats.Name.Night);
             }
 
             return list;
@@ -130,12 +145,12 @@ namespace SlugBase
                 int positionI = i - (8 * currentSlugPage);
                 if (i < 3 + (8 * currentSlugPage))
                 {
-                    self.slugcatButtons[i] = new SelectOneButton(menu, self, "", "SLUG-" + i.ToString(), new Vector2(525f + 110f * (float)positionI, 525f), new Vector2(94f, 94f), self.slugcatButtons, i);
+                    self.slugcatButtons[i] = new SelectOneButton(menu, self, "", "SLUG-" + i.ToString(), new Vector2(525f + 110f * positionI, 525f), new Vector2(94f, 94f), self.slugcatButtons, i);
                     self.subObjects.Add(self.slugcatButtons[i]);
                 }
                 else if (i >= 3 + (8 * currentSlugPage) && i <= 7 + (8 * currentSlugPage))
                 {
-                    self.slugcatButtons[i] = new SelectOneButton(menu, self, "", "SLUG-" + i.ToString(), new Vector2(415f + 110f * (float)(positionI - 3), 410f), new Vector2(94f, 94f), self.slugcatButtons, i);
+                    self.slugcatButtons[i] = new SelectOneButton(menu, self, "", "SLUG-" + i.ToString(), new Vector2(415f + 110f * (positionI - 3), 410f), new Vector2(94f, 94f), self.slugcatButtons, i);
                     self.subObjects.Add(self.slugcatButtons[i]);
                 }
                 self.slugcatButtons[i].buttonBehav.greyedOut = greyedOut;
@@ -144,7 +159,7 @@ namespace SlugBase
             self.ReloadSlugcatPortraits();
         }
 
-        //Controls for the slugcat page switch buttons
+        // Controls for the slugcat page switch buttons
         private static void CharacterSelectPage_Singal(On.Menu.CharacterSelectPage.orig_Singal orig, CharacterSelectPage self, MenuObject sender, string message)
         {
             orig(self, sender, message);
@@ -211,18 +226,39 @@ namespace SlugBase
             if (num > (ModManager.MSC ? 7 : 2))
             {
                 SlugcatStats.Name name = ExpeditionGame.playableCharacters[num];
+                string rodentName = "If you're seeing this in game then I think i might have screwed up<LINE>-Nacu";
                 if (SlugBaseCharacter.TryGet(name, out var chara))
                 {
-                    self.slugcatName.text = self.menu.Translate(chara.DisplayName).ToUpper();
-
-                    if(!GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
+                    rodentName = chara.DisplayName;
+                    if (!GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
                     {
                         description = chara.Description;
                     }
 
                     self.slugcatDescription.text = self.menu.Translate(description).Replace("<LINE>", Environment.NewLine);
-                    self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
                 }
+
+                if (name == SlugcatStats.Name.Night)
+                {
+                    rodentName = "NIGHTCAT";
+                    self.slugcatDescription.text = self.menu.Translate(
+                        "A mystery to everyone, with no unique skills, The Nightcat embarks <LINE>on an expedition to find purpose").Replace("<LINE>", Environment.NewLine);
+                }
+                else if (name == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
+                {
+                    rodentName = UnityEngine.Random.value < 0.33f ? "SOFANTHIEL" : UnityEngine.Random.value < 0.33f ? "INV" : UnityEngine.Random.value < 0.33f ? "ENOT" : "???"; // This is funny i think
+                    self.slugcatDescription.text = self.menu.Translate(
+                        "A freak of nature, this creature not meant to exist, or prosper in any meaningful way<LINE>travels alone attempting to prove itself to the world").Replace("<LINE>", Environment.NewLine);
+                }
+                else if (name == MoreSlugcatsEnums.SlugcatStatsName.Slugpup)
+                {
+                    rodentName = "SLUGPUP";
+                    self.slugcatDescription.text = self.menu.Translate(
+                        "A small lost and curious child, it's unrelenting bravery drives it to<LINE>complete harder and harder tasks, will you help?").Replace("<LINE>", Environment.NewLine);
+                }
+
+                self.slugcatName.text = self.menu.Translate(rodentName).ToUpper();
+                self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
             }
         }
 
@@ -234,7 +270,7 @@ namespace SlugBase
             if (SlugBaseCharacter.TryGet(slugcat, out var chara))
             {
                 string folderName = "illustrations";
-                string fileName = "multiplayerportrait30"; // Nightcat deadeth icon if some slug doesnt have a portrait
+                string fileName = "multiplayerportrait30"; // Nightcat deadeth icon if some slug doesnt have a portrait 
                 // Checking for all portraits starting from the 5th one
                 for (int i = -1; i < 4; i++)
                 {
@@ -256,6 +292,29 @@ namespace SlugBase
                     }
                 }
                 image = new(self.menu, self, folderName, fileName, pos, true, true);
+            }
+            else if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel || 
+                slugcat == MoreSlugcatsEnums.SlugcatStatsName.Slugpup ||
+                slugcat == SlugcatStats.Name.Night) // Pandemonium slugcats
+            {
+                string folderName = "illustrations";
+                string fileName = "multiplayerportrait31";
+                bool inv = false;
+                
+                if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
+                {
+                    int rand = UnityEngine.Random.Range(1, 13);
+                    folderName = "content";
+                    fileName = UnityEngine.Random.value < 0.05f ? "blush_001" : "sm" + (rand == 11 ? 15 : rand).ToString(); // Sprite 11 is not a portrait, and theres a gap between 12 and 15
+                    inv = true;
+                }
+                else if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Slugpup)
+                {
+                    fileName = "slugcatportraitalive1";
+                }
+
+                image = new(self.menu, self, folderName, fileName, pos, true, true);
+                image.sprite.scale = inv ? 0.2f : 1f;
             }
 
             return image;

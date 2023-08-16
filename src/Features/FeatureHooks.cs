@@ -344,10 +344,12 @@ namespace SlugBase.Features
         {
             orig(self, sLeaser, rCam, timeStacker, camPos);
 
-            if (sLeaser.sprites.Length > 9 && sLeaser.sprites[9] != null
-                && PlayerColor.Eyes.GetColor(self) is Color color)
+            if (sLeaser.sprites.Length > 9 && sLeaser.sprites[9] != null)
             {
-                sLeaser.sprites[9].color = color;
+                if (PlayerColor.Eyes.GetColor(self) is Color color)
+                    sLeaser.sprites[9].color = color;
+                else if (self.player.slugcatStats.name == SlugcatStats.Name.Night) // Fix Nightcat having black eyes outside arena
+                    sLeaser.sprites[9].color = Color.Lerp(new Color(1f, 1f, 1f), rCam.currentPalette.blackColor, 0.3f);
             }
         }
 
