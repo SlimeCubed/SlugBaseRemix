@@ -92,7 +92,7 @@ namespace SlugBase
         /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
         public string TryString() => Type == Element.String ? AsString() : null;
 
-        /// <summary>Try casting to <see cref="string"/>, returning <c>null</c> on failure.</summary>
+        /// <summary>Try casting to <see cref="bool"/>, returning <c>null</c> on failure.</summary>
         public bool? TryBool() => Type == Element.Bool ? AsBool() : null;
 
         /// <summary>Test if this value is <c>null</c>.</summary>
