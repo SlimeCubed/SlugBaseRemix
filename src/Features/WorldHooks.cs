@@ -44,9 +44,7 @@ namespace SlugBase.Features
             On.RoomSettings.ctor += RoomSettings_ctor;
             On.AbstractCreature.setCustomFlags += AbstractCreature_setCustomFlags;
 
-            //this is breaking my brain
-            //IL.PlacedObject.FilterData.ToString += FilterData_ToString;
-            //On.PlacedObject.FilterData.FromString += FilterData_FromString;
+            On.PlacedObject.FilterData.FromString += FilterData_FromString;
 
             //this property is only used to be passed into WorldLoader.ctor
             //new Hook( typeof(OverWorld).GetProperty(nameof(OverWorld.PlayerCharacterNumber)).GetGetMethod(),OverWorld_get_PlayerCharacterNumber );
@@ -62,63 +60,41 @@ namespace SlugBase.Features
         private static void FilterData_FromString(On.PlacedObject.FilterData.orig_FromString orig, PlacedObject.FilterData self, string s)
         {
             orig(self, s);
-            self.PlayerMentioned().Clear();
-            string[] array = Regex.Split(s, "~")[4].Split('|');
-            if (!array.Contains("{SlugbaseVersion}")) return;
-
-            for (int i = 0; i < ExtEnum<SlugcatStats.Name>.values.Count; i++)
+            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.IsStorySession)
             {
-                string entry = ExtEnum<SlugcatStats.Name>.values.GetEntry(i);
-                SlugcatStats.Name name = new(entry, false);
-                if (SlugcatStats.HiddenOrUnplayableSlugcat(name)) continue;
-                foreach (string str in array)
-                {
-                    string character = str;
-                    if (str.StartsWith("{include}"))
-                    {
-                        character = character.Substring("{include}".Length);
-                    }
-                    if (character == entry)
-                    {
-                        self.PlayerMentioned().Add(name);
-                        break;
-                    }
-                }
+                var storyName = game.StoryCharacter;
+                if (!SlugBaseCharacter.TryGet(storyName, out var chara) || !self.availableToPlayers.Contains(storyName) || !WorldState.TryGet(chara, out var copyWorld)) return;
+
+                var names = Utils.AllValidEnums(copyWorld);
+                names.Remove(storyName);
+
+                if (!FilterDataAllowsName(names, self.availableToPlayers))
+                    self.availableToPlayers.Remove(storyName);
             }
         }
 
-        private static void FilterData_ToString(ILContext il)
+        private static bool FilterDataAllowsName(List<SlugcatStats.Name> inheritedNames, List<SlugcatStats.Name> availableToPlayers, int iteration = 0)
         {
-            var c = new ILCursor(il);
+            if (iteration >= 100) return true; //Prevent recursion loop if modcats inherit eachother (for some reason)
 
-            int loc = 5;
-            int loc2 = 4;
-            while (c.TryGotoNext(MoveType.Before,
-                x => x.MatchLdloc(out loc),
-                x => x.MatchCall<SlugcatStats>("HiddenOrUnplayableSlugcat"),
-                x => x.MatchBrtrue(out _),
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<PlacedObject.FilterData>("availableToPlayers"),
-                x => x.MatchLdloc(out _),
-                x => x.MatchCallvirt<List<SlugcatStats.Name>>("Contains"),
-                x => x.MatchBrtrue(out _),
-                x => x.MatchLdloc(out _),
-                x => x.MatchLdloc(out loc2),
-                x => x.MatchCallvirt<List<string>>("Add")
-                ))
+            foreach (var inhName in inheritedNames)
             {
-                c.Emit(OpCodes.Ldloca_S, loc);
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit(OpCodes.Ldloca_S);
-                c.EmitDelegate<Action<PlacedObject.FilterData, SlugcatStats.Name, List<string>>>((self, name, list) =>
+                if (!availableToPlayers.Contains(inhName)) //If inherited name is blacklisted, we blacklist ours
+                    return false;
+
+                if (SlugBaseCharacter.TryGet(inhName, out var chara))
                 {
-                    list.Add("{SlugbaseVersion}");
-                    if (!SlugcatStats.HiddenOrUnplayableSlugcat(name) && self.availableToPlayers.Contains(name))
+                    if (WorldState.TryGet(chara, out var copyWorld))
                     {
-                        list.Add("{include}"+name.value);
+                        var names = Utils.AllValidEnums(copyWorld);
+                        names.Remove(inhName);
+                        return FilterDataAllowsName(names, availableToPlayers, iteration++); //Recursively checking modded inheritance
                     }
-                });
+                }
+                else //If inherited name is a vanilla cat, we use their filter
+                    return true;
             }
+            return true; //No inherited filter found
         }
         #endregion
 
@@ -329,45 +305,54 @@ namespace SlugBase.Features
         // WorldState: Mark regions as accessible for collections and safari
         private static string[] SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_getSlugcatStoryRegions orig, SlugcatStats.Name i)
         {
-            if (!(SlugBaseCharacter.TryGet(i, out var chara) && WorldState.TryGet(chara, out var copyWorld))) return orig(i);
-            SlugcatStats.Name[] names = Utils.AllValidEnums(copyWorld).ToArray();
+            if (!(SlugBaseCharacter.TryGet(i, out var chara))) return orig(i);
 
             List<string> regions = new();
 
-            //find first slug that isn't me
-            int j = 0;
-            for (; j < names.Length; j++)
+            if (WorldState.TryGet(chara, out var copyWorld))
             {
-                if (names[j] != i)
-                { break; }
+                SlugcatStats.Name[] names = Utils.AllValidEnums(copyWorld).ToArray();
+
+                //find first slug that isn't me
+                int j = 0;
+                for (; j < names.Length; j++)
+                {
+                    if (names[j] != i)
+                    { break; }
+                }
+
+                if (j != names.Length)
+                {
+                    if (SlugBaseCharacter.TryGet(names[j], out SlugBaseCharacter chara2)
+                        && WorldState.TryGet(chara2, out SlugcatStats.Name[] copyWorld2))
+                    {
+                        //this is very hacky I know, but it's easier than what I would do otherwise
+                        //temporarily pretend the modded slug's worldstate is the current slug's
+                        chara2.Features.Set(WorldState, JsonConverter.ToJsonAny(names.Skip(j).Where(x => x != i).Select(x => (object)x.value).ToList()));
+                        regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
+
+                        //this will technically remove any invalid enums from the world state, thereby changing it
+                        //if there's some way to get the raw string[] then that'd be better but idk how
+                        chara2.Features.Set(WorldState, JsonConverter.ToJsonAny(Utils.AllValidEnums(copyWorld2).Select(x => (object)x.value).ToList()));
+                    }
+                    else
+                    {
+                        regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
+                    }
+
+                    List<string> defaultRegions = orig(new SlugcatStats.Name("")).ToList();
+                    foreach (string region in orig(i).ToList())
+                    {
+                        //add any extra regions from orig that wouldn't naturally be there
+                        if (!defaultRegions.Contains(region) && !regions.Contains(region))
+                        { regions.Add(region); }
+                    }
+                }
             }
 
-            if (j != names.Length)
+            if(regions.Count == 0)
             {
-                if (SlugBaseCharacter.TryGet(names[j], out SlugBaseCharacter chara2)
-                    && WorldState.TryGet(chara2, out SlugcatStats.Name[] copyWorld2))
-                {
-                    //this is very hacky I know, but it's easier than what I would do otherwise
-                    //temporarily pretend the modded slug's worldstate is the current slug's
-                    chara2.Features.Set(StoryRegions, JsonConverter.ToJsonAny(names.Skip(j).Where(x => x != i).Select(x => (object)x.value).ToList()));
-                    regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
-
-                    //this will technically remove any invalid enums from the world state, thereby changing it
-                    //if there's some way to get the raw string[] then that'd be better but idk how
-                    chara2.Features.Set(StoryRegions, JsonConverter.ToJsonAny(Utils.AllValidEnums(copyWorld2).Select(x => (object)x.value).ToList()));
-                }
-                else
-                {
-                    regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
-                }
-            }
-
-            List<string> defaultRegions = orig(new SlugcatStats.Name("")).ToList();
-            foreach (string region in orig(i).ToList())
-            {
-                //add any extra regions from orig that wouldn't naturally be there
-                if (!defaultRegions.Contains(region) && !regions.Contains(region))
-                { regions.Add(region); }
+                regions = orig(i).ToList();
             }
 
             if (StoryRegions.TryGet(chara, out var changes))
@@ -377,8 +362,14 @@ namespace SlugBase.Features
                     if (string.IsNullOrEmpty(str))
                     { /*something bad happened idk*/ }
 
-                    else if (str.StartsWith("-") && str.Length > 2 && regions.Contains(str.Substring(1)))
-                    { regions.Remove(str.Substring(1)); }
+                    else if (str.StartsWith("-"))
+                    {
+                        if (str.Length > 2 && regions.Contains(str.Substring(1)))
+                        {
+                            Debug.Log(string.Join(", ", regions));
+                            regions.Remove(str.Substring(1));
+                        }
+                    }
 
                     else if (!regions.Contains(str))
                     { regions.Add(str); }
@@ -499,7 +490,7 @@ namespace SlugBase.Features
                         {
                             List<string> newSpawns = File.ReadAllLines(path).Where(x => !x.StartsWith("//") && !string.IsNullOrEmpty(x) && x.Contains(":")).ToList();
 
-                            self.lines.RemoveRange(startIndex + 1, endIndex - startIndex - 2);
+                            self.lines.RemoveRange(startIndex + 1, endIndex - startIndex - 1);
                             self.lines.InsertRange(startIndex + 1, newSpawns);
                             break;
                         }
