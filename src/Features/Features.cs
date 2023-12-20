@@ -150,7 +150,7 @@ namespace SlugBase.Features
         /// <summary>"death_scene": The scene for this slugcat when losing from a non-starvation death.</summary>
         public static readonly GameFeature<MenuScene.SceneID> DeathScene = GameExtEnum<MenuScene.SceneID>("death_scene");
 
-        /// <summary>"intro_scene": Add an intro scene in the style of Survivor or Gormaund.</summary>
+        /// <summary>"intro_scene": Add an intro scene in the style of Survivor or Gourmand.</summary>
         public static readonly GameFeature<SlideShow.SlideShowID> IntroScene = GameExtEnum<SlideShow.SlideShowID>("intro_slideshow");
 
         /// <summary>"outro_scene": Add an outro scene for a slugbase slugcat. </summary>

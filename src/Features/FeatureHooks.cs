@@ -27,7 +27,8 @@ namespace SlugBase.Features
             On.Player.CanMaulCreature += Player_CanMaulCreature;
             IL.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.ctor += Player_ctor;
-            On.Menu.SleepAndDeathScreen.AddBkgIllustration += SleepAndDeathScreen_AddBkgIllustration;
+            IL.Menu.DreamScreen.Update += DreamScreen_Update;
+            On.Menu.MenuScene.ctor += MenuScene_ctor;
             On.PlayerGraphics.DefaultBodyPartColorHex += PlayerGraphics_DefaultBodyPartColorHex;
             On.PlayerGraphics.ColoredBodyPartList += PlayerGraphics_ColoredBodyPartList;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
@@ -281,32 +282,61 @@ namespace SlugBase.Features
                 self.spearOnBack ??= new Player.SpearOnBack(self);
         }
 
-        // SleepScene, DeathScene, StarveScene: Replace scenes
-        private static void SleepAndDeathScreen_AddBkgIllustration(On.Menu.SleepAndDeathScreen.orig_AddBkgIllustration orig, SleepAndDeathScreen self)
+        // SleepScene: Fix dream scenes not changing off of slugcat
+        private static void DreamScreen_Update(ILContext il)
         {
-            MenuScene.SceneID newScene = null;
+            var c = new ILCursor(il);
+
+            var dreamsEqual = typeof(ExtEnum<MenuScene.SceneID>).GetMethod("op_Equality");
+
+            if(c.TryGotoNext(
+                    x => x.MatchLdcI4(35))
+                && c.TryGotoPrev(
+                    MoveType.After,
+                    x => x.MatchLdsfld<MenuScene.SceneID>(nameof(MenuScene.SceneID.SleepScreen)),
+                    x => x.MatchCallOrCallvirt(dreamsEqual)))
+            {
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate((DreamScreen self) =>
+                {
+                    SlugcatStats.Name name;
+                    if (self.manager.currentMainLoop is RainWorldGame game)
+                        name = game.StoryCharacter;
+                    else
+                        name = self.manager.rainWorld.progression?.PlayingAsSlugcat;
+
+                    return SlugBaseCharacter.TryGet(name, out var chara)
+                        && SleepScene.TryGet(chara, out var sleepScene)
+                        && sleepScene == self.scene.sceneID;
+                });
+                c.Emit(OpCodes.Or);
+            }
+            else
+            {
+                SlugBasePlugin.Logger.LogError($"IL hook {nameof(DreamScreen_Update)} failed!");
+            }
+        }
+
+        // SleepScene, DeathScene, StarveScene: Replace scenes
+        private static void MenuScene_ctor(On.Menu.MenuScene.orig_ctor orig, MenuScene self, Menu.Menu menu, MenuObject owner, MenuScene.SceneID sceneID)
+        {
             SlugcatStats.Name name;
-            
-            if (self.manager.currentMainLoop is RainWorldGame)
-                name = (self.manager.currentMainLoop as RainWorldGame).StoryCharacter;
+            if (menu.manager.currentMainLoop is RainWorldGame game)
+                name = game.StoryCharacter;
             else
-                name = self.manager.rainWorld.progression.PlayingAsSlugcat;
+                name = menu.manager.rainWorld.progression?.PlayingAsSlugcat;
 
-            if (SlugBaseCharacter.TryGet(name, out var chara))
+            if (name != null
+                && SlugBaseCharacter.TryGet(name, out var chara)
+                && (sceneID == MenuScene.SceneID.SleepScreen && SleepScene.TryGet(chara, out var newScene)
+                    || sceneID == MenuScene.SceneID.NewDeath && DeathScene.TryGet(chara, out newScene)
+                    || sceneID == MenuScene.SceneID.StarveScreen && StarveScene.TryGet(chara, out newScene))
+                && newScene.Index != -1)
             {
-                if (self.IsSleepScreen && SleepScene.TryGet(chara, out var sleep)) newScene = sleep;
-                else if (self.IsDeathScreen && DeathScene.TryGet(chara, out var death)) newScene = death;
-                else if (self.IsStarveScreen && StarveScene.TryGet(chara, out var starve)) newScene = starve;
+                sceneID = newScene;
             }
 
-            if(newScene != null && newScene.Index != -1)
-            {
-                self.scene = new InteractiveMenuScene(self, self.pages[0], newScene);
-                self.pages[0].subObjects.Add(self.scene);
-                return;
-            }
-            else
-                orig(self);
+            orig(self, menu, owner, sceneID);
         }
 
         // CustomColors: Set defaults for customization
