@@ -52,11 +52,6 @@ namespace SlugBase.Features
         }
 
         #region devtools
-        //doesn't work yet
-        private static ConditionalWeakTable<PlacedObject.FilterData, List<SlugcatStats.Name>> Mentioned = new();
-
-        public static List<SlugcatStats.Name> PlayerMentioned(this PlacedObject.FilterData p) => Mentioned.GetValue(p, _ => new());
-
         private static void FilterData_FromString(On.PlacedObject.FilterData.orig_FromString orig, PlacedObject.FilterData self, string s)
         {
             orig(self, s);
