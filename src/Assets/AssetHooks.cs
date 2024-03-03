@@ -34,8 +34,9 @@ namespace SlugBase.Assets
         {
             var c = new ILCursor(il);
 
-            if (c.TryGotoNext(MoveType.Before,
-                x => x.MatchCallOrCallvirt<AssetManager>(nameof(AssetManager.ResolveFilePath))))
+            if (c.TryGotoNext(MoveType.Before, 
+                    x => x.MatchLdcI4(0), 
+                    x => x.MatchCallOrCallvirt<AssetManager>(nameof(AssetManager.ResolveFilePath))))
             {
                 c.EmitDelegate<Func<string, string>>(path =>
                 {

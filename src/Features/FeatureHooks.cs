@@ -22,7 +22,7 @@ namespace SlugBase.Features
         public static void Apply()
         {
             IL.DreamsState.StaticEndOfCycleProgress += DreamsState_StaticEndOfCycleProgress;
-            On.SlugcatStats.getSlugcatTimelineOrder += SlugcatStats_getSlugcatTimelineOrder;
+            On.SlugcatStats.SlugcatTimelineOrder += SlugcatStats_SlugcatTimelineOrder;
             On.SlugcatStats.SlugcatCanMaul += SlugcatStats_SlugcatCanMaul;
             On.Player.CanMaulCreature += Player_CanMaulCreature;
             IL.Player.GrabUpdate += Player_GrabUpdate;
@@ -136,7 +136,7 @@ namespace SlugBase.Features
         }
 
         // TimelineBefore, TimelineAfter: Apply timeline order
-        private static SlugcatStats.Name[] SlugcatStats_getSlugcatTimelineOrder(On.SlugcatStats.orig_getSlugcatTimelineOrder orig)
+        private static LinkedList<SlugcatStats.Name> SlugcatStats_SlugcatTimelineOrder(On.SlugcatStats.orig_SlugcatTimelineOrder orig)
         {
             var order = orig();
 
@@ -199,7 +199,7 @@ namespace SlugBase.Features
                         }
                     }
 
-                    order = orderList.ToArray();
+                    order = new LinkedList<SlugcatStats.Name>(orderList);
                 }
             }
             catch (Exception e)

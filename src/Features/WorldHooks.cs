@@ -30,8 +30,8 @@ namespace SlugBase.Features
             On.Region.ctor += Region_ctor;
 
             //meta hooks
-            On.SlugcatStats.getSlugcatOptionalRegions += SlugcatStats_getSlugcatOptionalRegions;
-            On.SlugcatStats.getSlugcatStoryRegions += SlugcatStats_getSlugcatStoryRegions;
+            On.SlugcatStats.SlugcatOptionalRegions += SlugcatStats_SlugcatOptionalRegions;
+            On.SlugcatStats.SlugcatStoryRegions += SlugcatStats_getSlugcatStoryRegions;
             On.Region.GetProperRegionAcronym += Region_GetProperRegionAcronym;
 
             //worldloader
@@ -259,7 +259,7 @@ namespace SlugBase.Features
 
         #region meta
         // WorldState: Mark regions as optional for collections and safari
-        private static string[] SlugcatStats_getSlugcatOptionalRegions(On.SlugcatStats.orig_getSlugcatOptionalRegions orig, SlugcatStats.Name i)
+        private static List<string> SlugcatStats_SlugcatOptionalRegions(On.SlugcatStats.orig_SlugcatOptionalRegions orig, SlugcatStats.Name i)
         {
             if (!(SlugBaseCharacter.TryGet(i, out var chara) && WorldState.TryGet(chara, out var copyWorld))) return orig(i);
 
@@ -272,7 +272,7 @@ namespace SlugBase.Features
                 if (name != i)
                 {
                     regions.AddRange(orig(name).Where(x => !regions.Contains(x)));
-                    regions.AddRange(SlugcatStats.getSlugcatStoryRegions(name).Where(x => !regions.Contains(x)));
+                    regions.AddRange(SlugcatStats.SlugcatStoryRegions(name).Where(x => !regions.Contains(x)));
                 }
                 else
                 {
@@ -281,7 +281,7 @@ namespace SlugBase.Features
             }
 
             //remove the canon regions
-            foreach (string region in SlugcatStats.getSlugcatStoryRegions(i))
+            foreach (string region in SlugcatStats.SlugcatStoryRegions(i))
             {
                 if (regions.Contains(region))
                 { regions.Remove(region); }
@@ -294,11 +294,11 @@ namespace SlugBase.Features
                 { allRegions.RemoveAt(j); }
             }
 
-            return allRegions.ToArray();
+            return allRegions;
         }
 
         // WorldState: Mark regions as accessible for collections and safari
-        private static string[] SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_getSlugcatStoryRegions orig, SlugcatStats.Name i)
+        private static List<string> SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_SlugcatStoryRegions orig, SlugcatStats.Name i)
         {
             if (!(SlugBaseCharacter.TryGet(i, out var chara))) return orig(i);
 
@@ -324,7 +324,7 @@ namespace SlugBase.Features
                         //this is very hacky I know, but it's easier than what I would do otherwise
                         //temporarily pretend the modded slug's worldstate is the current slug's
                         chara2.Features.Set(WorldState, JsonConverter.ToJsonAny(names.Skip(j).Where(x => x != i).Select(x => (object)x.value).ToList()));
-                        regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
+                        regions = SlugcatStats.SlugcatStoryRegions(names[j]).ToList();
 
                         //this will technically remove any invalid enums from the world state, thereby changing it
                         //if there's some way to get the raw string[] then that'd be better but idk how
@@ -332,7 +332,7 @@ namespace SlugBase.Features
                     }
                     else
                     {
-                        regions = SlugcatStats.getSlugcatStoryRegions(names[j]).ToList();
+                        regions = SlugcatStats.SlugcatStoryRegions(names[j]).ToList();
                     }
 
                     List<string> defaultRegions = orig(new SlugcatStats.Name("")).ToList();
@@ -371,7 +371,7 @@ namespace SlugBase.Features
                 }
             }
 
-            return regions.ToArray();
+            return regions;
         }
 
         // WorldState: Swap regions based on character
