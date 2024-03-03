@@ -17,13 +17,14 @@ using SlugBase.SaveData;
 
 namespace SlugBase
 {
-    [BepInPlugin("slime-cubed.slugbase", "SlugBase", "2.7.2")]
+    [BepInPlugin("slime-cubed.slugbase", "SlugBase", Version)]
     internal class SlugBasePlugin : BaseUnityPlugin
     {
         new internal static ManualLogSource Logger;
         internal static Config RemixConfig;
         internal static Color SlugBaseBlue = new(19f / 255f, 63f / 255f, 231f / 255f);
         internal static Color SlugBaseGray = new(146f / 255f, 150f / 255f, 164f / 255f);
+        internal const string Version = "2.7.4";
 
         private bool _initialized = false;
 
