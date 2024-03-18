@@ -24,7 +24,7 @@ namespace SlugBase
         internal static Config RemixConfig;
         internal static Color SlugBaseBlue = new(19f / 255f, 63f / 255f, 231f / 255f);
         internal static Color SlugBaseGray = new(146f / 255f, 150f / 255f, 164f / 255f);
-        internal const string Version = "2.7.4";
+        internal const string Version = "2.7.5";
 
         private bool _initialized = false;
 
