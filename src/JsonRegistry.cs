@@ -300,7 +300,7 @@ namespace SlugBase
                 {
                     // File is in the root folder
                     string relativePath = fullPath.Substring(defaultPath.Length);
-                    return (!mod.hasTargetedVersionFolder || !File.Exists(Path.Combine(mod.NewestPath, relativePath)))
+                    return (!mod.hasTargetedVersionFolder || !File.Exists(Path.Combine(mod.TargetedPath, relativePath)))
                         && (!mod.hasNewestFolder || !File.Exists(Path.Combine(mod.NewestPath, relativePath)));
                 }
             }
