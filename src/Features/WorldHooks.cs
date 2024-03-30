@@ -158,7 +158,7 @@ namespace SlugBase.Features
             }
             else
             {
-                Debug.Log("Failed to hook World_LoadMapConfig!!");
+                SlugBasePlugin.Logger.LogError("Failed to hook World_LoadMapConfig!!");
             }
         }
 
@@ -171,7 +171,7 @@ namespace SlugBase.Features
                 x => x.MatchStelemRef(),
                 x => x.MatchDup(),
                 x => x.MatchLdcI4(4),
-                x => x.MatchLdstr("Properties- "), //one space typo in vanilla code lol
+                x => x.MatchLdstr("Properties-"),
                 x => x.MatchStelemRef(),
                 x => x.MatchDup(),
                 x => x.MatchLdcI4(5),
@@ -186,7 +186,7 @@ namespace SlugBase.Features
                     {
                         foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
                         {
-                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}Properties- {vname.value}.txt");
+                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}Properties-{vname.value}.txt");
                             if (File.Exists(path))
                             { return vname; }
                         }
@@ -197,7 +197,7 @@ namespace SlugBase.Features
             }
             else
             {
-                Debug.Log("Failed to IL hook LoadMap properties 1!!");
+                SlugBasePlugin.Logger.LogError("Failed to IL hook LoadMap properties 1!!");
             }
 
             int loc = 14;
@@ -237,7 +237,7 @@ namespace SlugBase.Features
             }
             else
             {
-                Debug.Log("Failed to IL hook LoadMap properties 2!!");
+                SlugBasePlugin.Logger.LogError("Failed to IL hook LoadMap properties 2!!");
             }
         }
 
@@ -494,7 +494,7 @@ namespace SlugBase.Features
             }
             else
             {
-                Debug.Log("Failed to IL hook WorldLoader.ctor!!");
+                SlugBasePlugin.Logger.LogError("Failed to IL hook WorldLoader.ctor!!");
             }
         }
 
