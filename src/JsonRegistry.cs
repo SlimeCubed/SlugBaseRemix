@@ -80,7 +80,8 @@ namespace SlugBase
 
             foreach (var file in files.Where(file => file.EndsWith(".json")))
             {
-                TryAddFromFile(file);
+                if(IsMostRecent(file))
+                    TryAddFromFile(file);
             }
         }
 
@@ -274,9 +275,44 @@ namespace SlugBase
             }
         }
 
+        // Returns true if this is the most recent version of a file in the parent mod
+        private bool IsMostRecent(string path)
+        {
+            string fullPath = Path.GetFullPath(path);
+            foreach(var mod in ModManager.ActiveMods)
+            {
+                string targetedPath = Path.GetFullPath(mod.TargetedPath) + Path.DirectorySeparatorChar;
+                string newestPath = Path.GetFullPath(mod.NewestPath) + Path.DirectorySeparatorChar;
+                string defaultPath = Path.GetFullPath(mod.path) + Path.DirectorySeparatorChar;
+
+                if (mod.hasTargetedVersionFolder && fullPath.StartsWith(targetedPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // File is in the targeted folder
+                    return true;
+                }
+                else if(mod.hasNewestFolder && fullPath.StartsWith(newestPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // File is in the newest folder
+                    string relativePath = fullPath.Substring(newestPath.Length);
+                    return !mod.hasTargetedVersionFolder || !File.Exists(Path.Combine(mod.TargetedPath, relativePath));
+                }
+                else if(fullPath.StartsWith(defaultPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // File is in the root folder
+                    string relativePath = fullPath.Substring(defaultPath.Length);
+                    return (!mod.hasTargetedVersionFolder || !File.Exists(Path.Combine(mod.NewestPath, relativePath)))
+                        && (!mod.hasNewestFolder || !File.Exists(Path.Combine(mod.NewestPath, relativePath)));
+                }
+            }
+
+            // Couldn't identify which mod the file is from
+            return true;
+        }
+
         private void FileChanged(object sender, FileSystemEventArgs e)
         {
-            _reloadQueue.Enqueue(e.FullPath);
+            if(IsMostRecent(e.FullPath))
+                _reloadQueue.Enqueue(e.FullPath);
         }
 
         private TKey ClaimID(string id)
