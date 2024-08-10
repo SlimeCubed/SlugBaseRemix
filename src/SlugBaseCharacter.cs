@@ -52,7 +52,8 @@ namespace SlugBase
             {
                 { "id", id },
                 { "name", "No Name" },
-                { "description", "No description." }
+                { "description", "No description." },
+                { "background", -1 }
             };
 
             return Registry.Add(JsonConverter.ToJson(data)).Value;
@@ -80,6 +81,11 @@ namespace SlugBase
         public string DisplayName { get; set; }
 
         /// <summary>
+        /// The ID of this character's background in the Expedition select screen. Is an integer between -1 and 29, where -1 chooses a random one.
+        /// </summary>
+        public int Background { get; set; }
+
+        /// <summary>
         /// A description of this character that appears on the select menu.
         /// </summary>
         public string Description { get; set; }
@@ -95,6 +101,11 @@ namespace SlugBase
 
             DisplayName = json.GetString("name");
             Description = json.GetString("description");
+            if (json.TryGet("background")) {
+                Background = json.Get("background");
+            } else {
+                Background = -1;
+            }
 
             Features.Clear();
             if (json.TryGet("features")?.AsObject() is JsonObject obj)
