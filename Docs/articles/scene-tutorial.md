@@ -71,4 +71,4 @@ Ex. `"shader": "Basic"`
 
 Shader is how the image is rendered. By default, it uses the vanilla `Normal` shader.
 # Example Scene
-You can dig through (here)[https://github.com/SlimeCubed/SlugTemplate/tree/master/mod] for finding the example for how the scenes are constructed and referenced.
+You can dig through [https://github.com/SlimeCubed/SlugTemplate/tree/master/mod](here) for finding the example for how the scenes are constructed and referenced.
