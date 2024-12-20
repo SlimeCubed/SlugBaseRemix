@@ -59,7 +59,7 @@ Position is a `Vector2` (which is effectively an array of 2 integers) that deter
 `bool`\
 Ex. `"flatmode": true`
 
-If `true`, this image will display when in flat mode and will be hidden otherwise.
+If `true`, this image will display when in flat mode and will be hidden otherwise. (When using flatmode, be sure that the image's depth is set to -1!)
 ## "depth"
 `float`\
 Ex. `"depth": 2.5`
