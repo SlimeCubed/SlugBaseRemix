@@ -1,5 +1,5 @@
 # CustomScene
-A CustomScene is Slugbase's method of allowing an easy way for mod creators to add slugcat-specific scenes, such as unique select screens, sleep screens, or even intro sequences.
+A CustomScene is Slugbase's method of allowing an easy way for mod creators to add slugcat-specific scenes, such as unique select screens, sleep screens, or even part of sequences such as intros.
 
 CustomScenes are stored either in the `slugbase/scenes/` folder as unique .json files, or inside of [CustomSlideshow](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/edit/master/Docs/articles/slideshow-tutorial.md)s.
 # Basic Usage
