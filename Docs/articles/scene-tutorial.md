@@ -48,9 +48,9 @@ SelectMenuOffset is a `Vector2` (which is effectively an array of 2 integers) th
 The "images" array is filled with `CustomScene.Image`s, which are just objects of which contain information about the layered images of the scene. Here are the constructors of each image:
 ## "name"
 `string`\
-Ex. `"name": "scenes/sleep - myslugcat/abc"` (When the image is stored at `StreamingAssets/mods/myslugcat/scenes/sleep - myslugcat/abc.png` and (insert link)[`scene_folder`] is not defined)
+Ex. `"name": "scenes/sleep - myslugcat/abc"` (When the image is stored at `StreamingAssets/mods/myslugcat/scenes/sleep - myslugcat/abc.png` and [`scene_folder`](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/blob/master/Docs/articles/scene-tutorial.md#scene_folder-optional) is not defined)
 
-Name determines the filepath of the image shown. If (insert link)[`scene_folder`] is defined, SlugBase will look for the file at whatever folder (that is inside the mod folder) that it defines, instead of `StreamingAssets/mods/<mod_id>`.
+Name determines the filepath of the image shown. If [`scene_folder`](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/blob/master/Docs/articles/scene-tutorial.md#scene_folder-optional) is defined, SlugBase will look for the file at whatever folder (that is inside the mod folder) that it defines, instead of `StreamingAssets/mods/<mod_id>`.
 ## "pos"
 `Vector2`
 
