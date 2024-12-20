@@ -1,7 +1,7 @@
 # CustomScene
 A CustomScene is Slugbase's method of allowing an easy way for mod creators to add slugcat-specific scenes, such as unique select screens, sleep screens, or even intro sequences.
 
-CustomScenes are stored either in the `slugbase/scenes/` folder as unique .json files, or inside of [CustomSlideshow](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/edit/master/Docs/articles/scene-tutorial.md)s.
+CustomScenes are stored either in the `slugbase/scenes/` folder as unique .json files, or inside of [CustomSlideshow](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/edit/master/Docs/articles/slideshow-tutorial.md)s.
 # Basic Usage
 ## "id"
 `MenuScene.SceneID` (acts like a `string`)\
@@ -9,7 +9,7 @@ Ex. `"id": "Sleep_MySlugcat"`
 
 ID is a `SceneID`, which effectively is a string that no other scene should share. Instead of referencing a file name, all built-in SlugBase features reference whatever ID that is put here.
 
-If no ID is defined, the scene will not be able to be referenced, unless it is a scene that is inside of a [CustomSlideshow](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/edit/master/Docs/articles/scene-tutorial.md).
+If no ID is defined, the scene will not be able to be referenced, unless it is a scene that is inside of a [CustomSlideshow](https://github.com/nonAssociatedIdiot/SlugBaseRemixExtraDocs/edit/master/Docs/articles/slideshow-tutorial.md).
 ## "scene_folder" (Optional)
 `string`\
 Ex. `"scene_folder": "scenes/sleep - myslugcat"`
