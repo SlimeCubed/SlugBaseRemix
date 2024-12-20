@@ -45,30 +45,27 @@ Ex. `"select_menu_pos": [0, 0]`
 
 SelectMenuOffset is a `Vector2` (which is effectively an array of 2 integers) that offsets all images in the scene by whatever numbers are within it.
 # Images Within Slideshows
-## "images"
-`CustomScene.Image[]`
-
-The images array is filled with `CustomScene.Image`s, which are just objects of which contain information about the layered images of the scene. Here are the constructors of each image:
-### "name"
+The "images" array is filled with `CustomScene.Image`s, which are just objects of which contain information about the layered images of the scene. Here are the constructors of each image:
+## "name"
 `string`\
 Ex. `"name": "scenes/sleep - myslugcat/abc"` (When the image is stored at `StreamingAssets/mods/myslugcat/scenes/sleep - myslugcat/abc.png` and (insert link)[`scene_folder`] is not defined)
 
 Name determines the filepath of the image shown. If (insert link)[`scene_folder`] is defined, SlugBase will look for the file at whatever folder (that is inside the mod folder) that it defines, instead of `StreamingAssets/mods/<mod_id>`.
-### "pos"
+## "pos"
 `Vector2`
 
 Position is a `Vector2` (which is effectively an array of 2 integers) that determines the pixel location of where the image is on-screen.
-### "flatmode" (Defaults to `false`)
+## "flatmode" (Defaults to `false`)
 `bool`\
 Ex. `"flatmode": true`
 
 If `true`, this image will display when in flat mode and will be hidden otherwise.
-### "depth"
+## "depth"
 `float`\
 Ex. `"depth": 2.5`
 
 Depth is a `float` determining the image's depth.
-### "shader" (Defaults to `Menu.MenuDepthIllustration.MenuShader.Normal`)
+## "shader" (Defaults to `Menu.MenuDepthIllustration.MenuShader.Normal`)
 `MenuDepthIllustration.MenuShader`\
 Ex. `"shader": "Basic"`
 
