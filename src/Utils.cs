@@ -7,24 +7,20 @@ namespace SlugBase
 {
     internal static class Utils
     {
-
         /// <summary>
-        /// Returns first non-null and non-negative index extenum in a collection
+        /// Gets the first non-null, registered enum in <paramref name="values"/>.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="values"></param>
-        /// <returns></returns>
+        /// <param name="values">The collection to search through.</param>
+        /// <returns>A registered enum, or <c>null</c> if no enums in the list are registered.</returns>
         public static T FirstValidEnum<T>(IEnumerable<T> values)
             where T : ExtEnum<T>
         {
             return values.FirstOrDefault(val => val != null && val.Index != -1);
         }
         /// <summary>
-        /// Filters out all non-null and non-negative extenums in a collection
+        /// Gets all non-null, registered enums in <paramref name="values"/>.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="values"></param>
-        /// <returns></returns>
+        /// <param name="values">The collection to search through.</param>
         public static List<T> AllValidEnums<T>(IEnumerable<T> values)
             where T : ExtEnum<T>
         {
@@ -32,35 +28,34 @@ namespace SlugBase
         }
 
         /// <summary>
-        /// Tries to parse text as name
+        /// Gets the <see cref="Name"/> corresponding to <paramref name="text"/>, converting canon character names to code names.
         /// </summary>
-        /// <param name="text">ID of name</param>
-        /// <returns></returns>
-        #warning unclean method
+        /// <param name="text">The name of the character to convert to an ID.</param>
         public static Name GetName(string text)
         {
-            if (!ExtEnumBase.TryParse(typeof(Name), text, true, out var res))
+            // Return an exact match, if found
+            if (ExtEnumBase.TryParse(typeof(Name), text, true, out var res))
                 return (Name)res;
 
             return text.ToLowerInvariant() switch
             {
+                // Convert canon names to code names
                 "survivor" => Name.White,
                 "hunter" => Name.Red,
                 "monk" => Name.Yellow,
                 "spearmaster" => new Name("Spear"),
                 "inv" => new Name("Inv"),
+
+                // If nothing matched, return the input text as an enum
                 _ => new Name(text)
             };
         }
 
         /// <summary>
-        /// Find in ExtEnum matching ID
+        /// Changes the case of <paramref name="name"/> to match the corresponding enum in <typeparamref name="T"/>.
         /// </summary>
-        /// <typeparam name="T">Extenum type</typeparam>
-        /// <param name="name">ID of lookup</param>
-        /// <returns>Matching ID if found, same string if not</returns>
-        #warning weird return logic
-        //it will always return same thing specified in name, be it a successful lookup or not
+        /// <param name="name">The string to capitalize.</param>
+        /// <returns>The value of an enum in <typeparamref name="T"/>, or <paramref name="name"/> if no matching entry exists.</returns>
         public static string MatchCaseInsensitiveEnum<T>(string name)
             where T : ExtEnum<T>
         {
@@ -68,10 +63,8 @@ namespace SlugBase
         }
 
         /// <summary>
-        /// Parses an IEnumerable of strings into colors
+        /// Converts a list of hexadecimal strings to colors.
         /// </summary>
-        /// <param name="stringList"></param>
-        /// <returns>List of same size as input list. Invalid strings have UB in parsting</returns>
         public static List<Color> StringsToColors(IEnumerable<string> stringList)
         {
             if (stringList == null) return null;
@@ -85,10 +78,8 @@ namespace SlugBase
         }
 
         /// <summary>
-        /// Parses an IEnumerable of colors into a list of strings.
+        /// Converts a list of colors to hexadecimal strings.
         /// </summary>
-        /// <param name="colorList"></param>
-        /// <returns>List of colors same size as input</returns>
         public static List<string> ColorsToStrings(IEnumerable<Color> colorList)
         {
             if (colorList == null) return null;
