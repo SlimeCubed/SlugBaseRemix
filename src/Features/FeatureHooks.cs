@@ -21,6 +21,7 @@ namespace SlugBase.Features
     {
         public static void Apply()
         {
+            On.ProcessManager.PreSwitchMainProcess += ProcessManager_PreSwitchMainProcess;
             IL.DreamsState.StaticEndOfCycleProgress += DreamsState_StaticEndOfCycleProgress;
             On.SlugcatStats.SlugcatTimelineOrder += SlugcatStats_SlugcatTimelineOrder;
             On.SlugcatStats.SlugcatCanMaul += SlugcatStats_SlugcatCanMaul;
@@ -107,6 +108,13 @@ namespace SlugBase.Features
             }
         }
 
+        // WorldState: Reload custom timeline order on switch
+        private static void ProcessManager_PreSwitchMainProcess(On.ProcessManager.orig_PreSwitchMainProcess orig, ProcessManager self, ProcessManager.ProcessID ID)
+        {
+            orig(self, ID);
+            CustomTimeline.ReloadTimelineOrder();
+        }
+
         // UseDefaultDreams: Remove default dreams
         private static void DreamsState_StaticEndOfCycleProgress(ILContext il)
         {
@@ -136,75 +144,23 @@ namespace SlugBase.Features
         }
 
         // TimelineBefore, TimelineAfter: Apply timeline order
-        private static LinkedList<SlugcatStats.Name> SlugcatStats_SlugcatTimelineOrder(On.SlugcatStats.orig_SlugcatTimelineOrder orig)
+        private static LinkedList<SlugcatStats.Timeline> SlugcatStats_SlugcatTimelineOrder(On.SlugcatStats.orig_SlugcatTimelineOrder orig)
         {
             var order = orig();
 
-            try
+            foreach (var timeline in CustomTimeline.OrderedTimelines)
             {
-                IEnumerable<SlugBaseCharacter> timelineCharas = SlugBaseCharacter.Registry.Values
-                    .Where(chara => TimelineBefore.TryGet(chara, out _) || TimelineAfter.TryGet(chara, out _))
-                    .OrderBy(chara => chara.Name.value, StringComparer.InvariantCulture);
-
-                if (timelineCharas.Any())
+                if (!order.Contains(timeline.ID))
                 {
-                    // Use topological sorting to remove load order dependency
-                    timelineCharas = BepInEx.Utility.TopologicalSort(timelineCharas, chara =>
+                    if (timeline.InsertAfter?.FirstOrDefault(order.Contains) is SlugcatStats.Timeline afterTimeline)
                     {
-                        // Get names
-                        TimelineBefore.TryGet(chara, out var before);
-                        TimelineAfter.TryGet(chara, out var after);
-
-                        IEnumerable<SlugcatStats.Name> names;
-                        if (before != null)
-                            names = after == null ? before : before.Concat(after);
-                        else
-                            names = after;
-
-                        // Return associated SlugBaseCharacters
-                        return names.Select(SlugBaseCharacter.Get).Where(chara => chara != null);
-                    });
-
-                    // Insert into list
-                    var orderList = order.ToList();
-
-                    foreach (var chara in timelineCharas)
-                    {
-                        bool added = false;
-                        if (TimelineBefore.TryGet(chara, out var before))
-                        {
-                            foreach (var beforeName in before)
-                            {
-                                int i = orderList.IndexOf(beforeName);
-                                if (i != -1)
-                                {
-                                    added = true;
-                                    orderList.Insert(i, chara.Name);
-                                    break;
-                                }
-                            }
-                        }
-                        if (!added && TimelineAfter.TryGet(chara, out var after))
-                        {
-                            foreach (var afterName in after)
-                            {
-                                int i = orderList.IndexOf(afterName);
-                                if (i != -1)
-                                {
-                                    added = true;
-                                    orderList.Insert(i + 1, chara.Name);
-                                    break;
-                                }
-                            }
-                        }
+                        order.AddAfter(order.Find(afterTimeline), timeline.ID);
                     }
-
-                    order = new LinkedList<SlugcatStats.Name>(orderList);
+                    else if (timeline.InsertBefore?.FirstOrDefault(order.Contains) is SlugcatStats.Timeline beforeTimeline)
+                    {
+                        order.AddBefore(order.Find(beforeTimeline), timeline.ID);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
             }
 
             return order;
@@ -838,74 +794,29 @@ namespace SlugBase.Features
         // TitleCard: Add to pool
         private static void IntroRoll_ctor(ILContext il)
         {
-            var cursor = new ILCursor(il);
+            var c = new ILCursor(il);
+            ILLabel introRollCAdded = null;
 
-            // MSC is active
-            if (cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
-                && cursor.TryGotoNext(MoveType.After, i => i.MatchCallOrCallvirt<string>(nameof(string.Concat))))
+            // Move right before the DLC check for Watcher
+            // Then, find where the Watcher intro roll branches to
+            if (c.TryGotoNext(
+                MoveType.AfterLabel,
+                x => x.MatchLdsfld<ModManager>(nameof(ModManager.Watcher)),
+                x => x.MatchBrfalse(out _))
+                && c.Clone().TryGotoNext(x => x.MatchBr(out introRollCAdded)))
             {
-                cursor.Emit(OpCodes.Ldloc_3);
-                cursor.EmitDelegate<Func<string, string[], string>>((titleImage, oldTitleImages) =>
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate((IntroRoll self) =>
                 {
-                    // Get a list of all SlugBase title images
-                    var newTitleImages = new List<string>();
-                    foreach(var chara in SlugBaseCharacter.Registry.Values)
+                    SlugcatStats.Name current = self.manager.rainWorld.progression.miscProgressionData.currentlySelectedSinglePlayerSlugcat;
+                    if (SlugBaseCharacter.TryGet(current, out var chara) && TitleCard.TryGet(chara, out string path))
                     {
-                        if(TitleCard.TryGet(chara, out var newTitleImage)
-                            && !string.IsNullOrEmpty(newTitleImage))
-                        {
-                            newTitleImages.Add(newTitleImage);
-                        }
+                        self.illustrations[2] = new MenuIllustration(self, self.pages[0], "", path, new Vector2(0f, 0f), true, false);
+                        return true;
                     }
-
-                    // Switch title if random choice is from SlugBase
-                    if (newTitleImages.Count > 0)
-                    {
-                        int choice = Random.Range(0, newTitleImages.Count + oldTitleImages.Length);
-                        if (choice < newTitleImages.Count)
-                        {
-                            titleImage = newTitleImages[choice];
-                        }
-                    }
-
-                    return titleImage;
+                    return false;
                 });
-            }
-            else
-            {
-                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, MSC, failed!");
-            }
-
-            // MSC is not active
-            cursor.Index = 0;
-            if(cursor.TryGotoNext(i => i.MatchLdstr("Intro_Roll_C_"))
-                && cursor.TryGotoPrev(i => i.MatchLdstr("Intro_Roll_C")))
-            {
-                cursor.EmitDelegate<Func<string, string>>(titleImage =>
-                {
-                    // Get a list of all SlugBase title images
-                    var newTitleImages = new List<string>();
-                    foreach (var chara in SlugBaseCharacter.Registry.Values)
-                    {
-                        if (TitleCard.TryGet(chara, out var newTitleImage)
-                            && !string.IsNullOrEmpty(newTitleImage))
-                        {
-                            newTitleImages.Add(newTitleImage);
-                        }
-                    }
-
-                    // Switch title to random choice from SlugBase characters
-                    if (newTitleImages.Count > 0)
-                    {
-                        titleImage = newTitleImages[Random.Range(0, newTitleImages.Count)];
-                    }
-
-                    return titleImage;
-                });
-            }
-            else
-            {
-                SlugBasePlugin.Logger.LogError($"IL hook {nameof(IntroRoll_ctor)}, no MSC, failed!");
+                c.Emit(OpCodes.Brtrue, introRollCAdded);
             }
         }
     }

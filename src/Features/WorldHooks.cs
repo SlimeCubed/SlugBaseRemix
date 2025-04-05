@@ -1,13 +1,12 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using UnityEngine;
+using Timeline = SlugcatStats.Timeline;
 
 namespace SlugBase.Features
 {
@@ -20,31 +19,32 @@ namespace SlugBase.Features
         public static void Apply()
         {
             //map_XX hooks
-            IL.HUD.Map.LoadConnectionPositions += ApplyWorldState;
-            IL.HUD.Map.Update += ApplyWorldState;
-            IL.World.LoadWorldForFastTravel += World_LoadMapConfig;
-            IL.World.LoadMapConfig += World_LoadMapConfig;
+            IL.HUD.Map.LoadConnectionPositions += InheritMapFile_Map;
+            IL.HUD.Map.Update += InheritMapFile_Map;
+            IL.World.LoadWorldForFastTravel_Timeline_List1_Int32Array_Int32Array_Int32Array += InheritMapFile_World;
+            IL.World.LoadMapConfig_Timeline += InheritMapFile_World;
 
             //properties.txt hooks
-            IL.World.LoadMapConfig += PropertiesConfig;
-            On.Region.ctor += Region_ctor;
+            IL.World.LoadMapConfig_Timeline += PropertiesConfig;
+            On.Region.ctor_string_int_int_Timeline += Region_ctor;
 
             //meta hooks
+            On.SlugcatStats.SlugcatToTimeline += SlugcatStats_SlugcatToTimeline;
             On.SlugcatStats.SlugcatOptionalRegions += SlugcatStats_SlugcatOptionalRegions;
-            On.SlugcatStats.SlugcatStoryRegions += SlugcatStats_getSlugcatStoryRegions;
-            On.Region.GetProperRegionAcronym += Region_GetProperRegionAcronym;
+            On.SlugcatStats.SlugcatStoryRegions += SlugcatStats_SlugcatStoryRegions;
+            On.Region.GetProperRegionAcronym_Timeline_string += Region_GetProperRegionAcronym;
 
             //worldloader
-            IL.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_ILHook;
-            On.WorldLoader.ctor_RainWorldGame_Name_bool_string_Region_SetupValues += WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues;
+            IL.WorldLoader.ctor_RainWorldGame_Name_Timeline_bool_string_Region_SetupValues += WorldLoader_ctor_ILHook;
+            On.WorldLoader.ctor_RainWorldGame_Name_Timeline_bool_string_Region_SetupValues += WorldLoader_ctor;
             On.WorldLoader.CreatingWorld += WorldLoader_CreatingWorld;
 
             //misc
             On.Region.GetRegionFullName += Region_GetRegionFullName;
-            On.RoomSettings.ctor += RoomSettings_ctor;
+            On.RoomSettings.ctor_Room_string_Region_bool_bool_Timeline_RainWorldGame += RoomSettings_ctor;
             On.AbstractCreature.setCustomFlags += AbstractCreature_setCustomFlags;
 
-            On.PlacedObject.FilterData.FromString += FilterData_FromString;
+            On.PlacedObject.FilterData.RefreshTimelineList += FilterData_RefreshTimelineList;
 
             //this property is only used to be passed into WorldLoader.ctor
             //new Hook( typeof(OverWorld).GetProperty(nameof(OverWorld.PlayerCharacterNumber)).GetGetMethod(),OverWorld_get_PlayerCharacterNumber );
@@ -52,231 +52,214 @@ namespace SlugBase.Features
         }
 
         #region devtools
-        private static void FilterData_FromString(On.PlacedObject.FilterData.orig_FromString orig, PlacedObject.FilterData self, string s)
+        private static void FilterData_RefreshTimelineList(On.PlacedObject.FilterData.orig_RefreshTimelineList orig, PlacedObject.FilterData self)
         {
-            orig(self, s);
-            if (RWCustom.Custom.rainWorld.processManager.currentMainLoop is RainWorldGame game && game.IsStorySession)
+            orig(self);
+
+            // Except for weird edge cases regarding timelines with no slugcats, filters are saved as blacklists
+            // If a region was made without a slugcat in mind, all filters will be active
+            foreach (var customTimeline in CustomTimeline.Registry.Values)
             {
-                var storyName = game.StoryCharacter;
-                if (!SlugBaseCharacter.TryGet(storyName, out var chara) || !self.availableToPlayers.Contains(storyName) || !WorldState.TryGet(chara, out var copyWorld)) return;
-
-                var names = Utils.AllValidEnums(copyWorld);
-                names.Remove(storyName);
-
-                if (!FilterDataAllowsName(names, self.availableToPlayers))
-                    self.availableToPlayers.Remove(storyName);
-            }
-        }
-
-        private static bool FilterDataAllowsName(List<SlugcatStats.Name> inheritedNames, List<SlugcatStats.Name> availableToPlayers, int iteration = 0)
-        {
-            if (iteration >= 100) return true; //Prevent recursion loop if modcats inherit eachother (for some reason)
-
-            foreach (var inhName in inheritedNames)
-            {
-                if (!availableToPlayers.Contains(inhName)) //If inherited name is blacklisted, we blacklist ours
-                    return false;
-
-                if (SlugBaseCharacter.TryGet(inhName, out var chara))
+                // So, if a custom timeline or any of its parents are backlisted, blacklist it
+                if (self.availableOnTimelines.Contains(customTimeline.ID)
+                    && !customTimeline.Priorities.All(self.availableOnTimelines.Contains))
                 {
-                    if (WorldState.TryGet(chara, out var copyWorld))
-                    {
-                        var names = Utils.AllValidEnums(copyWorld);
-                        names.Remove(inhName);
-                        return FilterDataAllowsName(names, availableToPlayers, iteration++); //Recursively checking modded inheritance
-                    }
+                    self.availableOnTimelines.Remove(customTimeline.ID);
                 }
-                else //If inherited name is a vanilla cat, we use their filter
-                    return true;
             }
-            return true; //No inherited filter found
         }
         #endregion
 
         #region Map & Properties
-        // WorldState: Fix map connections
-        private static void ApplyWorldState(ILContext il)
+
+        // Custom timelines: Fix map connections
+        private static void InheritMapFile_Map(ILContext il)
         {
             var c = new ILCursor(il);
 
-            while (c.TryGotoNext(MoveType.After,
-                x => x.MatchCallOrCallvirt<PlayerProgression>("get_PlayingAsSlugcat")))
+            try
             {
-                c.Emit(OpCodes.Ldarg_0);
-                c.EmitDelegate<Func<SlugcatStats.Name, HUD.Map, SlugcatStats.Name>>((name, self) =>
-                {
-                    if (SlugBaseCharacter.TryGet(name, out var chara)
-                        && WorldState.TryGet(chara, out var copyWorld))
-                    {
-                        foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
-                        {
-                            string path = AssetManager.ResolveFilePath($"World{Separator}{self.RegionName}{Separator}map_{self.RegionName}-{vname.value}.txt");
-                            if (File.Exists(path)) 
-                            { return vname; }
-                        }
-                    }
+                // Sneak in right after resolving the slugcat-specific map file path
+                c.GotoNext(x => x.MatchLdstr("map_"));
+                c.GotoNext(MoveType.After, x => x.MatchCall<AssetManager>(nameof(AssetManager.ResolveFilePath)));
 
-                    return name;
+                // Modify the result on the stack
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate((string origPath, HUD.Map map) =>
+                {
+                    var baseTimeline = SlugcatStats.SlugcatToTimeline(map.hud.rainWorld.progression.PlayingAsSlugcat);
+                    if (CustomTimeline.Registry.TryGet(baseTimeline, out var customTimeline))
+                    {
+                        // Search through inherited timelines for map file variations
+                        string prefix = "World" + Separator + map.RegionName + Separator + "map_" + map.UseMapName() + "-";
+                        string suffix = ".png";
+                        return FindWorldFileOverride(customTimeline, prefix, suffix) ?? origPath;
+                    }
+                    return origPath;
                 });
             }
+            catch (Exception e)
+            {
+                SlugBasePlugin.Logger.LogError("Failed to hook InheritMapFile_Map!");
+                SlugBasePlugin.Logger.LogError(e);
+            }
         }
-        private static void World_LoadMapConfig(ILContext il)
+
+        private static void InheritMapFile_World(ILContext il)
         {
             var c = new ILCursor(il);
 
-            if (c.TryGotoNext(MoveType.After,
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<World>("name"),
-                x => x.MatchStelemRef(),
-                x => x.MatchDup(),
-                x => x.MatchLdcI4(6),
-                x => x.MatchLdstr("-"),
-                x => x.MatchStelemRef(),
-                x => x.MatchDup(),
-                x => x.MatchLdcI4(7),
-                x => x.MatchLdarg(1)))
-                //x => x.MatchLdfld<ExtEnumBase>("value")))
+            try
             {
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<World>(OpCodes.Ldfld, "name");
-                c.EmitDelegate<Func<SlugcatStats.Name, string, SlugcatStats.Name>>((name, regionName) =>
-                {
-                    //cursed hook
-                    if (SlugBaseCharacter.TryGet(name, out var chara)
-                        && WorldState.TryGet(chara, out var copyWorld))
-                    {
-                        foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
-                        {
-                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}map_{regionName}-{vname.value}.txt");
-                            if (File.Exists(path))
-                            { return vname; }
-                        }
-                    }
+                // Sneak in right after resolving the slugcat-specific map file path
+                c.GotoNext(x => x.MatchLdstr("-"));
+                c.GotoNext(MoveType.After, x => x.MatchCall<AssetManager>(nameof(AssetManager.ResolveFilePath)));
 
-                    return name;
+                // Modify the result on the stack
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Ldarg_1);
+                c.EmitDelegate((string origPath, World world, SlugcatStats.Timeline baseTimeline) =>
+                {
+                    if (CustomTimeline.Registry.TryGet(baseTimeline, out var customTimeline))
+                    {
+                        // Search through inherited timelines for map file variations
+                        string prefix = "World" + Separator + world.name + Separator + "map_" + WorldLoader.MapNameManipulator(world.name, world.game) + "-";
+                        string suffix = ".txt";
+                        return FindWorldFileOverride(customTimeline, prefix, suffix) ?? origPath;
+                    }
+                    return origPath;
                 });
             }
-            else
+            catch (Exception e)
             {
-                SlugBasePlugin.Logger.LogError("Failed to hook World_LoadMapConfig!!");
+                SlugBasePlugin.Logger.LogError("Failed to hook InheritMapFile_World!");
+                SlugBasePlugin.Logger.LogError(e);
             }
         }
 
-
+        // Apply timeline inheritance to region properties
         private static void PropertiesConfig(ILContext il)
         {
             var c = new ILCursor(il);
 
-            if (c.TryGotoNext(MoveType.After,
-                x => x.MatchStelemRef(),
-                x => x.MatchDup(),
-                x => x.MatchLdcI4(4),
-                x => x.MatchLdstr("Properties-"),
-                x => x.MatchStelemRef(),
-                x => x.MatchDup(),
-                x => x.MatchLdcI4(5),
-                x => x.MatchLdarg(1)))
+            try
             {
+                // Region properties
+                c.GotoNext(x => x.MatchLdstr("Properties-"));
+                c.GotoNext(MoveType.After, x => x.MatchCall<AssetManager>(nameof(AssetManager.ResolveFilePath)));
+
                 c.Emit(OpCodes.Ldarg_0);
-                c.Emit<World>(OpCodes.Ldfld, "name");
-                c.EmitDelegate<Func<SlugcatStats.Name, string, SlugcatStats.Name>>((name, regionName) =>
+                c.Emit(OpCodes.Ldarg_1);
+                c.EmitDelegate((string origPath, World world, Timeline baseTimeline) =>
                 {
-                    //cursed hook
-                    if (SlugBaseCharacter.TryGet(name, out var chara) && WorldState.TryGet(chara, out var copyWorld))
+                    if (CustomTimeline.Registry.TryGet(baseTimeline, out var customTimeline))
                     {
-                        foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
-                        {
-                            string path = AssetManager.ResolveFilePath($"World{Separator}{regionName}{Separator}Properties-{vname.value}.txt");
-                            if (File.Exists(path))
-                            { return vname; }
-                        }
+                        string prefix = $"World{Separator}{world.name}{Separator}Properties-";
+                        string suffix = ".txt";
+                        return FindWorldFileOverride(customTimeline, prefix, suffix) ?? origPath;
                     }
 
-                    return name;
+                    return origPath;
                 });
-            }
-            else
-            {
-                SlugBasePlugin.Logger.LogError("Failed to IL hook LoadMap properties 1!!");
-            }
 
-            int loc = 14;
-            if (c.TryGotoNext(MoveType.After,
-                x => x.MatchLdloc(out loc),
-                x => x.MatchLdcI4(0),
-                x => x.MatchLdelemRef(),
-                x => x.MatchLdstr("Broken Shelters"),
-                x => x.MatchCall(typeof(string),"op_Equality"),
-                x => x.MatchBrfalse(out _),
-                x => x.MatchLdarg(1)))
-            {
-                c.Emit(OpCodes.Ldloc, loc);
-                c.EmitDelegate<Func<SlugcatStats.Name, string[], SlugcatStats.Name>>((name, lines) =>
+                // Broken shelters
+                // Go to the condition after testing against "Broken Shelters"
+                c.GotoNext(x => x.MatchLdstr("Broken Shelters"));
+                c.GotoNext(x => x.MatchBrfalse(out _));
+                c.GotoNext(x => x.MatchBrfalse(out _));
+
+                // Break the shelter if any inherited timelines are broken
+                c.Emit(OpCodes.Ldarg_1);
+                c.Emit(OpCodes.Ldloc, 14);
+                c.EmitDelegate((bool result, Timeline timeline, string[] parts) =>
                 {
-                    //cursed hook
-                    if (SlugBaseCharacter.TryGet(name, out var chara) && WorldState.TryGet(chara, out var copyWorld))
+                    if (!result && CustomTimeline.Registry.TryGet(timeline, out var customTimeline))
                     {
-                        foreach (string line in lines)
-                        {
-                            if (line.StartsWith("Broken Shelters"))
-                            {
-                                foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
-                                {
-                                    string[] array = Regex.Split(RWCustom.Custom.ValidateSpacedDelimiter(line, ":"), ": ");
-                                    if (array.Length > 1 && array[1] == vname.value)
-                                    {
-                                        return vname;
-                                    }
-                                }
-                            }
-                        }
+                        var brokenTimeline = new Timeline(parts[1].Trim());
+                        result = customTimeline.Priorities.Contains(brokenTimeline);
                     }
 
-                    return name;
+                    return result;
                 });
             }
-            else
+            catch (Exception e)
             {
-                SlugBasePlugin.Logger.LogError("Failed to IL hook LoadMap properties 2!!");
+                SlugBasePlugin.Logger.LogError("Failed to hook PropertiesConfig!");
+                SlugBasePlugin.Logger.LogError(e);
             }
         }
 
-        private static void Region_ctor(On.Region.orig_ctor orig, Region self, string name, int firstRoomIndex, int regionNumber, SlugcatStats.Name storyIndex)
+        private static void Region_ctor(On.Region.orig_ctor_string_int_int_Timeline orig, Region self, string name, int firstRoomIndex, int regionNumber, SlugcatStats.Timeline timeline)
         {
-            if (SlugBaseCharacter.TryGet(storyIndex, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
+            if (CustomTimeline.Registry.TryGet(timeline, out var customTimeline))
             {
-                foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
+                foreach (var inheritFrom in customTimeline.Priorities)
                 {
-                    string path = AssetManager.ResolveFilePath($"World{Separator}{name}{Separator}properties-{vname.value}.txt");
-                    if (File.Exists(path)) { storyIndex = vname; break; }
+                    string path = AssetManager.ResolveFilePath($"World{Separator}{name}{Separator}properties-{inheritFrom.value}.txt");
+                    if (File.Exists(path)) { timeline = inheritFrom; break; }
                 }
             }
 
-            orig(self, name, firstRoomIndex, regionNumber, storyIndex);
+            orig(self, name, firstRoomIndex, regionNumber, timeline);
+        }
+
+        private static string FindWorldFileOverride(CustomTimeline customTimeline, string prefix, string suffix)
+        {
+            foreach (var timeline in customTimeline.Priorities)
+            {
+                // If found, replace the original path
+                string testPath = AssetManager.ResolveFilePath(prefix + timeline.value + suffix);
+                if (File.Exists(testPath))
+                    return testPath;
+            }
+
+            return null;
         }
         #endregion
 
         #region meta
-        // WorldState: Mark regions as optional for collections and safari
+        // Custom timelines: Set starting timeline
+        private static Timeline SlugcatStats_SlugcatToTimeline(On.SlugcatStats.orig_SlugcatToTimeline orig, SlugcatStats.Name slugcat)
+        {
+            if (SlugBaseCharacter.TryGet(slugcat, out var chara) && WorldState.TryGet(chara, out var timelines))
+                return Utils.FirstValidEnum(timelines);
+            else
+                return orig(slugcat);
+        }
+
+        // Custom timelines: Mark regions as optional for collections and safari
         private static List<string> SlugcatStats_SlugcatOptionalRegions(On.SlugcatStats.orig_SlugcatOptionalRegions orig, SlugcatStats.Name i)
         {
-            if (!(SlugBaseCharacter.TryGet(i, out var chara) && WorldState.TryGet(chara, out var copyWorld))) return orig(i);
+            if (!SlugBaseCharacter.TryGet(i, out _)) return orig(i);
 
-            List<string> allRegions = Region.GetFullRegionOrder();
-            List<string> regions = new();
+            // Get all timelines this character might use
+            var baseTimeline = SlugcatStats.SlugcatToTimeline(i);
+            List<Timeline> timelines;
+            if (CustomTimeline.Registry.TryGet(baseTimeline, out var customTimeline))
+                timelines = customTimeline.Priorities;
+            else
+                timelines = new List<Timeline>() { baseTimeline };
+
+            // Collect all slugcats that could result in these timelines
+            var slugcats = new HashSet<SlugcatStats.Name>();
+            foreach (var slugcatName in SlugcatStats.Name.values.entries)
+            {
+                var slugcat = new SlugcatStats.Name(slugcatName);
+                if (timelines.Contains(SlugcatStats.SlugcatToTimeline(slugcat)))
+                    slugcats.Add(slugcat);
+            }
 
             //collect a list of all regions that have the slightest chance of being accessible
-            foreach (SlugcatStats.Name name in Utils.AllValidEnums(copyWorld))
+            var regions = new HashSet<string>();
+            foreach (var slugcat in slugcats)
             {
-                if (name != i)
+                foreach (var region in orig(slugcat))
+                    regions.Add(region);
+
+                if (slugcat != i)
                 {
-                    regions.AddRange(orig(name).Where(x => !regions.Contains(x)));
-                    regions.AddRange(SlugcatStats.SlugcatStoryRegions(name).Where(x => !regions.Contains(x)));
-                }
-                else
-                {
-                    regions.AddRange(orig(i).Where(x => !regions.Contains(x)));
+                    foreach (var region in SlugcatStats.SlugcatStoryRegions(slugcat))
+                        regions.Add(region);
                 }
             }
 
@@ -284,72 +267,58 @@ namespace SlugBase.Features
             foreach (string region in SlugcatStats.SlugcatStoryRegions(i))
             {
                 if (regions.Contains(region))
-                { regions.Remove(region); }
+                    regions.Remove(region);
             }
 
             //order by FullRegionOrder
+            List<string> allRegions = Region.GetFullRegionOrder();
             for (int j = allRegions.Count - 1; j >= 0; j--)
             {
                 if (!regions.Contains(allRegions[j]))
-                { allRegions.RemoveAt(j); }
+                    allRegions.RemoveAt(j);
             }
 
             return allRegions;
         }
 
-        // WorldState: Mark regions as accessible for collections and safari
-        private static List<string> SlugcatStats_getSlugcatStoryRegions(On.SlugcatStats.orig_SlugcatStoryRegions orig, SlugcatStats.Name i)
+        // Custom timelines, StoryRegions: Mark regions as accessible for collections and safari
+        private static List<string> SlugcatStats_SlugcatStoryRegions(On.SlugcatStats.orig_SlugcatStoryRegions orig, SlugcatStats.Name i)
         {
-            if (!(SlugBaseCharacter.TryGet(i, out var chara))) return orig(i);
+            if (!SlugBaseCharacter.TryGet(i, out var chara)) return orig(i);
 
-            List<string> regions = new();
+            List<string> regions = null;
 
-            if (WorldState.TryGet(chara, out var copyWorld))
+            // Inherit story regions from first non-SlugBase slugcat
+            var baseTimeline = SlugcatStats.SlugcatToTimeline(i);
+            var timelines = CustomTimeline.Registry.TryGet(baseTimeline, out var customTimeline)
+                ? customTimeline.Priorities
+                : new List<Timeline>() { baseTimeline };
+
+            // Get the first non-SlugBase character that this inherits from
+            SlugcatStats.Name vanillaSlugcat = timelines
+                .Where(x => !CustomTimeline.Registry.TryGet(x, out _))
+                .SelectMany(GetSlugcats)
+                .FirstOrDefault();
+
+            if (vanillaSlugcat != null)
             {
-                SlugcatStats.Name[] names = Utils.AllValidEnums(copyWorld).ToArray();
+                regions = SlugcatStats.SlugcatStoryRegions(vanillaSlugcat);
 
-                //find first slug that isn't me
-                int j = 0;
-                for (; j < names.Length; j++)
+                List<string> defaultRegions = orig(new SlugcatStats.Name(""));
+                foreach (string region in orig(i))
                 {
-                    if (names[j] != i)
-                    { break; }
-                }
-
-                if (j != names.Length)
-                {
-                    if (SlugBaseCharacter.TryGet(names[j], out SlugBaseCharacter chara2)
-                        && WorldState.TryGet(chara2, out SlugcatStats.Name[] copyWorld2))
-                    {
-                        //this is very hacky I know, but it's easier than what I would do otherwise
-                        //temporarily pretend the modded slug's worldstate is the current slug's
-                        chara2.Features.Set(WorldState, JsonConverter.ToJsonAny(names.Skip(j).Where(x => x != i).Select(x => (object)x.value).ToList()));
-                        regions = SlugcatStats.SlugcatStoryRegions(names[j]).ToList();
-
-                        //this will technically remove any invalid enums from the world state, thereby changing it
-                        //if there's some way to get the raw string[] then that'd be better but idk how
-                        chara2.Features.Set(WorldState, JsonConverter.ToJsonAny(Utils.AllValidEnums(copyWorld2).Select(x => (object)x.value).ToList()));
-                    }
-                    else
-                    {
-                        regions = SlugcatStats.SlugcatStoryRegions(names[j]).ToList();
-                    }
-
-                    List<string> defaultRegions = orig(new SlugcatStats.Name("")).ToList();
-                    foreach (string region in orig(i).ToList())
-                    {
-                        //add any extra regions from orig that wouldn't naturally be there
-                        if (!defaultRegions.Contains(region) && !regions.Contains(region))
-                        { regions.Add(region); }
-                    }
+                    //add any extra regions from orig that wouldn't naturally be there
+                    if (!defaultRegions.Contains(region) && !regions.Contains(region))
+                    { regions.Add(region); }
                 }
             }
 
-            if(regions.Count == 0)
+            if(regions == null || regions.Count == 0)
             {
-                regions = orig(i).ToList();
+                regions = orig(i);
             }
 
+            // Apply manual changes from StoryRegions
             if (StoryRegions.TryGet(chara, out var changes))
             {
                 foreach (string str in changes)
@@ -374,27 +343,39 @@ namespace SlugBase.Features
             return regions;
         }
 
-        // WorldState: Swap regions based on character
-        private static string Region_GetProperRegionAcronym(On.Region.orig_GetProperRegionAcronym orig, SlugcatStats.Name character, string baseAcronym)
+        // Get all slugcats associated with a timeline
+        private static IEnumerable<SlugcatStats.Name> GetSlugcats(Timeline timeline)
         {
-            if (SlugBaseCharacter.TryGet(character, out var chara) && WorldState.TryGet(chara, out var copyWorld) && Utils.AllValidEnums(copyWorld).Count != 0)
+            foreach (var name in SlugcatStats.Name.values.entries)
             {
-                character = FindFirstEquivalences(Utils.AllValidEnums(copyWorld).ToArray(), baseAcronym);
+                var slugcat = new SlugcatStats.Name(name);
+                if (SlugcatStats.SlugcatToTimeline(slugcat) == timeline)
+                    yield return slugcat;
             }
-
-            return orig(character, baseAcronym);
         }
 
-        private static SlugcatStats.Name FindFirstEquivalences(SlugcatStats.Name[] names, string regionName)
+        // Custom timelines: Swap regions based on character
+        private static string Region_GetProperRegionAcronym(On.Region.orig_GetProperRegionAcronym_Timeline_string orig, Timeline timeline, string baseAcronym)
+        {
+            if (CustomTimeline.Registry.TryGet(timeline, out var customTimeline))
+            {
+                timeline = FindFirstEquivalences(customTimeline.Priorities, baseAcronym);
+            }
+
+            return orig(timeline, baseAcronym);
+        }
+
+        private static Timeline FindFirstEquivalences(IEnumerable<Timeline> names, string regionName)
         {
             string[] array = AssetManager.ListDirectory("World", true, false);
-            foreach (SlugcatStats.Name name in names)
+            foreach (var timeline in names)
             {
-                //if it's not a slugbase character, it's probably real
-                if (!SlugBaseCharacter.TryGet(name, out _))
+                //if it's not a slugbase timeline, it's probably real
+                if (!CustomTimeline.Registry.TryGet(timeline, out _))
                 {
-                    return name;
+                    return timeline;
                 }
+
                 for (int i = 0; i < array.Length; i++)
                 {
                     string path = AssetManager.ResolveFilePath($"World{Separator}{Path.GetFileName(array[i])}{Separator}equivalences.txt");
@@ -410,59 +391,48 @@ namespace SlugBase.Features
                             a = array2[j].Split('-')[0];
                             text2 = array2[j].Split('-')[1];
                         }
-                        if (a == regionName && text2 != null && name.value.ToLower() == text2.ToLower())
+                        if (a == regionName && text2 != null && timeline.value.ToLower() == text2.ToLower())
                         {
-                            return name;
+                            return timeline;
                         }
                     }
                 }
             }
-            return names[0];
+            return names.First();
         }
 
         #endregion
 
         #region worldloader
 
-        private static ConditionalWeakTable<WorldLoader, StrongBox<SlugcatStats.Name>> _ActualPlayer = new();
+        private static ConditionalWeakTable<WorldLoader, StrongBox<Timeline>> _actualTimeline = new();
 
-        public static StrongBox<SlugcatStats.Name> ActualPlayer(this WorldLoader p) => _ActualPlayer.GetValue(p, _ => new(null));
-        // WorldState: Change character filters
-        private static void WorldLoader_ctor_RainWorldGame_Name_bool_string_Region_SetupValues
-            (On.WorldLoader.orig_ctor_RainWorldGame_Name_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game,
-            SlugcatStats.Name playerCharacter, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
+        public static StrongBox<Timeline> ActualTimeline(this WorldLoader p) => _actualTimeline.GetValue(p, _ => new(null));
+
+        // Custom timelines: Change character filters
+        private static void WorldLoader_ctor(On.WorldLoader.orig_ctor_RainWorldGame_Name_Timeline_bool_string_Region_SetupValues orig, WorldLoader self, RainWorldGame game, SlugcatStats.Name playerCharacter, Timeline timelinePosition, bool singleRoomWorld, string worldName, Region region, RainWorldGame.SetupValues setupValues)
         {
-            //story the Real slug so their name can be used later to get worldstate
-            self.ActualPlayer().Value = playerCharacter;
+            //store the Real slug so their name can be used later to get worldstate
+            self.ActualTimeline().Value = timelinePosition;
 
             //guard clause
-            if (self.singleRoomWorld || !SlugBaseCharacter.TryGet(playerCharacter, out var chara)
-                || !WorldState.TryGet(chara, out var copyWorld) || Utils.AllValidEnums(copyWorld).Count == 0)
+            if (!self.singleRoomWorld && CustomTimeline.Registry.TryGet(timelinePosition, out var customTimeline) && customTimeline.Base.Length > 0)
             {
-                orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
-                return;
+                //open the world file and find the first slugcat mentioned
+                string path = $"World{Separator}{worldName}{Separator}world_{worldName}.txt";
+                string[] array = File.ReadAllLines(AssetManager.ResolveFilePath(path));
+                timelinePosition = FirstTimelineMentionedInWorld(array.ToList(), customTimeline.Priorities);
             }
 
-            //open the world file and find the first slugcat mentioned
-            string path = $"World{Separator}{worldName}{Separator}world_{worldName}.txt";
-            string[] array = File.ReadAllLines(AssetManager.ResolveFilePath(path));
-            playerCharacter = FirstSlugcatMentionedInWorld(array.ToList(), Utils.AllValidEnums(copyWorld).ToArray());
-
-            orig(self, game, playerCharacter, singleRoomWorld, worldName, region, setupValues);
+            orig(self, game, playerCharacter, timelinePosition, singleRoomWorld, worldName, region, setupValues);
         }
 
+        // Custom timelines: Apply spawn file overrides
         private static void WorldLoader_ctor_ILHook(ILContext il)
         {
             var c = new ILCursor(il);
 
-            if (c.TryGotoNext(MoveType.Before, // this Action could go anywhere in the method as long as it's after the txt is loaded
-                //x => x.MatchRet() //I wish... but some things skip to this instruction
-                x => x.MatchLdarg(3),
-                x => x.MatchBrtrue(out _),
-                x => x.MatchLdarg(0),
-                x => x.MatchLdcI4(100),
-                x => x.MatchStfld<WorldLoader>("simulateUpdateTicks")
-                ))
+            if (c.TryGotoNext(MoveType.After, x => x.MatchStfld<WorldLoader>(nameof(WorldLoader.simulateUpdateTicks))))
             {
                 c.Emit(OpCodes.Ldarg_0);
                 c.EmitDelegate<Action<WorldLoader>>((self) =>
@@ -473,12 +443,13 @@ namespace SlugBase.Features
                     int endIndex = self.lines.IndexOf("END CREATURES");
                     if (startIndex == -1 || endIndex == -1) return;
 
-                    SlugcatStats.Name[] names = new SlugcatStats.Name[] { self.ActualPlayer().Value };
+                    IEnumerable<Timeline> names;
+                    if (CustomTimeline.Registry.TryGet(self.ActualTimeline().Value, out var customTimeline))
+                        names = customTimeline.Priorities;
+                    else
+                        names = new Timeline[] { self.ActualTimeline().Value };
 
-                    if (SlugBaseCharacter.TryGet(self.ActualPlayer().Value, out var chara) && WorldState.TryGet(chara, out var copyWorld) && copyWorld.Length != 0)
-                    { names = copyWorld; }
-
-                    foreach (var vname in Utils.AllValidEnums(names).ToArray())
+                    foreach (var vname in names)
                     {
                         string path = AssetManager.ResolveFilePath($"World{Separator}{self.worldName}{Separator}spawns_{self.worldName}-{vname.value}.txt");
                         if (File.Exists(path))
@@ -494,16 +465,16 @@ namespace SlugBase.Features
             }
             else
             {
-                SlugBasePlugin.Logger.LogError("Failed to IL hook WorldLoader.ctor!!");
+                SlugBasePlugin.Logger.LogError("Failed to IL hook WorldLoader.ctor!");
             }
         }
 
-        private static SlugcatStats.Name FirstSlugcatMentionedInWorld(List<string> lines, SlugcatStats.Name[] names)
+        private static Timeline FirstTimelineMentionedInWorld(List<string> lines, IEnumerable<Timeline> timelines)
         {
             int conditionalStart = lines.IndexOf("CONDITIONAL LINKS");
             int conditionalEnd = lines.IndexOf("END CONDITIONAL LINKS");
 
-            foreach (SlugcatStats.Name name in names)
+            foreach (var timeline in timelines)
             {
                 //if it's not a slugbase character then it's assumed to have a valid world
                 //jk, what if you want to load saint world but with Rivulet's UW
@@ -513,9 +484,9 @@ namespace SlugBase.Features
                 {
                     foreach (string line in lines.GetRange(conditionalStart, conditionalEnd - conditionalStart))
                     {
-                        if (!string.IsNullOrEmpty(line) && line.Contains(" : ") && Regex.Split(line, " : ")[0] == name.value)
+                        if (!string.IsNullOrEmpty(line) && line.Contains(" : ") && Regex.Split(line, " : ")[0] == timeline.value)
                         {
-                            return name;
+                            return timeline;
                         }
                     }
                 }
@@ -529,38 +500,37 @@ namespace SlugBase.Features
                         string[] array = text.Split(',');
                         foreach (string str in array)
                         {
-                            if (str == name.value) return name;
+                            if (str == timeline.value) return timeline;
                         }
                     }
                 }
             }
 
-            return names[0] ?? SlugcatStats.Name.White;
+            return timelines.FirstOrDefault() ?? Timeline.White;
         }
 
         //set slug's name back to regular so it's passed into World.LoadMapConfig
         private static void WorldLoader_CreatingWorld(On.WorldLoader.orig_CreatingWorld orig, WorldLoader self)
         {
-            SlugcatStats.Name currentName = self.playerCharacter;
-            self.playerCharacter = self.ActualPlayer().Value;
+            Timeline currentTimeline = self.timelinePosition;
+            self.timelinePosition = self.ActualTimeline().Value;
 
             orig(self);
 
-            self.playerCharacter = currentName;
+            self.timelinePosition = currentTimeline;
         }
         #endregion
 
         #region misc
-        // WorldState: Stop some creatures from freezing when using Saint's world state
+        // Custom timelines: Stop some creatures from freezing when using Saint's world state
         private static void AbstractCreature_setCustomFlags(On.AbstractCreature.orig_setCustomFlags orig, AbstractCreature self)
         {
             orig(self);
 
             if (ModManager.MSC
                 && self.Room.world.game.IsStorySession
-                && SlugBaseCharacter.TryGet(self.Room.world.game.StoryCharacter, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld)
-                && Utils.FirstValidEnum(copyWorld) == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Saint)
+                && CustomTimeline.Registry.TryGet(self.Room.world.game.TimelinePoint, out var timeline)
+                && timeline.InheritsFrom(Timeline.Saint))
             {
                 if (self.creatureTemplate.BlizzardAdapted)
                 {
@@ -573,58 +543,43 @@ namespace SlugBase.Features
             }
         }
 
-        // WorldState: Change region world files ||UNUSED||
-        private static SlugcatStats.Name OverWorld_get_PlayerCharacterNumber(Func<OverWorld, SlugcatStats.Name> orig, OverWorld self)
+        // Custom timelines: Change conditional settings
+        private static void RoomSettings_ctor(On.RoomSettings.orig_ctor_Room_string_Region_bool_bool_Timeline_RainWorldGame orig, RoomSettings self, Room room, string name, Region region, bool template, bool firstTemplate, Timeline timelinePoint, RainWorldGame game)
         {
-            var playerChar = orig(self);
-
-            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
+            if (CustomTimeline.Registry.TryGet(timelinePoint, out var customTimeline))
             {
-                playerChar = Utils.FirstValidEnum(copyWorld) ?? playerChar;
-            }
-
-            return playerChar;
-        }
-
-        // WorldState: Change conditional settings
-        private static void RoomSettings_ctor(On.RoomSettings.orig_ctor orig, RoomSettings self, string name, Region region, bool template, bool firstTemplate, SlugcatStats.Name playerChar)
-        {
-            if (SlugBaseCharacter.TryGet(playerChar, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
+                foreach (var vname in customTimeline.Priorities)
                 {
                     string path = WorldLoader.FindRoomFile(name, false, "_settings-" + vname.value + ".txt");
-                    if (File.Exists(path)) { playerChar = vname; break; }
+                    if (File.Exists(path)) { timelinePoint = vname; break; }
                 }
             }
 
-            orig(self, name, region, template, firstTemplate, playerChar);
+            orig(self, room, name, region, template, firstTemplate, timelinePoint, game);
         }
 
         // WorldState: Change regions on fast travel screen ||UNUSED||
-        private static Region[] Region_LoadAllRegions(On.Region.orig_LoadAllRegions orig, SlugcatStats.Name storyIndex)
-        {
-            if (SlugBaseCharacter.TryGet(storyIndex, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
-            {
-                storyIndex = Utils.FirstValidEnum(copyWorld) ?? storyIndex;
-            }
+        // private static Region[] Region_LoadAllRegions(On.Region.orig_LoadAllRegions orig, SlugcatStats.Name storyIndex)
+        // {
+        //     if (SlugBaseCharacter.TryGet(storyIndex, out var chara)
+        //         && WorldState.TryGet(chara, out var copyWorld))
+        //     {
+        //         storyIndex = Utils.FirstValidEnum(copyWorld) ?? storyIndex;
+        //     }
+        // 
+        //     return orig(storyIndex);
+        // }
 
-            return orig(storyIndex);
-        }
-
-        // WorldState: Change region names
+        // Custom timelines: Change region names
         private static string Region_GetRegionFullName(On.Region.orig_GetRegionFullName orig, string regionAcro, SlugcatStats.Name slugcatIndex)
         {
-            if (SlugBaseCharacter.TryGet(slugcatIndex, out var chara)
-                && WorldState.TryGet(chara, out var copyWorld))
+            var timeline = SlugcatStats.SlugcatToTimeline(slugcatIndex);
+            if (CustomTimeline.Registry.TryGet(timeline, out var customTimeline))
             {
-                foreach (var vname in Utils.AllValidEnums(copyWorld).ToArray())
+                foreach (var vname in customTimeline.Priorities)
                 {
                     string path = AssetManager.ResolveFilePath($"World{Path.DirectorySeparatorChar}{regionAcro}{Path.DirectorySeparatorChar}DisplayName-{vname.value}.txt");
-                    if (File.Exists(path)) { slugcatIndex = vname; break; }
+                    if (File.Exists(path)) { slugcatIndex = new SlugcatStats.Name(vname.value); break; }
                 }
             }
 

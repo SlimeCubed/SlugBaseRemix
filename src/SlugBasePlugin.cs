@@ -24,7 +24,7 @@ namespace SlugBase
         internal static Config RemixConfig;
         internal static Color SlugBaseBlue = new(19f / 255f, 63f / 255f, 231f / 255f);
         internal static Color SlugBaseGray = new(146f / 255f, 150f / 255f, 164f / 255f);
-        internal const string Version = "2.7.8";
+        internal const string Version = "2.8.0";
 
         private bool _initialized = false;
 
@@ -45,7 +45,7 @@ namespace SlugBase
                 }
                 catch(Exception e)
                 {
-                    Debug.LogException(e);
+                    UnityEngine.Debug.LogException(e);
                 }
 
                 orig(self);
@@ -78,10 +78,11 @@ namespace SlugBase
                     SlugBaseCharacter.Registry.WatchForChanges = true;
                     CustomScene.Registry.WatchForChanges = true;
                     CustomSlideshow.Registry.WatchForChanges = true;
+                    CustomTimeline.Registry.WatchForChanges = true;
                 }
                 catch(Exception e)
                 {
-                    Debug.LogException(e);
+                    UnityEngine.Debug.LogException(e);
                 }
             };
 
@@ -96,7 +97,7 @@ namespace SlugBase
                 }
                 catch (Exception e)
                 {
-                    Debug.LogException(e);
+                    UnityEngine.Debug.LogException(e);
                 }
             };
         }
@@ -106,6 +107,10 @@ namespace SlugBase
             SlugBaseCharacter.Registry.ScanDirectory("slugbase");
             CustomScene.Registry.ScanDirectory("slugbase/scenes");
             CustomSlideshow.Registry.ScanDirectory("slugbase/slideshows");
+            CustomTimeline.Registry.ScanDirectory("slugbase/timelines");
+
+            foreach (var chara in SlugBaseCharacter.Registry.Values)
+                chara.UpdateLegacyTimeline();
         }
 
         public void Update()
@@ -113,6 +118,7 @@ namespace SlugBase
             SlugBaseCharacter.Registry.ReloadChangedFiles();
             CustomScene.Registry.ReloadChangedFiles();
             CustomSlideshow.Registry.ReloadChangedFiles();
+            CustomTimeline.Registry.ReloadChangedFiles();
         }
     }
 }
