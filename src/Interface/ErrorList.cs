@@ -57,7 +57,7 @@ namespace SlugBase.Interface
 
                 list.AddError(ErrorIcon.Character, args.ErrorMessage, args.Path, retry);
 
-                Debug.LogException(args.Exception);
+                UnityEngine.Debug.LogException(args.Exception);
             };
 
             CustomScene.Registry.LoadFailed += (_, args) =>
@@ -68,7 +68,7 @@ namespace SlugBase.Interface
 
                 list.AddError(ErrorIcon.Scene, args.ErrorMessage, args.Path, retry);
 
-                Debug.LogException(args.Exception);
+                UnityEngine.Debug.LogException(args.Exception);
             };
 
             CustomSlideshow.Registry.LoadFailed += (_, args) =>
@@ -79,7 +79,18 @@ namespace SlugBase.Interface
 
                 list.AddError(ErrorIcon.Scene, args.ErrorMessage, args.Path, retry);
 
-                Debug.LogException(args.Exception);
+                UnityEngine.Debug.LogException(args.Exception);
+            };
+
+            CustomTimeline.Registry.LoadFailed += (_, args) =>
+            {
+                Action retry = null;
+                if (args.Path != null)
+                    retry = () => CustomTimeline.Registry.TryAddFromFile(args.Path);
+
+                list.AddError(ErrorIcon.Timeline, args.ErrorMessage, args.Path, retry);
+
+                UnityEngine.Debug.LogException(args.Exception);
             };
 
             return list;
@@ -251,6 +262,7 @@ namespace SlugBase.Interface
             ErrorIcon.Character => "slugbase/ui/character",
             ErrorIcon.Scene => "slugbase/ui/scene",
             ErrorIcon.Plugin => "slugbase/ui/plugin",
+            ErrorIcon.Timeline => "slugbase/ui/timeline",
             _ => "pixel"
         };
 
@@ -279,7 +291,8 @@ namespace SlugBase.Interface
         {
             Character,
             Scene,
-            Plugin
+            Plugin,
+            Timeline
         }
     }
 }

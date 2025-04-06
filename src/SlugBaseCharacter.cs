@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using SlugBase.Features;
 
 namespace SlugBase
@@ -66,6 +67,7 @@ namespace SlugBase
                 {
                     Refreshed?.Invoke(_, new RefreshEventArgs(game, args.Key, args.Value));
                 }
+                args.Value.UpdateLegacyTimeline();
             };
         }
 
@@ -99,6 +101,56 @@ namespace SlugBase
             Features.Clear();
             if (json.TryGet("features")?.AsObject() is JsonObject obj)
                 Features.AddMany(obj);
+        }
+
+        /// <summary>
+        /// If necessary, registers or updates a character-specific timeline that uses the pre-Watcher world state system.
+        /// </summary>
+        internal void UpdateLegacyTimeline()
+        {
+            // Create a new timeline if the first entry matches the character's name and isn't registered
+            // Update only if it's a SlugBase timeline not added from a file
+            if (GameFeatures.WorldState.TryGet(this, out var worldStates)
+                && worldStates.Length > 0
+                && worldStates[0].value == Name.value
+                && (worldStates[0].Index == -1
+                    || CustomTimeline.Registry.TryGet(worldStates[0], out _) && !CustomTimeline.Registry.TryGetPath(worldStates[0], out _)))
+            {
+                try
+                {
+                    var id = worldStates[0];
+                    var before = GameFeatures.TimelineBefore.TryGet(this, out var beforeEnums)
+                        ? new List<object>(beforeEnums.Select(x => x.value))
+                        : new List<object>();
+
+                    var after = GameFeatures.TimelineBefore.TryGet(this, out var afterEnums)
+                        ? new List<object>(beforeEnums.Select(x => x.value))
+                        : new List<object>();
+
+                    var dict = new Dictionary<string, object>()
+                    {
+                        { "id", id.value },
+                        { "base", new List<object>(worldStates.Skip(1).Select(x => x.value)) }
+                    };
+                    if (before.Count > 0)
+                        dict.Add("before", before);
+                    if (after.Count > 0)
+                        dict.Add("after", after);
+
+                    var json = JsonConverter.ToJson(dict);
+
+                    if (CustomTimeline.Registry.TryGet(id, out _))
+                        CustomTimeline.Registry.Remove(id);
+
+                    CustomTimeline.Registry.Add(json);
+                }
+                catch (Exception e)
+                {
+                    Registry.TryGetPath(Name, out string path);
+                    Interface.ErrorList.Instance.AddError(Interface.ErrorList.ErrorIcon.Timeline, "Failed to create legacy timeline: " + e.Message, path, null);
+                    UnityEngine.Debug.LogException(e);
+                }
+            }
         }
 
         /// <summary>

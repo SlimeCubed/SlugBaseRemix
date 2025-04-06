@@ -74,6 +74,13 @@ namespace SlugBase.Features
         /// <summary>Create a player feature that takes one enum value.</summary>
         public static PlayerFeature<T> PlayerExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
 
+        /// <summary>Create a player feature that takes an array of enum values.</summary>
+        public static PlayerFeature<T[]> PlayerExtEnums<T>(string id, int minLength = 0, int maxLength = int.MaxValue)
+            where T : ExtEnum<T>
+        {
+            return new(id, json => ToExtEnums<T>(AssertLength(json, minLength, maxLength)));
+        }
+
 
         /// <summary>Create a game feature that takes one integer.</summary>
         public static GameFeature<int> GameInt(string id) => new(id, ToInt);
@@ -125,5 +132,12 @@ namespace SlugBase.Features
 
         /// <summary>Create a game feature that takes one enum value.</summary>
         public static GameFeature<T> GameExtEnum<T>(string id) where T : ExtEnum<T> => new(id, ToExtEnum<T>);
+
+        /// <summary>Create a game feature that takes an array of enum values.</summary>
+        public static GameFeature<T[]> GameExtEnums<T>(string id, int minLength = 0, int maxLength = int.MaxValue)
+            where T : ExtEnum<T>
+        {
+            return new(id, json => ToExtEnums<T>(AssertLength(json, minLength, maxLength)));
+        }
     }
 }

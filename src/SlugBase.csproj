@@ -13,6 +13,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(RainWorldDir)')">
     <ItemGroup>
       <Assets Include="$(ProjectDir)../assets/**/*.*" />
@@ -22,7 +26,10 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(ProjectDir)../assets/slime-cubed.slugbase/')">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)../assets/slime-cubed.slugbase/newest/plugins/" />
+    <ItemGroup>
+      <Plugins Include="$(TargetDir)*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Plugins)" DestinationFolder="$(ProjectDir)../assets/slime-cubed.slugbase/newest/plugins/" />
   </Target>
 
 </Project>

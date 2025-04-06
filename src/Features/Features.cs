@@ -157,16 +157,16 @@ namespace SlugBase.Features
         public static readonly GameFeature<SlideShow.SlideShowID> OutroScene = GameExtEnum<SlideShow.SlideShowID>("outro_slideshow");
         // This ideally should be able to support an arbitrary amount of outros for alternate endings. Personally I'd also be fine with only allowing two, one being `outro_scene_alt`, seems like a reasonable compromise
 
-        /// <summary>"world_state": The character to use for creature spawns and room connections.</summary>
-        public static readonly GameFeature<SlugcatStats.Name[]> WorldState = GameSlugcatNames("world_state");
+        /// <summary>"world_state": The timeline to use for creature spawns and room connections.</summary>
+        public static readonly GameFeature<SlugcatStats.Timeline[]> WorldState = GameExtEnums<SlugcatStats.Timeline>("world_state");
 
         /// <summary>"story_regions": The new or removed story regions from an inherited world_state.</summary>
         public static readonly GameFeature<string[]> StoryRegions = GameStrings("story_regions");
 
-        /// <summary>"timeline_before": The next character in the timeline.</summary>
+        /// <summary>"timeline_before": The next timeline after this character's.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> TimelineBefore = GameSlugcatNames("timeline_before", 1);
 
-        /// <summary>"timeline_after": The previous character in the timeline.</summary>
+        /// <summary>"timeline_after": The previous timeline before this character's.</summary>
         public static readonly GameFeature<SlugcatStats.Name[]> TimelineAfter = GameSlugcatNames("timeline_after", 1);
 
         /// <summary>"title_card": Add a intro titlecard to be randomly selected. Must be 1366x768 pixels big to display correctly.</summary>

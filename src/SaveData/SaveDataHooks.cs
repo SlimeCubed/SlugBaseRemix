@@ -4,13 +4,15 @@
     {
         public static void Apply()
         {
+            //mine for slugbase data on par with vanilla data
             On.Menu.SlugcatSelectMenu.MineForSaveData += SlugcatSelectMenu_MineForSaveData;
+
+            //save slugbase savestate along with vanilla savestate
             On.DeathPersistentSaveData.SaveToString += DeathPersistentSaveData_SaveToString;
             On.MiscWorldSaveData.ToString += MiscWorldSaveData_ToString;
             On.PlayerProgression.MiscProgressionData.ToString += MiscProgressionData_ToString;
         }
 
-        // Mine for SlugBase save data
         private static Menu.SlugcatSelectMenu.SaveGameData SlugcatSelectMenu_MineForSaveData(On.Menu.SlugcatSelectMenu.orig_MineForSaveData orig, ProcessManager manager, SlugcatStats.Name slugcat)
         {
             var origData = orig(manager, slugcat);

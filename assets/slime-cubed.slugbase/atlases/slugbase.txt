@@ -55,6 +55,14 @@
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
 	"sourceSize": {"w":16,"h":16}
+},
+"slugbase/ui/timeline.png":
+{
+	"frame": {"x":35,"y":51,"w":16,"h":16},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+	"sourceSize": {"w":16,"h":16}
 }},
 "meta": {
 	"app": "https://www.codeandweb.com/texturepacker",
@@ -63,6 +71,6 @@
 	"format": "RGBA8888",
 	"size": {"w":52,"h":68},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:06080aa7f53dc373648d71f60e3b26bf:6f6bab3a320e2ae125762e35d632a24c:01dac5fee6de78d510e2ccf92c050df5$"
+	"smartupdate": "$TexturePacker:SmartUpdate:12e9cc21f878d56b23862729732ce810:444b9e902153b6c504040461ae28c2fb:01dac5fee6de78d510e2ccf92c050df5$"
 }
 }

@@ -148,6 +148,20 @@ namespace SlugBase
         }
 
         /// <summary>
+        /// Convert list to <see cref="ExtEnum{T}"/>[].
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ExtEnumBase.Index"/> will be -1 for values that could not be parsed.
+        /// </remarks>
+        public static T[] ToExtEnums<T>(JsonAny json) where T : ExtEnum<T>
+        {
+            if (json.TryString() == null)
+                return json.AsList().Select(ToExtEnum<T>).ToArray();
+            else
+                return new[] { ToExtEnum<T>(json) };
+        }
+
+        /// <summary>
         /// Convert to <see cref="Vector2"/>
         /// </summary>
         /// <remarks>
