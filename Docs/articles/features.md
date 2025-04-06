@@ -10,9 +10,15 @@ Values specified in angle brackets refer to `ExtEnum`s in the game's code. Repla
 
 # [SlugcatStats.Name](#tab/slugcatname)
 
-**Vanilla:** `White`, `Yellow`, `Red`
+**Vanilla:** `White`, `Yellow`, `Red`, `Night`
 
 **More Slugcats:** `Rivulet`, `Artificer`, `Saint`, `Spear`, `Gourmand`, `Slugpup`, `Inv`
+
+**Watcher:** `Watcher`
+
+# [SlugcatStats.Timeline](#tab/timeline)
+
+**Vanilla:** `Spear`, `Artificer`, `Inv`, `Red`, `Gourmand`, `White`, `Yellow`, `Rivulet`, `Saint`, `Watcher`
 
 # [CreatureCommunities.CommunityID](#tab/communityid)
 
@@ -22,17 +28,25 @@ Values specified in angle brackets refer to `ExtEnum`s in the game's code. Repla
 
 **Vanilla:** `StandardGroundCreature`, `Slugcat`, `LizardTemplate`, `PinkLizard`, `GreenLizard`, `BlueLizard`, `YellowLizard`, `WhiteLizard`, `RedLizard`, `BlackLizard`, `Salamander`, `CyanLizard`, `Fly`, `Leech`, `SeaLeech`, `Snail`, `Vulture`, `GarbageWorm`, `LanternMouse`, `CicadaA`, `CicadaB`, `Spider`, `JetFish`, `BigEel`, `Deer`, `TubeWorm`, `DaddyLongLegs`, `BrotherLongLegs`, `TentaclePlant`, `PoleMimic`, `MirosBird`, `TempleGuard`, `Centipede`, `RedCentipede`, `Centiwing`, `SmallCentipede`, `Scavenger`, `Overseer`, `VultureGrub`, `EggBug`, `BigSpider`, `SpitterSpider`, `SmallNeedleWorm`, `BigNeedleWorm`, `DropBug`, `KingVulture`, `Hazer`
 
-**More Slugcats:** `MirosVulture`, `SpitLizard`, `EelLizard`, `MotherSpider`, `TerrorLongLegs`, `AquaCenti`, `HunterDaddy`, `FireBug`, `StowawayBug`, `ScavengerElite`, `Inspector`, `Yeek`, `BigJelly`, `SlugNPC`, `JungleLeech`, `ZoopLizard`, `ScavengerKing`, `TrainLizard`
+**More Slugcats:** `HunterDaddy`, `FireBug`, `SlugNPC`, `ScavengerKing`, `TrainLizard`
+
+**Watcher:** `DrillCrab`, `Barnacle`, `SandGrub`, `BigSandGrub`, `BigMoth`, `SmallMoth`, `BoxWorm`, `FireSprite`, `Rattler`, `SkyWhale`, `ScavengerTemplar`, `ScavengerDisciple`, `Loach`, `RotLoach`, `BlizzardLizard`, `BasiliskLizard`, `IndigoLizard`, `Rat`, `Frog`, `Tardigrade`
+
+**Any DLC:** `MirosVulture`, `SpitLizard`, `EelLizard`, `MotherSpider`, `TerrorLongLegs`, `AquaCenti`, `StowawayBug`, `ScavengerElite`, `Inspector`, `Yeek`, `BigJelly`, `JungleLeech`, `ZoopLizard`
 
 # [AbstractPhysicalObject.Type](#tab/objecttype)
 
-**Vanilla:** `Creature`, `Rock`, `Spear`, `FlareBomb`, `VultureMask`, `PuffBall`, `DangleFruit`, `Oracle`, `PebblesPearl`, `SLOracleSwarmer`, `SSOracleSwarmer`, `DataPearl`, `SeedCob`, `WaterNut`, `JellyFish`, `Lantern`, `KarmaFlower`, `Mushroom`, `VoidSpawn`, `FirecrackerPlant`, `SlimeMold`, `FlyLure`, `ScavengerBomb`, `SporePlant`, `AttachedBee`, `EggBugEgg`, `NeedleEgg`, `DartMaggot`, `BubbleGrass`, `NSHSwarmer`, `OverseerCarcass`, `CollisionField`, `BlinkingFlower`,
+**Vanilla:** `Creature`, `Rock`, `Spear`, `FlareBomb`, `VultureMask`, `PuffBall`, `DangleFruit`, `Oracle`, `PebblesPearl`, `SLOracleSwarmer`, `SSOracleSwarmer`, `DataPearl`, `SeedCob`, `WaterNut`, `JellyFish`, `Lantern`, `KarmaFlower`, `Mushroom`, `VoidSpawn`, `FirecrackerPlant`, `SlimeMold`, `FlyLure`, `ScavengerBomb`, `SporePlant`, `AttachedBee`, `EggBugEgg`, `NeedleEgg`, `DartMaggot`, `BubbleGrass`, `NSHSwarmer`, `OverseerCarcass`, `CollisionField`, `BlinkingFlower`, `Pomegranate`, `LobeTree`
 
-**More Slugcats:** `JokeRifle`, `Bullet`, `SingularityBomb`, `Spearmasterpearl`, `FireEgg`, `EnergyCell`, `Germinator`, `Seed`, `GooieDuck`, `LillyPuck`, `GlowWeed`, `MoonCloak`, `HalcyonPearl`, `DandelionPeach`, `HRGuard`
+**More Slugcats:** `JokeRifle`, `Bullet`, `Spearmasterpearl`, `FireEgg`, `EnergyCell`, `Germinator`, `MoonCloak`, `HalcyonPearl`, `HRGuard`
+
+**Watcher:** `RippleSpawn`, `FireSpriteLarva`, `Boomerang`, `PrinceBulb`, `Prince`, `SpinToy`, `BallToy`, `SoftToy`, `WeirdToy`
+
+**Any DLC:** `SingularityBomb`, `Seed`, `GooieDuck`, `LillyPuck`, `GlowWeed`, `DandelionPeach`
 
 ---
 
-Some values will not be present if More Slugcats is not installed. Other mods may add values to these. Features that take enums will often ignore invalid values.
+Some values will not be present if DLCs are not installed. Other mods may add values to these. Features that take enums will often ignore invalid values. DLC timelines, though always available for custom characters to use, will not work correctly in vanilla regions if the corresponding DLC is not installed.
 
 ## Player Features
 ### "color"
@@ -324,21 +338,30 @@ Slideshow ID to use for the void sea slideshow.
 `string[]`\
 Ex: `"world_state": "Red"`, `"world_state": [ "Spear", "Red" ]`
 
-`SlugcatStats.Name` values to copy world state from. This includes spawns and room connections. If the first name does not exist, then the second will be tried and so on.
+`SlugcatStats.Timeline` values to copy world state from. This includes spawns and room connections. If the first timeline does not exist, then the second will be tried and so on.
 
 See [World State Tutorial](world-state-tutorial.md) for more information.
+
+> [!NOTE]
+> If the first item in your world state is your character's name, a timeline point will be created automatically. Consider using [Custom Timelines](gettingstarted.md#custom-timelines) for more flexibility.
 
 ### "timeline_before"
 `string[]`\
 Ex: `"timeline_before": "Red"`, `"timeline_after": [ "Artificer", "Red" ]`
 
-`SlugcatStats.Name` values to position this character before in the timeline. If the first name does not exist or is not on the timeline, then the second will be tried and so on. This takes precedence over `"timeline_after"`.
+`SlugcatStats.Timeline` values to position this character's timeline point before in the timeline order. If the first timeline point does not exist or is not on the timeline, then the second will be tried and so on. This takes precedence over `"timeline_after"`.
+
+> [!NOTE]
+> This only has an effect if `"world_state"` matches your character's name. Consider using [Custom Timelines](gettingstarted.md#custom-timelines) instead.
 
 ### "timeline_after"
 `string[]`\
 Ex: `"timeline_after": "Yellow"`, `"timeline_after": [ "Rivulet", "Yellow" ]`
 
-`SlugcatStats.Name` values to position this character after in the timeline. If the first name does not exist or is not on the timeline, then the second will be tried and so on. `"timeline_before"` takes precedence over this.
+`SlugcatStats.Timeline` values to position this character's timeline point after in the timeline order. If the first timeline point does not exist or is not on the timeline, then the second will be tried and so on. `"timeline_before"` takes precedence over this.
+
+> [!NOTE]
+> This only has an effect if `"world_state"` matches your character's name. Consider using [Custom Timelines](gettingstarted.md#custom-timelines) instead.
 
 ### "title_card"
 `string`\

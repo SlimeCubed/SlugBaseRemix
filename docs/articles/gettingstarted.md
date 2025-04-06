@@ -134,3 +134,21 @@ Much the same way you created your Character Select Menu, create a file called `
   - **"camera_path"**: An optional list of points for the camera to move along when displaying this scene. The first two elements of each point represent the camera position, and the optional third element represents the focal depth between 0 and 1.
 
 Slideshows can be used for intros via the "intro_slideshow" feature, and outros when finishing the game via the "outro_slideshow" feature. You can start a slideshow manually by setting `processManager.nextSlideshow` and calling `processManager.RequestMainProcessSwitch(ProcessManager.ProcessID.SlideShow)`.
+
+## Custom Timelines
+
+As of the release of The Watcher, timeline points are now a distinct concept from slugcats. For example, with just a little save editing, Survivor can load into Saint's snow-covered world. You can choose which timeline point you want to use for your character with the "world_state" feature. To define your own timeline, make a file called `slugbase\timelines\my_timeline.json`. The JSON object needs at least the "id" property:
+```json
+{
+  "id": "MyTimeline",
+  "base": [ "SomeOtherTimeline", "Red" ],
+  "insert_before": "Red"
+}
+```
+
+- **"id"**: A unique ID. Your timeline will not be registered if another timeline has this ID!
+- **"base"**: A timeline or list of timelines to inherit from when a region doesn't define anything for this timeline.
+- **"insert_before"**: Your timeline will be inserted into the order right before this one. If this is a list, then the first timeline that exists will be used.
+- **"insert_after"**: Your timeline will be inserted into the order right after this one. If this is a list, then the first timeline that exists will be used.
+
+The vanilla timeline order is: Spear, Artificer, Sofanthiel, Red, Gourmand, White, Yellow, Rivulet, Saint. You can use "insert_before" or "insert_after" to add your timeline to this list. If neither are present, then your timeline will still be registered without adding it to the timeline order. See [World State Tutorial](world-state-tutorial.md) for more information on timelines and timeline inheritance.
