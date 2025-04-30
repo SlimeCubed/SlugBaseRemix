@@ -446,8 +446,10 @@ namespace SlugBase.Features
                     IEnumerable<Timeline> names;
                     if (CustomTimeline.Registry.TryGet(self.ActualTimeline().Value, out var customTimeline))
                         names = customTimeline.Priorities;
-                    else
+                    else if (self.ActualTimeline().Value != null)
                         names = new Timeline[] { self.ActualTimeline().Value };
+                    else
+                        names = new Timeline[0];
 
                     foreach (var vname in names)
                     {
