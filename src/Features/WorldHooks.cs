@@ -164,13 +164,15 @@ namespace SlugBase.Features
 
                 // Broken shelters
                 // Go to the condition after testing against "Broken Shelters"
+                int partsLoc = -1; // Local variable that stores current line from world file, split on ":"
                 c.GotoNext(x => x.MatchLdstr("Broken Shelters"));
                 c.GotoNext(x => x.MatchBrfalse(out _));
+                c.GotoNext(x => x.MatchLdloc(out partsLoc));
                 c.GotoNext(x => x.MatchBrfalse(out _));
 
                 // Break the shelter if any inherited timelines are broken
                 c.Emit(OpCodes.Ldarg_1);
-                c.Emit(OpCodes.Ldloc, 14);
+                c.Emit(OpCodes.Ldloc, partsLoc);
                 c.EmitDelegate((bool result, Timeline timeline, string[] parts) =>
                 {
                     if (!result && CustomTimeline.Registry.TryGet(timeline, out var customTimeline))
