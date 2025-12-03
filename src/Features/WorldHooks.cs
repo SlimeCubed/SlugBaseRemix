@@ -418,7 +418,7 @@ namespace SlugBase.Features
             self.ActualTimeline().Value = timelinePosition;
 
             //guard clause
-            if (!self.singleRoomWorld && CustomTimeline.Registry.TryGet(timelinePosition, out var customTimeline) && customTimeline.Base.Length > 0)
+            if (!singleRoomWorld && CustomTimeline.Registry.TryGet(timelinePosition, out var customTimeline) && customTimeline.Base.Length > 0)
             {
                 //open the world file and find the first slugcat mentioned
                 string path = $"World{Separator}{worldName}{Separator}world_{worldName}.txt";
