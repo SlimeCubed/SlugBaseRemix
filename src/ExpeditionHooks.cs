@@ -217,7 +217,7 @@ namespace SlugBase
             new (nameof(MSCSceneID.Landscape_CL)),
         };
 
-        // Assigning the name, description, and a random background scene
+        // Assigning the name, description, and background scene
         private static void CharacterSelectPage_UpdateSelectedSlugcat(On.Menu.CharacterSelectPage.orig_UpdateSelectedSlugcat orig, CharacterSelectPage self, int num)
         {
             if (num < 0 || num >= ExpeditionGame.playableCharacters.Count) num = 1; // This might not be necessary, but better be safe
@@ -227,6 +227,7 @@ namespace SlugBase
             {
                 SlugcatStats.Name name = ExpeditionGame.playableCharacters[num];
                 string rodentName = "If you're seeing this in game then I think i might have screwed up<LINE>-Nacu";
+                self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))]; // Sets background to be random
                 if (SlugBaseCharacter.TryGet(name, out var chara))
                 {
                     rodentName = chara.DisplayName;
@@ -236,6 +237,14 @@ namespace SlugBase
                     }
 
                     self.slugcatDescription.text = self.menu.Translate(description).Replace("<LINE>", Environment.NewLine);
+
+                    sceneNum = -1; // AHHHH HOW DO I MAKE IT REFERENCE THE BACKGROUND THINGY
+                    
+                    if (sceneNum > -1) // If the sceneNum is -1 (the default), it keeps the background randomized.
+                    {
+                        if (sceneNum < 23 || ModManager.MSC) { // If the sceneNum has a MSC background selected and MSC isn't enabled, it is also randomized.
+                        self.slugcatScene = randomScenes[sceneNum];
+                    }
                 }
 
                 if (name == SlugcatStats.Name.Night)
@@ -258,7 +267,6 @@ namespace SlugBase
                 }
 
                 self.slugcatName.text = self.menu.Translate(rodentName).ToUpper();
-                self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
             }
         }
 
