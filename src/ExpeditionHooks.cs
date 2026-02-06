@@ -220,45 +220,58 @@ namespace SlugBase
         // Assigning the name, description, and a random background scene
         private static void CharacterSelectPage_UpdateSelectedSlugcat(On.Menu.CharacterSelectPage.orig_UpdateSelectedSlugcat orig, CharacterSelectPage self, int num)
         {
-            if (num < 0 || num >= ExpeditionGame.playableCharacters.Count) num = 1; // This might not be necessary, but better be safe
             orig(self, num);
-
-            if (num > (ModManager.MSC ? 7 : 2))
+            
+            // Only replace slugcats that weren't already given a name or description
+            if (string.IsNullOrEmpty(self.slugcatName.text)
+                && string.IsNullOrEmpty(self.slugcatDescription.text)
+                && num >= 0
+                && num < ExpeditionGame.playableCharacters.Count)
             {
                 SlugcatStats.Name name = ExpeditionGame.playableCharacters[num];
-                string rodentName = "If you're seeing this in game then I think i might have screwed up<LINE>-Nacu";
+                string rodentName;
+                string rodentDesc;
+
+                // For custom SlugBase characters
                 if (SlugBaseCharacter.TryGet(name, out var chara))
                 {
                     rodentName = chara.DisplayName;
-                    if (!GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
-                    {
-                        description = chara.Description;
-                    }
-
-                    self.slugcatDescription.text = self.menu.Translate(description).Replace("<LINE>", Environment.NewLine);
+                    if (GameFeatures.ExpeditionDescription.TryGet(chara, out string description))
+                        rodentDesc = description;
+                    else
+                        rodentDesc = chara.Description;
                 }
 
-                if (name == SlugcatStats.Name.Night)
+                // For pandemonium.txt
+                else if (name == SlugcatStats.Name.Night)
                 {
                     rodentName = "NIGHTCAT";
-                    self.slugcatDescription.text = self.menu.Translate(
-                        "A mystery to everyone, with no unique skills, The Nightcat embarks <LINE>on an expedition to find purpose").Replace("<LINE>", Environment.NewLine);
+                    rodentDesc = "A mystery to everyone, with no unique skills, The Nightcat embarks <LINE>on an expedition to find purpose";
                 }
                 else if (name == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
                 {
                     rodentName = UnityEngine.Random.value < 0.33f ? "SOFANTHIEL" : UnityEngine.Random.value < 0.33f ? "INV" : UnityEngine.Random.value < 0.33f ? "ENOT" : "???"; // This is funny i think
-                    self.slugcatDescription.text = self.menu.Translate(
-                        "A freak of nature, this creature not meant to exist, or prosper in any meaningful way<LINE>travels alone attempting to prove itself to the world").Replace("<LINE>", Environment.NewLine);
+                    rodentDesc = "A freak of nature, this creature not meant to exist, or prosper in any meaningful way<LINE>travels alone attempting to prove itself to the world";
                 }
                 else if (name == MoreSlugcatsEnums.SlugcatStatsName.Slugpup)
                 {
                     rodentName = "SLUGPUP";
-                    self.slugcatDescription.text = self.menu.Translate(
-                        "A small lost and curious child, it's unrelenting bravery drives it to<LINE>complete harder and harder tasks, will you help?").Replace("<LINE>", Environment.NewLine);
+                    rodentDesc = "A small lost and curious child, it's unrelenting bravery drives it to<LINE>complete harder and harder tasks, will you help?";
                 }
 
-                self.slugcatName.text = self.menu.Translate(rodentName).ToUpper();
-                self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
+                // Added by another mod
+                else
+                {
+                    rodentName = null;
+                    rodentDesc = null;
+                }
+
+                if (rodentName != null)
+                {
+                    self.slugcatName.text = self.menu.Translate(rodentName).ToUpper();
+                    self.slugcatDescription.text = self.menu.Translate(rodentDesc).Replace("<LINE>", Environment.NewLine);
+                    self.slugcatScene = randomScenes[UnityEngine.Random.Range(0, randomScenes.Length - (ModManager.MSC ? 0 : 7))];
+                }
             }
         }
 
