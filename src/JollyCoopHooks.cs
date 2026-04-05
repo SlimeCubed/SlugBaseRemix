@@ -122,7 +122,7 @@ namespace SlugBase
                         _extraColors.Remove(self.jollyPlayerOptionsArray[i]);
                         _extraColors.Add(self.jollyPlayerOptionsArray[i], colors);
                     }
-                    return true;
+                    return false;
                 }
             }
             catch(Exception e)
