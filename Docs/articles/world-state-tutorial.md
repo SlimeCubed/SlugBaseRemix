@@ -1,6 +1,6 @@
 ﻿# World State
 
-A "World State" is SlugBase' way of categorizing all world-related slugcat specific changes. A SlugBase slugcat can inherit a world state from another slugcat to use its same room connections, spawns, accessible regions, and so on. The world will appear as if it was the campaign of the other slugcat, except for non-world changes, such as iterator states, echoes, campaign cutscenes, ect.
+A "World State" is SlugBase's way of categorizing all world-related slugcat specific changes. A SlugBase slugcat can inherit a world state from another slugcat to use its same room connections, spawns, accessible regions, and so on. The world will appear as if it was the campaign of the other slugcat, except for non-world changes, such as iterator states, echoes, campaign cutscenes, etc.
 
 # Basic Usage
 
